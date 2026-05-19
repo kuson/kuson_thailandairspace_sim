@@ -1,0 +1,2645 @@
+PROHIBITED, RESTRICTED, DANGER AREAS
+
+## ENR 5 NAVIGATION WARNINGS
+
+### ENR 5.1 PROHIBITED, RESTRICTED, DANGER AREAS
+
+1. All airspace in which a potential hazard to aircraft operations may exist and all areas over which the operation of civil aircraft may, for one reason or another, be restricted either temporarily or permanently, are classified, according to the following three types of areas as defined by ICAO.
+
+Prohibited Area
+
+An airspace of defined dimensions above the land areas or territorial waters of a State, within which the flight of aircraft is prohibited. The flight of aircraft within the designated airspace is require prior authorization from appropriate agency.
+
+Restricted Area
+
+An airspace of defined dimensions, above the land areas or territorial waters of a State, within which the flight of aircraft is restricted in accordance with certain specified conditions. The flight of aircraft within the designated airspace is not absolutely prohibited but require prior authorization from appropriate agency or pilot comply with specified entry criteria.
+
+Danger Area
+
+An airspace of defined dimensions within which activities dangerous to the flight of aircraft may exist at specified time. The effect of the creation of danger area is to caution operators or pilots of aircraft that it is necessary for them to assess the dangers in relation to their responsibility for the safety of their aircraft.
+
+2. Each area is numbered and a single series of numbers is used for all areas, regardless of type, to ensure that a number is never duplicated.
+
+3. The type of area involved is indicated by the letter “P” for Prohibited, “R” for Restricted and “D” for Danger, preceded by the nationality letter “VT”. For example, areas are assigned numbers and letters in the following manner VTR1, VTR2, VTR3, VTP4, VTD5, etc.
+
+4. Each area is described in the tabulation which indicates its lateral and vertical limits, the type of restriction or hazard involved, the time at which the area is active and any other pertinent information.
+
+5. These areas are also shown on aeronautical chart using the symbols shown in the following examples:
+
+PROHIBITED
+
+RESTRICTED
+
+DANGER
+
+The upper and lower limits are shown in the manner indicated. Altitudes are given in feet.
+
+#### 6. PROHIBITED, RESTRICTED AND DANGER AREAS
+
+##### 6.1 PROHIBITED AREAS
+
+Upper limit / Lower limit
+
+Remarks
+
+(time of activity, type of restric tion, nature of hazard, risk of inter ception)
+
+VTP4TAIRSPACE;CODE_ID;117 MUANG KOMTAIRSPACE;TXT_NAME;117
+
+Area bounded by lines joining successively the following points:
+
+150700NTAIRSPACE_VERTEX;GEO_LAT;301 1005900ETAIRSPACE_VERTEX;GEO_LONG;301 -
+
+150700NTAIRSPACE_VERTEX;GEO_LAT;302 1005000ETAIRSPACE_VERTEX;GEO_LONG;302 -
+
+145500NTAIRSPACE_VERTEX;GEO_LAT;303 1005000ETAIRSPACE_VERTEX;GEO_LONG;303 -
+
+145500NTAIRSPACE_VERTEX;GEO_LAT;304 1005900ETAIRSPACE_VERTEX;GEO_LONG;304 -
+
+150700NTAIRSPACE_VERTEX;GEO_LAT;305 1005900ETAIRSPACE_VERTEX;GEO_LONG;305
+
+FLTAIRSPACE_VOLUME;UOM_DIST_VER_UPPER;124 240TAIRSPACE_VOLUME;VAL_DIST_VER_UPPER;124 / GNDTAIRSPACE_VOLUME;VAL_DIST_VER_LOWER;124
+
+Type of restriction : RTAF Flying Training
+
+Nature of hazard/activity : Bombing / Air Firing Area
+
+Time of activity : MON - FRI, H24
+
+Permission to entry : Only authorized aircraft
+
+Inflight information : Chandy Tower freq. 134.75 MHzZ or 285.4 MHzZ
+
+Contact agency : Chandy Tower, Tel: +662 534 6000 ext. 25884
+
+VTP7TAIRSPACE;CODE_ID;118 SATTAHIPTAIRSPACE;TXT_NAME;118
+
+Circle of 4TAIRSPACE_VERTEX;VAL_RADIUS_ARC;306NMTAIRSPACE_VERTEX;UOM_RADIUS_ARC;306 radius centred on point
+
+123845NTAIRSPACE_VERTEX;GEO_LAT_ARC;306 1005300ETAIRSPACE_VERTEX;GEO_LONG_ARC;306
+
+UNLTAIRSPACE_VOLUME;VAL_DIST_VER_UPPER;125 / GNDTAIRSPACE_VOLUME;VAL_DIST_VER_LOWER;125
+
+Type of restriction : Naval Base
+
+Nature of hazard/activity : National security area
+
+Time of activity : H24
+
+Permission to entry : Only authorized aircraft by RTN
+
+Inflight information : U-Tapao Approach freq. 119.7 MHzZ or 273.3 MHZz
+
+Contact agency : Royal Thai Naval Air Division, Tel. +663 824 5193, +663 824 5600
+
+VTP36TAIRSPACE;CODE_ID;119 KHAO SOIDAO TAITAIRSPACE;TXT_NAME;119
+
+A semi-circle 17TAIRSPACE_VERTEX;VAL_RADIUS_ARC;307 NMTAIRSPACE_VERTEX;UOM_RADIUS_ARC;307 radius of
+
+125613NTAIRSPACE_VERTEX;GEO_LAT_ARC;307 1021250ETAIRSPACE_VERTEX;GEO_LONG_ARC;307 from 0° to 180°
+
+ALT 5 000TAIRSPACE_VOLUME;VAL_DIST_VER_UPPER;127 ftTAIRSPACE_VOLUME;UOM_DIST_VER_UPPER;127FT / GNDTAIRSPACE_VOLUME;VAL_DIST_VER_LOWER;127
+
+Type of restriction : RTN Area
+
+Nature of hazard/activity : Military operations
+
+Time of activity : Sunset to Sunrise
+
+Permission to entry : Only authorized aircraft by RTN
+
+Inflight information : Trat ApproachTSERVICE;TXT_NAME;460 freq. 120.25TFREQUENCY;VAL_FREQ_TRANS;636 MHzTFREQUENCY;UOM_FREQ;636MHZTFREQUENCY;UOM_FREQ;636
+
+Contact agency : Chanthaburi and Trat Border Defense, Tel. +663 931 2334, +663 931 1099
+
+VTP37TAIRSPACE;CODE_ID;120 KHAO KHLONG OATAIRSPACE;TXT_NAME;120
+
+A semi-circle 14TAIRSPACE_VERTEX;VAL_RADIUS_ARC;308 NMTAIRSPACE_VERTEX;UOM_RADIUS_ARC;308 radius of
+
+123419NTAIRSPACE_VERTEX;GEO_LAT_ARC;308 1023635ETAIRSPACE_VERTEX;GEO_LONG_ARC;308 from 135° to 315°
+
+ALT 5 000TAIRSPACE_VOLUME;VAL_DIST_VER_UPPER;128 ftTAIRSPACE_VOLUME;UOM_DIST_VER_UPPER;128FT / GNDTAIRSPACE_VOLUME;VAL_DIST_VER_LOWER;128
+
+Type of restriction : RTN Area
+
+Nature of hazard/activity : Military operations
+
+Time of activity : Sunset to Sunrise
+
+Permission to entry : Only authorized aircraft by RTN
+
+Inflight information : Trat Approach freq. 120.25 MHzZ
+
+Contact agency : Chanthaburi and Trat Border Defense, Tel. +663 931 2334, +663 931 1099
+
+VTP38TAIRSPACE;CODE_ID;121 KO CHANG - KO KHUDTAIRSPACE;TXT_NAME;121
+
+Area bounded by lines joining successively the following points:
+
+121737NTAIRSPACE_VERTEX;GEO_LAT;309 1021424ETAIRSPACE_VERTEX;GEO_LONG;309 -
+
+120945NTAIRSPACE_VERTEX;GEO_LAT;310 1023432ETAIRSPACE_VERTEX;GEO_LONG;310 -
+
+114630NTAIRSPACE_VERTEX;GEO_LAT;311 1025324ETAIRSPACE_VERTEX;GEO_LONG;311 -
+
+113800NTAIRSPACE_VERTEX;GEO_LAT;312 1025530ETAIRSPACE_VERTEX;GEO_LONG;312 -
+
+113000NTAIRSPACE_VERTEX;GEO_LAT;313 1023000ETAIRSPACE_VERTEX;GEO_LONG;313 -
+
+120000NTAIRSPACE_VERTEX;GEO_LAT;314 1021100ETAIRSPACE_VERTEX;GEO_LONG;314 -
+
+121737NTAIRSPACE_VERTEX;GEO_LAT;315 1021424ETAIRSPACE_VERTEX;GEO_LONG;315
+
+ALT 5 000TAIRSPACE_VOLUME;VAL_DIST_VER_UPPER;129 ftTAIRSPACE_VOLUME;UOM_DIST_VER_UPPER;129FT / GNDTAIRSPACE_VOLUME;VAL_DIST_VER_LOWER;129
+
+Type of restriction : RTN Area
+
+Nature of hazard/activity : Military operations
+
+Time of activity : Sunset to Sunrise
+
+Permission to entry : Only authorized aircraft by RTN
+
+Inflight information : Trat Approach freq. 120.25 MHZz
+
+Contact agency : Chanthaburi and Trat Border Defense, Tel. +663 931 2334, +663 931 1099
+
+| Identification, name and lateral limits |
+| --- |
+| 1 | 2 | 3 |
+
+##### 6.2 RESTRICTED AREAS
+
+Upper limit / Lower limit
+
+Remarks
+
+(time of activity, type of restric tion, nature of hazard, risk of inter ception)
+
+VTR1TAIRSPACE;CODE_ID;122 BANGKOK CITYTAIRSPACE;TXT_NAME;122
+
+CircleTAIRSPACE_VERTEX;CODE_TYPE;316 of 10TAIRSPACE_VERTEX;VAL_RADIUS_ARC;316 NMTAIRSPACE_VERTEX;UOM_RADIUS_ARC;316 radius centred on point
+
+134554NTAIRSPACE_VERTEX;GEO_LAT_ARC;316 1003218ETAIRSPACE_VERTEX;GEO_LONG_ARC;316
+
+ALT 3 000TAIRSPACE_VOLUME;VAL_DIST_VER_UPPER;130 ftTAIRSPACE_VOLUME;UOM_DIST_VER_UPPER;130FT / GNDTAIRSPACE_VOLUME;VAL_DIST_VER_LOWER;130
+
+Type of restriction : Congested Area
+
+Nature of hazard/activity : -
+
+Time of acitivity : H24
+
+Permission to entry : Only authorized aircraft by CAAT, except any aircraft operated under air traffic control services.CAAT may issue further temporary condition for flight operation within VT R1 by NOTAM.
+
+Inflight information : Don Mueang ApproachTSERVICE;TXT_NAME;167 freq. 119.4TFREQUENCY;VAL_FREQ_TRANS;222 MHzTFREQUENCY;UOM_FREQ;222MHZ or Bangkok ApproachTSERVICE;TXT_NAME;141 freq. 125.8 MHzZ or 262.5 MHzZ
+
+Contact agency : CAAT, Air Navigation Operations Management Department
+
+VTR2TAIRSPACE;CODE_ID;123 CHITRLADA PALACETAIRSPACE;TXT_NAME;123
+
+CircleTAIRSPACE_VERTEX;CODE_TYPE;317 of 1TAIRSPACE_VERTEX;VAL_RADIUS_ARC;317 NMTAIRSPACE_VERTEX;UOM_RADIUS_ARC;317 radius centred on point
+
+134605.18NTAIRSPACE_VERTEX;GEO_LAT_ARC;317 1003116.44ETAIRSPACE_VERTEX;GEO_LONG_ARC;317
+
+ALT 6 000TAIRSPACE_VOLUME;VAL_DIST_VER_UPPER;131 ftTAIRSPACE_VOLUME;UOM_DIST_VER_UPPER;131FT / GNDTAIRSPACE_VOLUME;VAL_DIST_VER_LOWER;131
+
+Type of restriction : Royal Residence Area
+
+Nature of hazard/activity : -
+
+Time of activity : H24
+
+Permission to entry : As specified condition:
+
+Authorized aircraft; or
+
+HOSP or MEDEVAC aircraft, prior coordination with ATC is required .
+
+Any occurrence of entry into restricted area shall be reported to CAAT.
+
+Inflight information : Don Mueang ApproachTSERVICE;TXT_NAME;167 freq. 119.4TFREQUENCY;VAL_FREQ_TRANS;222 MHzTFREQUENCY;UOM_FREQ;222MHZ or Bangkok Approach freq. 125.8 MHzZ or 262.5 MHzZ
+
+Contact agency : CAAT, Air Navigation Service Standards Department
+
+VTR3TAIRSPACE;CODE_ID;124 HUA HIN PALACETAIRSPACE;TXT_NAME;124
+
+CircleTAIRSPACE_VERTEX;CODE_TYPE;318 of 1TAIRSPACE_VERTEX;VAL_RADIUS_ARC;318 NMTAIRSPACE_VERTEX;UOM_RADIUS_ARC;318 radius centred on point
+
+123522.19NTAIRSPACE_VERTEX;GEO_LAT_ARC;318 0995710.69ETAIRSPACE_VERTEX;GEO_LONG_ARC;318
+
+ALT 6 000TAIRSPACE_VOLUME;VAL_DIST_VER_UPPER;133 ftFT / GNDTAIRSPACE_VOLUME;VAL_DIST_VER_LOWER;133
+
+Type of restriction : Royal Residence Area
+
+Nature of hazard/activity : -
+
+Time of activity : Notified by NOTAM
+
+Permission to entry : As specified condition:
+
+Authorized aircraft; or
+
+HOSP or MEDEVAC aircraft, prior coordination with ATC is required .
+
+Any occurrence of entry into restricted area shall be reported to CAAT.
+
+Inflight information : Hua Hin Approach, AEROTHAI
+
+Contact agency : CAAT, Air Navigation Service Standards Department
+
+VTR5TAIRSPACE;CODE_ID;125 PHU PHING PALACETAIRSPACE;TXT_NAME;125
+
+CircleTAIRSPACE_VERTEX;CODE_TYPE;319 of 2TAIRSPACE_VERTEX;VAL_RADIUS_ARC;319 NMTAIRSPACE_VERTEX;UOM_RADIUS_ARC;319 radius centred on point
+
+184820NTAIRSPACE_VERTEX;GEO_LAT_ARC;319 0985357ETAIRSPACE_VERTEX;GEO_LONG_ARC;319
+
+ALT 12 000TAIRSPACE_VOLUME;VAL_DIST_VER_UPPER;134 ftTAIRSPACE_VOLUME;UOM_DIST_VER_UPPER;134FT / GNDTAIRSPACE_VOLUME;VAL_DIST_VER_LOWER;134
+
+Type of restriction : Royal Residence Area
+
+Nature of hazard/activity : -
+
+Time of activity : Notified by NOTAM
+
+Permission to entry : As specified condition:
+
+Authorized aircraft; or
+
+HOSP or MEDEVAC aircraft, prior coordination with ATC is required .
+
+Any occurrence of entry into restricted area shall be reported to CAAT.
+
+Inflight information : Chiang Mai Approach, AEROTHAI
+
+Contact agency : CAAT, Air Navigation Service Standards Department
+
+VTR6TAIRSPACE;CODE_ID;126 THAK SIN PALACETAIRSPACE;TXT_NAME;126
+
+CircleTAIRSPACE_VERTEX;CODE_TYPE;320 of 5TAIRSPACE_VERTEX;VAL_RADIUS_ARC;320 NMTAIRSPACE_VERTEX;UOM_RADIUS_ARC;320 radius centred on point
+
+062522.11NTAIRSPACE_VERTEX;GEO_LAT_ARC;320 1015218.93ETAIRSPACE_VERTEX;GEO_LONG_ARC;320
+
+ALT 6 000TAIRSPACE_VOLUME;VAL_DIST_VER_UPPER;135 ftTAIRSPACE_VOLUME;UOM_DIST_VER_UPPER;135FT / GNDTAIRSPACE_VOLUME;VAL_DIST_VER_LOWER;135
+
+Type of restriction : Royal Residence Area
+
+Nature of hazard/activity : -
+
+Time of activity : Notified by NOTAM
+
+Permission to entry : As specified condition:
+
+Authorized aircraft; or
+
+HOSP or MEDEVAC aircraft, prior coordination with ATC is required .
+
+Any occurrence of entry into restricted area shall be reported to CAAT.
+
+Inflight information : Narathiwat Approach, AEROTHAI
+
+Contact agency : CAAT, Air Navigation Service Standards Department
+
+VTR8TAIRSPACE;CODE_ID;127 KAMPHAENG SAEN JETTISONTAIRSPACE;TXT_NAME;127
+
+Area bounded by lines joining successively the following points:
+
+125300NTAIRSPACE_VERTEX;GEO_LAT;321 1002000ETAIRSPACE_VERTEX;GEO_LONG;321 -
+
+125300NTAIRSPACE_VERTEX;GEO_LAT;322 1002500ETAIRSPACE_VERTEX;GEO_LONG;322 -
+
+123500NTAIRSPACE_VERTEX;GEO_LAT;323 1001700ETAIRSPACE_VERTEX;GEO_LONG;323 -
+
+123500NTAIRSPACE_VERTEX;GEO_LAT;324 1001130ETAIRSPACE_VERTEX;GEO_LONG;324 -
+
+125300NTAIRSPACE_VERTEX;GEO_LAT;325 1002000ETAIRSPACE_VERTEX;GEO_LONG;325
+
+ALT 7 000TAIRSPACE_VOLUME;VAL_DIST_VER_UPPER;136 ftTAIRSPACE_VOLUME;UOM_DIST_VER_UPPER;136FT / GNDTAIRSPACE_VOLUME;VAL_DIST_VER_LOWER;136
+
+Type of restriction : RTAF Jettison Area
+
+Nature of hazard/activity : Jettison Area
+
+Time of activity : H24
+
+Permission to entry : Only authorized aircraft
+
+Inflight information : Kamphaeng Saen ApproachTSERVICE;TXT_NAME;368 freq. 127.7TFREQUENCY;VAL_FREQ_TRANS;474 MHzTFREQUENCY;UOM_FREQ;474MHZ or 237.0TFREQUENCY;VAL_FREQ_TRANS;473 MHzTFREQUENCY;UOM_FREQ;473MHZ before entering.
+
+Contact agency : Kamphaeng Saen Flying Training School Air Traffic Control branch, Tel.+662 534 6000 ext 37517, 37522
+
+VTR11TAIRSPACE;CODE_ID;129 KO HIN CHALAM, SATTAHIPTAIRSPACE;TXT_NAME;129
+
+CircleTAIRSPACE_VERTEX;CODE_TYPE;331 of 2TAIRSPACE_VERTEX;VAL_RADIUS_ARC;331 NMTAIRSPACE_VERTEX;UOM_RADIUS_ARC;331 radius centred on point
+
+122753NTAIRSPACE_VERTEX;GEO_LAT_ARC;331 1005819ETAIRSPACE_VERTEX;GEO_LONG_ARC;331
+
+UNLTAIRSPACE_VOLUME;VAL_DIST_VER_UPPER;140 / GNDTAIRSPACE_VOLUME;VAL_DIST_VER_LOWER;140
+
+Type of restriction : RTN Jettison Area / Ground and Air Gunnery Area
+
+Nature of hazard/activity : Military operations
+
+Time of activity : H24
+
+Permission to entry : Only authorized aircraft by U-Tapao
+
+Inflight information : U-Tapao Approach freq. 119.7 MHzZ or 273.3 MHZz
+
+Contact agency : Royal Thai Naval Air Division, Tel. +663 824 5193, +663 824 5196
+
+VTR12TAIRSPACE;CODE_ID;130 KO LUAM, PRACHUAP KHIRI KHANTAIRSPACE;TXT_NAME;130
+
+CircleTAIRSPACE_VERTEX;CODE_TYPE;332 of 0.5TAIRSPACE_VERTEX;VAL_RADIUS_ARC;332 NMTAIRSPACE_VERTEX;UOM_RADIUS_ARC;332 radius centred on point
+
+114530NTAIRSPACE_VERTEX;GEO_LAT_ARC;332 0995000ETAIRSPACE_VERTEX;GEO_LONG_ARC;332
+
+ALT 9 000TAIRSPACE_VOLUME;VAL_DIST_VER_UPPER;141 ftTAIRSPACE_VOLUME;UOM_DIST_VER_UPPER;141FT / GNDTAIRSPACE_VOLUME;VAL_DIST_VER_LOWER;141
+
+Type of restriction : RTN Jettison Area
+
+Nature of hazard/activity : Military operations
+
+Time of activity : Notified by NOTAM
+
+Permission to entry : Only authorized aircraft by RTN
+
+Inflight information : Prachuap Tower freq. 135.9 MHzZ or 236.6 MHzZ
+
+Contact agency : Wing 5, Prachuap Air Force Base Prachuap Khirikhan Province, Tel. +663 260 3919
+
+VTR13TAIRSPACE;CODE_ID;131 KO SAMET, RAYONGTAIRSPACE;TXT_NAME;131
+
+CircleTAIRSPACE_VERTEX;CODE_TYPE;333 of 7.1TAIRSPACE_VERTEX;VAL_RADIUS_ARC;333 NMTAIRSPACE_VERTEX;UOM_RADIUS_ARC;333 radius centred on point
+
+121200NTAIRSPACE_VERTEX;GEO_LAT_ARC;333 1012100ETAIRSPACE_VERTEX;GEO_LONG_ARC;333
+
+UNLTAIRSPACE_VOLUME;VAL_DIST_VER_UPPER;142 / GNDTAIRSPACE_VOLUME;VAL_DIST_VER_LOWER;142
+
+Type of restriction : RTN Jettison Area / Ground Gunnery Area
+
+Nature of hazard/activity : Military operations
+
+Time of activity : H24
+
+Permission to entry : Only authorized aircraft by U-Tapao
+
+Inflight information : U-Tapao Approach freq. 119.7 MHzZ or 273.3 MHzZ
+
+Contact agency : Royal Thai Naval Air Division, Tel. +663 824 5193, +663 824 5196
+
+VTR15TAIRSPACE;CODE_ID;133 UBONTAIRSPACE;TXT_NAME;133
+
+Area bounded by lines joining successively the following points:
+
+151013NTAIRSPACE_VERTEX;GEO_LAT;339 1045610ETAIRSPACE_VERTEX;GEO_LONG;339 -
+
+151046NTAIRSPACE_VERTEX;GEO_LAT;340 1045642ETAIRSPACE_VERTEX;GEO_LONG;340 -
+
+151046NTAIRSPACE_VERTEX;GEO_LAT;341 1045749ETAIRSPACE_VERTEX;GEO_LONG;341 -
+
+150942NTAIRSPACE_VERTEX;GEO_LAT;342 1045649ETAIRSPACE_VERTEX;GEO_LONG;342 -
+
+150942NTAIRSPACE_VERTEX;GEO_LAT;343 1045642ETAIRSPACE_VERTEX;GEO_LONG;343 -
+
+151013NTAIRSPACE_VERTEX;GEO_LAT;344 1045610ETAIRSPACE_VERTEX;GEO_LONG;344
+
+ALT 8 000TAIRSPACE_VOLUME;VAL_DIST_VER_UPPER;144 ftTAIRSPACE_VOLUME;UOM_DIST_VER_UPPER;144FT / GNDTAIRSPACE_VOLUME;VAL_DIST_VER_LOWER;144
+
+Type of restriction : RTAF Flying Training
+
+Nature of hazard/activity : High speed combat manoeuvring
+
+Time of activity : H24
+
+Permission to entry : Only authorized aircraft by RTAF
+
+Inflight information : OSCAR Control freq. 127.0 MHzZ or 331.3 MHZz
+
+Contact agency : Wing 21 Air Traffic Control branch, Tel. +662 534 6000 ext 43512, 43508
+
+VTR51TAIRSPACE;CODE_ID;134 SONGKHLATAIRSPACE;TXT_NAME;134
+
+Area bounded by lines joining successively the following points:
+
+0717NTAIRSPACE_VERTEX;GEO_LAT;345 09954ETAIRSPACE_VERTEX;GEO_LONG;345 -
+
+0717NTAIRSPACE_VERTEX;GEO_LAT;346 09959ETAIRSPACE_VERTEX;GEO_LONG;346 -
+
+0715NTAIRSPACE_VERTEX;GEO_LAT;347 09959ETAIRSPACE_VERTEX;GEO_LONG;347 -
+
+0713NTAIRSPACE_VERTEX;GEO_LAT;348 09954ETAIRSPACE_VERTEX;GEO_LONG;348 -
+
+0717NTAIRSPACE_VERTEX;GEO_LAT;349 09954ETAIRSPACE_VERTEX;GEO_LONG;349
+
+ALT 5 000TAIRSPACE_VOLUME;VAL_DIST_VER_UPPER;146 ftTAIRSPACE_VOLUME;UOM_DIST_VER_UPPER;146FT / GNDTAIRSPACE_VOLUME;VAL_DIST_VER_LOWER;146
+
+Type of restriction : RTAF Jettison Area
+
+Nature of hazard/activity : Jettison Area
+
+Time of activity : Sunrise to Sunset
+
+Permission to entry : Only authorized aircraft by RTAF
+
+Inflight information : contact BIG SHELL control freq. 127.0 MHzZ or 331.3 MHzZ
+
+Contact agency : Air Defense Sector Operation Control 3, Tel. +667 726 8083
+
+VTR52TAIRSPACE;CODE_ID;135 SONGKHLATAIRSPACE;TXT_NAME;135
+
+Area bounded by lines joining successively the following points:
+
+0629NTAIRSPACE_VERTEX;GEO_LAT;350 10032ETAIRSPACE_VERTEX;GEO_LONG;350 -
+
+0636NTAIRSPACE_VERTEX;GEO_LAT;351 10032ETAIRSPACE_VERTEX;GEO_LONG;351 -
+
+0636NTAIRSPACE_VERTEX;GEO_LAT;352 10038ETAIRSPACE_VERTEX;GEO_LONG;352 -
+
+0629NTAIRSPACE_VERTEX;GEO_LAT;353 10038ETAIRSPACE_VERTEX;GEO_LONG;353 -
+
+0629NTAIRSPACE_VERTEX;GEO_LAT;354 10032ETAIRSPACE_VERTEX;GEO_LONG;354
+
+ALT 8 000TAIRSPACE_VOLUME;VAL_DIST_VER_UPPER;148 ftTAIRSPACE_VOLUME;UOM_DIST_VER_UPPER;148FT / GNDTAIRSPACE_VOLUME;VAL_DIST_VER_LOWER;148
+
+Type of restriction : RTAF Jettison Area
+
+Nature of hazard/activity : Jettison Area
+
+Time of activity : Sunrise to Sunset
+
+Permission to entry : Only authorized aircraft by RTAF
+
+Inflight information : BIG SHELL control freq. 127.0 MHzZ or 331.3 MHzZ
+
+Contact agency : Air Defense Sector Operation Control 3, Tel. +667 726 8083
+
+VTR62TAIRSPACE;CODE_ID;136 EASTERN AREATAIRSPACE;TXT_NAME;136
+
+Area bounded by lines joining successively the following points:
+
+113800NTAIRSPACE_VERTEX;GEO_LAT;355 1025530ETAIRSPACE_VERTEX;GEO_LONG;355 -
+
+113000NTAIRSPACE_VERTEX;GEO_LAT;356 1023000ETAIRSPACE_VERTEX;GEO_LONG;356 -
+
+120945NTAIRSPACE_VERTEX;GEO_LAT;357 1023432ETAIRSPACE_VERTEX;GEO_LONG;357 -
+
+125613NTAIRSPACE_VERTEX;GEO_LAT;358 1021250ETAIRSPACE_VERTEX;GEO_LONG;358 -
+
+135000NTAIRSPACE_VERTEX;GEO_LAT;359 1021250ETAIRSPACE_VERTEX;GEO_LONG;359 -
+
+142800NTAIRSPACE_VERTEX;GEO_LAT;360 1031000ETAIRSPACE_VERTEX;GEO_LONG;360 -
+
+144500NTAIRSPACE_VERTEX;GEO_LAT;361 1040000ETAIRSPACE_VERTEX;GEO_LONG;361 -
+
+144500NTAIRSPACE_VERTEX;GEO_LAT;362 1044100ETAIRSPACE_VERTEX;GEO_LONG;362 -
+
+142400NTAIRSPACE_VERTEX;GEO_LAT;363 1045100ETAIRSPACE_VERTEX;GEO_LONG;363 -
+
+then westward along the Thai-Cambodian border to the starting point.
+
+ALT 13 000TAIRSPACE_VOLUME;VAL_DIST_VER_UPPER;150 ftTAIRSPACE_VOLUME;UOM_DIST_VER_UPPER;150FT / GNDTAIRSPACE_VOLUME;VAL_DIST_VER_LOWER;150
+
+Type of restriction : RTN Area
+
+Nature of hazard/activity : Military operations
+
+Time of activity : Sunset to Sunrise
+
+Permission to entry : Only authorized aircraft by RTN
+
+Inflight information : Trat Approach freq. 120.25 MHzZ
+
+Contact agency : Chanthaburi and Trat Border Defense Command, Tel. +663 931 2334, +663 931 1099
+
+VTR66TAIRSPACE;CODE_ID;137 PHU PHAN PALACETAIRSPACE;TXT_NAME;137
+
+Circle of 5 NM radius centred on point
+
+170738.10NTAIRSPACE_VERTEX;GEO_LAT_ARC;364 1040119.76ETAIRSPACE_VERTEX;GEO_LONG_ARC;364
+
+ALT 6 000TAIRSPACE_VOLUME;VAL_DIST_VER_UPPER;151 ftTAIRSPACE_VOLUME;UOM_DIST_VER_UPPER;151FT / GNDTAIRSPACE_VOLUME;VAL_DIST_VER_LOWER;151
+
+Type of restriction : Royal Residence Area
+
+Nature of hazard/activity : -
+
+Time of activity : Notified by NOTAM
+
+Permission to entry : As specified condition:
+
+Authorized aircraft; or
+
+HOSP or MEDEVAC aircraft, prior coordination with ATC is required .
+
+Any occurrence of entry into restricted area shall be reported to CAAT.
+
+Inflight information : Sakon Nakhon Approach, AEROTHAI
+
+Contact agency : CAAT, Air Navigation Service Standards Department
+
+VTR68TAIRSPACE;CODE_ID;138 NAM PHONGTAIRSPACE;TXT_NAME;138
+
+Area bounded by lines joining successively the following points:
+
+164048.58NTAIRSPACE_VERTEX;GEO_LAT;365 1025559.19ETAIRSPACE_VERTEX;GEO_LONG;365 -
+
+163810.90NTAIRSPACE_VERTEX;GEO_LAT;366 1025605.94ETAIRSPACE_VERTEX;GEO_LONG;366 -
+
+164049.25NTAIRSPACE_VERTEX;GEO_LAT;367 1025706.67ETAIRSPACE_VERTEX;GEO_LONG;367 -
+
+163814.77NTAIRSPACE_VERTEX;GEO_LAT;368 1025708.31ETAIRSPACE_VERTEX;GEO_LONG;368
+
+FLTAIRSPACE_VOLUME;UOM_DIST_VER_UPPER;152 150TAIRSPACE_VOLUME;VAL_DIST_VER_UPPER;152 / GNDTAIRSPACE_VOLUME;VAL_DIST_VER_LOWER;152
+
+Type of restriction : RTAF Jettison Area
+
+Nature of hazard/activity : RTAF Jettison Area
+
+Time of activity : MON-FRI, 0000-1000
+
+Permission to entry : Only authorized aircraft by RTAF
+
+Inflight information : contact Khon Kaen Approach freq. 123.4 MHzZ or 236.6 MHzZ
+
+Contact agency : Wing 23 Air Traffic Control branch Tel. +662 534 6000 ext 45502, 45503 or Nam Phong Tower, Tel. +662 534 6000 ext 42305
+
+VTR79TAIRSPACE;CODE_ID;139 PHIMANMAS PALACETAIRSPACE;TXT_NAME;139
+
+Circle of 0.5 NM radius centred on point
+
+123908NTAIRSPACE_VERTEX;GEO_LAT_ARC;369 1005848ETAIRSPACE_VERTEX;GEO_LONG_ARC;369
+
+ALT 6 000TAIRSPACE_VOLUME;VAL_DIST_VER_UPPER;153 ftTAIRSPACE_VOLUME;UOM_DIST_VER_UPPER;153FT / GNDTAIRSPACE_VOLUME;VAL_DIST_VER_LOWER;153
+
+Type of restriction : Royal Residence Area
+
+Nature of hazard/activity : -
+
+Time of activity : Notified by NOTAM
+
+Permission to entry : As specified condition:
+
+Authorized aircraft; or
+
+HOSP or MEDEVAC aircraft, prior coordination with ATC is required .
+
+Any occurrence of entry into restricted area shall be reported to CAAT.
+
+Inflight information : U-Tapao Approach, Royal Thai Navy
+
+Contact agency : CAAT, Air Navigation Service Standards Department
+
+VTR80TAIRSPACE;CODE_ID;140 SRAPATHUM PALACETAIRSPACE;TXT_NAME;140
+
+Circle of 1 NM radius centred on point
+
+134452.69NTAIRSPACE_VERTEX;GEO_LAT_ARC;370 1003155.92ETAIRSPACE_VERTEX;GEO_LONG_ARC;370
+
+ALT 6 000TAIRSPACE_VOLUME;VAL_DIST_VER_UPPER;154 ftTAIRSPACE_VOLUME;UOM_DIST_VER_UPPER;154FT / GNDTAIRSPACE_VOLUME;VAL_DIST_VER_LOWER;154
+
+Type of restriction : Royal Residence Area
+
+Nature of hazard/activity : -
+
+Time of activity : H24
+
+Permission to entry : As specified condition:
+
+Authorized aircraft; or
+
+HOSP or MEDEVAC aircraft, prior coordination with ATC is required .
+
+Any occurrence of entry into restricted area shall be reported to CAAT.
+
+Inflight information : Don Mueang Approach freq. 119.4 MHzZ or Bangkok Approach freq. 125.8 MHz Z or 262.5 MHzZ
+
+Contact agency : CAAT, Air Navigation Service Standards Department
+
+VTR81TAIRSPACE;CODE_ID;141 JAKRIBONGKOT PALACETAIRSPACE;TXT_NAME;141
+
+Circle of 1 NM radius centred on point
+
+135648.31NTAIRSPACE_VERTEX;GEO_LAT_ARC;371 1003126.90ETAIRSPACE_VERTEX;GEO_LONG_ARC;371
+
+ALT 6 000TAIRSPACE_VOLUME;VAL_DIST_VER_UPPER;155 ftTAIRSPACE_VOLUME;UOM_DIST_VER_UPPER;155FT / GNDTAIRSPACE_VOLUME;VAL_DIST_VER_LOWER;155
+
+Type of restriction : Royal Residence Area
+
+Nature of hazard/activity : -
+
+Time of activity : H24
+
+Permission to entry : As specified condition:
+
+Authorized aircraft; or
+
+HOSP or MEDEVAC aircraft, prior coordination with ATC is required .
+
+Any occurrence of entry into restricted area shall be reported to CAAT.
+
+Inflight information : Don Mueang Approach freq. 119.4 MHzZ or Bangkok Approach freq. 125.8 MHzZ or 262.5 MHzZ
+
+Contact agency : CAAT, Air Navigation Service Standards Department
+
+VTR82 AMPHORN ROYAL PALACE
+
+Circle of 1 NM radius centred on point
+
+134621.50N 1003040.28E
+
+ALT 6 000 ftFT / GND
+
+Type of restriction : Royal Residence Area
+
+Nature of hazard/activity : -
+
+Time of activity : H24
+
+Permission to entry : As specified condition:
+
+Authorized aircraft; or
+
+HOSP or MEDEVAC aircraft, prior coordination with ATC is required .
+
+Any occurrence of entry into restricted area shall be reported to CAAT.
+
+Inflight information : Don Mueang Approach freq. 119.4 MHzZ or Bangkok Approach freq. 125.8 MHzZ or 262.5 MHzZ
+
+Contact agency : CAAT, Air Navigation Service Standards Department
+
+VTR83 SUKOTHAI PALACE
+
+Circle of 1 NM radius centred on point
+
+134656.66N 1003033.51E
+
+ALT 6 000 ftFT / GND
+
+Type of restriction : Royal Residence Area
+
+Nature of hazard, activity : -
+
+Time of activity : H24
+
+Permission to entry : As specified condition:
+
+Authorized aircraft; or
+
+HOSP or MEDEVAC aircraft, prior coordination with ATC is required .
+
+Any occurrence of entry into restricted area shall be reported to CAAT.
+
+Inflight information : Don Mueang Approach freq. 119.4 MHzZ or Bangkok Approach freq. 125.8 MHzZ or 262.5 MHzZ
+
+Contact agency : CAAT, Air Navigation Service Standards Department
+
+VTR84TAIRSPACE;CODE_ID;954 TIPPIMARN PALACETAIRSPACE;TXT_NAME;954
+
+Circle of 1 NM radius centred on point
+
+142929.82NTAIRSPACE_VERTEX;GEO_LAT_ARC;2359 1013145.88ETAIRSPACE_VERTEX;GEO_LONG_ARC;2359
+
+ALT 7 500TAIRSPACE_VOLUME;VAL_DIST_VER_UPPER;1019 ftTAIRSPACE_VOLUME;UOM_DIST_VER_UPPER;1019FT / GNDTAIRSPACE_VOLUME;VAL_DIST_VER_LOWER;1019
+
+Type of restriction : Royal Residence Area
+
+Nature of hazard/activity : -
+
+Time of activity : H24
+
+Permission to entry : As specified condition:
+
+Authorized aircraft; or
+
+HOSP or MEDEVAC aircraft, prior coordination with ATC is required .
+
+Any occurrence of entry into restricted area shall be reported to CAAT.
+
+Inflight information : OSCAR Control
+
+Contact agency : CAAT, Air Navigation Service Standards Department
+
+| Identification, name and lateral limits |
+| --- |
+| 1 | 2 | 3 |
+
+##### 6.3 DANGER AREAS
+
+Upper limit / Lower limit
+
+Remarks
+
+(time of activity, type of restric tion, nature of hazard, risk of inter ception)
+
+VTD16TAIRSPACE;CODE_ID;142 RATCHABURITAIRSPACE;TXT_NAME;142
+
+Area 1
+
+Area bounded by lines joining successively the following points:
+
+133200.00NTAIRSPACE_VERTEX;GEO_LAT;372 1001600.00ETAIRSPACE_VERTEX;GEO_LONG;372 -
+
+then follows the coast line to
+
+132555.77NTAIRSPACE_VERTEX;GEO_LAT;373 1000709.33ETAIRSPACE_VERTEX;GEO_LONG;373 -
+
+135409.97NTAIRSPACE_VERTEX;GEO_LAT;374 0995818.91ETAIRSPACE_VERTEX;GEO_LONG;374 -
+
+135600.00NTAIRSPACE_VERTEX;GEO_LAT;375 1001100.00ETAIRSPACE_VERTEX;GEO_LONG;375 -
+
+134800.00NTAIRSPACE_VERTEX;GEO_LAT;376 1001100.00ETAIRSPACE_VERTEX;GEO_LONG;376 -
+
+133200.00NTAIRSPACE_VERTEX;GEO_LAT;377 1001600.00ETAIRSPACE_VERTEX;GEO_LONG;377
+
+FLTAIRSPACE_VOLUME;UOM_DIST_VER_UPPER;156 120TAIRSPACE_VOLUME;VAL_DIST_VER_UPPER;156 / GNDTAIRSPACE_VOLUME;VAL_DIST_VER_LOWER;156
+
+Type of restriction : RTAF Flying Training
+
+Nature of hazard/activity : High speed combat manoeuvring
+
+Time of activity : MON - FRI, 2300-1300
+
+Inflight information : Kamphaeng Saen Approach freq. 127.7 MHzZ or 237.0 MHzZ
+
+Pilots are advised to contact prior to entering.
+
+Contact agency : Kamphaeng Saen Flying Training School Air Traffic Control branch, Tel. +662 534 6000 ext 37517, 37522
+
+Area 2
+
+Area bounded by lines joining successively the following points:
+
+132555.77NTAIRSPACE_VERTEX;GEO_LAT;378 1000709.33ETAIRSPACE_VERTEX;GEO_LONG;378 -
+
+then follows the coast line to
+
+130000.00NTAIRSPACE_VERTEX;GEO_LAT;379 1000400.00ETAIRSPACE_VERTEX;GEO_LONG;379 -
+
+130000.00NTAIRSPACE_VERTEX;GEO_LAT;380 0994000.00ETAIRSPACE_VERTEX;GEO_LONG;380 -
+
+134900.00NTAIRSPACE_VERTEX;GEO_LAT;381 0992300.00ETAIRSPACE_VERTEX;GEO_LONG;381 -
+
+135409.97NTAIRSPACE_VERTEX;GEO_LAT;382 0995818.91ETAIRSPACE_VERTEX;GEO_LONG;382 -
+
+132555.77NTAIRSPACE_VERTEX;GEO_LAT;383 1000709.33ETAIRSPACE_VERTEX;GEO_LONG;383
+
+UNLTAIRSPACE_VOLUME;VAL_DIST_VER_UPPER;158 / GNDTAIRSPACE_VOLUME;VAL_DIST_VER_LOWER;158
+
+VTD17TAIRSPACE;CODE_ID;143 KANCHANABURITAIRSPACE;TXT_NAME;143
+
+Area 1
+
+Area bounded by lines joining successively the following points:
+
+135600.00NTAIRSPACE_VERTEX;GEO_LAT;384 1001100.00ETAIRSPACE_VERTEX;GEO_LONG;384 -
+
+135253.16NTAIRSPACE_VERTEX;GEO_LAT;385 0994930.37ETAIRSPACE_VERTEX;GEO_LONG;385 -
+
+then clockwise along 45TAIRSPACE_VERTEX;VAL_RADIUS_ARC;386NMTAIRSPACE_VERTEX;UOM_RADIUS_ARC;386 arcTAIRSPACE_VERTEX;CODE_TYPE;386 radius centred on BKKTNAVAID;NAT_KEY;116 VOR/DMETNAVAID;CODE_TYPE;116 (135336.8N 1003546.3E) to
+
+140930.15NTAIRSPACE_VERTEX;GEO_LAT;387 0995225.65ETAIRSPACE_VERTEX;GEO_LONG;387 -
+
+140600.00NTAIRSPACE_VERTEX;GEO_LAT;388 1001100.00ETAIRSPACE_VERTEX;GEO_LONG;388 -
+
+135600.00NTAIRSPACE_VERTEX;GEO_LAT;389 1001100.00ETAIRSPACE_VERTEX;GEO_LONG;389
+
+ALT 6 000TAIRSPACE_VOLUME;VAL_DIST_VER_UPPER;159 ftTAIRSPACE_VOLUME;UOM_DIST_VER_UPPER;159FT / GNDTAIRSPACE_VOLUME;VAL_DIST_VER_LOWER;159
+
+Type of restriction : RTAF Flying Training
+
+Nature of hazard/activity : High speed combat manoeuvring
+
+Time of activity : MON - FRI, 2300-1300
+
+Inflight information : Kamphaeng Saen Approach freq. 127.7 MHzZ or 237.0 MHzZ
+
+Pilots are advised to contact prior to entering.
+
+Contact agency : Kamphaeng Saen Flying Training School Air Traffic Control branch, Tel. +662 534 6000 ext 37517, 37522
+
+Area 2
+
+Area bounded by lines joining successively the following points:
+
+135253.16NTAIRSPACE_VERTEX;GEO_LAT;390 0994930.37ETAIRSPACE_VERTEX;GEO_LONG;390 -
+
+134900.00NTAIRSPACE_VERTEX;GEO_LAT;391 0992300.00ETAIRSPACE_VERTEX;GEO_LONG;391 -
+
+141500.00NTAIRSPACE_VERTEX;GEO_LAT;392 0992300.00ETAIRSPACE_VERTEX;GEO_LONG;392 -
+
+140930.15NTAIRSPACE_VERTEX;GEO_LAT;393 0995225.65ETAIRSPACE_VERTEX;GEO_LONG;393 -
+
+then counter clockwise along 45 NM arc radius centred on BKKTNAVAID;NAT_KEY;116 VOR/DMETNAVAID;CODE_TYPE;116 (135336.8N 1003546.3E) to
+
+135253.16NTAIRSPACE_VERTEX;GEO_LAT;395 0994930.37ETAIRSPACE_VERTEX;GEO_LONG;395
+
+ALT 9 000TAIRSPACE_VOLUME;VAL_DIST_VER_UPPER;840 ftTAIRSPACE_VOLUME;UOM_DIST_VER_UPPER;840FT / GNDTAIRSPACE_VOLUME;VAL_DIST_VER_LOWER;840
+
+VTD18TAIRSPACE;CODE_ID;796 SUPHAN BURITAIRSPACE;TXT_NAME;796
+
+Area 1
+
+Area bounded by lines joining successively the following points:
+
+140600.00NTAIRSPACE_VERTEX;GEO_LAT;1169 1001100.00ETAIRSPACE_VERTEX;GEO_LONG;1169 -
+
+140930.15NTAIRSPACE_VERTEX;GEO_LAT;1170 0995225.65ETAIRSPACE_VERTEX;GEO_LONG;1170 -
+
+then clockwise along 45 NM arc radius centred on BKKTNAVAID;NAT_KEY;116 VOR/DMETNAVAID;CODE_TYPE;116 (135336.8N 1003546.3E) to
+
+143304.18NTAIRSPACE_VERTEX;GEO_LAT;1171 1001310.02ETAIRSPACE_VERTEX;GEO_LONG;1171 -
+
+141900.00NTAIRSPACE_VERTEX;GEO_LAT;1172 1002400.00ETAIRSPACE_VERTEX;GEO_LONG;1172 -
+
+140600.00NTAIRSPACE_VERTEX;GEO_LAT;1173 1001100.00ETAIRSPACE_VERTEX;GEO_LONG;1173
+
+ALT 6 000TAIRSPACE_VOLUME;VAL_DIST_VER_UPPER;824 ftTAIRSPACE_VOLUME;UOM_DIST_VER_UPPER;824FT / GNDTAIRSPACE_VOLUME;VAL_DIST_VER_LOWER;824
+
+UNL / FL 200
+
+Type of restriction : RTAF Flying Training
+
+Nature of hazard/activity : High speed combat manoeuvring
+
+Time of activity : MON - FRI, 2300-1300
+
+Inflight information : Kamphaeng Saen Approach freq. 127.7 MHzZ or 237.0 MHzZ
+
+Pilots are advised to contact prior to entering.
+
+Contact agency : Kamphaeng Saen Flying Training School Air Traffic Control branch, Tel. +662 534 6000 ext 37517, 37522
+
+Note: Training aircraft at FL200 and above will be authorized by Bangkok ACC.
+
+Area 2
+
+Area bounded by lines joining successively the following points:
+
+140930.15NTAIRSPACE_VERTEX;GEO_LAT;1174 0995225.65ETAIRSPACE_VERTEX;GEO_LONG;1174 -
+
+141500.00NTAIRSPACE_VERTEX;GEO_LAT;1175 0992300.00ETAIRSPACE_VERTEX;GEO_LONG;1175 -
+
+145400.00NTAIRSPACE_VERTEX;GEO_LAT;1176 0995700.00ETAIRSPACE_VERTEX;GEO_LONG;1176 -
+
+143304.18NTAIRSPACE_VERTEX;GEO_LAT;1177 1001310.02ETAIRSPACE_VERTEX;GEO_LONG;1177 -
+
+then counter clockwise along 45 NM arc radius centred on BKKTNAVAID;NAT_KEY;116 VOR/DMETNAVAID;CODE_TYPE;116 (135336.8N 1003546.3E) to
+
+140930.15NTAIRSPACE_VERTEX;GEO_LAT;1178 0995225.65ETAIRSPACE_VERTEX;GEO_LONG;1178
+
+ALT 8 000TAIRSPACE_VOLUME;VAL_DIST_VER_UPPER;825 ftTAIRSPACE_VOLUME;UOM_DIST_VER_UPPER;825FT / GNDTAIRSPACE_VOLUME;VAL_DIST_VER_LOWER;825
+
+UNL / FL 200
+
+VTD19TAIRSPACE;CODE_ID;144 MAE KLONGTAIRSPACE;TXT_NAME;144
+
+Area bounded by lines joining successively the following points:
+
+1324NTAIRSPACE_VERTEX;GEO_LAT;396 10015ETAIRSPACE_VERTEX;GEO_LONG;396 -
+
+1322NTAIRSPACE_VERTEX;GEO_LAT;397 10022ETAIRSPACE_VERTEX;GEO_LONG;397 -
+
+1302NTAIRSPACE_VERTEX;GEO_LAT;398 10012ETAIRSPACE_VERTEX;GEO_LONG;398 -
+
+1303NTAIRSPACE_VERTEX;GEO_LAT;399 10009ETAIRSPACE_VERTEX;GEO_LONG;399 -
+
+1324NTAIRSPACE_VERTEX;GEO_LAT;400 10015ETAIRSPACE_VERTEX;GEO_LONG;400
+
+UNLTAIRSPACE_VOLUME;VAL_DIST_VER_UPPER;162 / GNDTAIRSPACE_VOLUME;VAL_DIST_VER_LOWER;162
+
+Type of restriction : RTAF Jettison Area
+
+Nature of hazard/activity : High altitude Training Area
+
+Time of activity : MON - FRI, 0300-0900
+
+Inflight information : Kamphaeng Saen Approach freq. 127.7 MHzZ or 237.0 MHzZ before entering
+
+Pilots are advised to contact prior to entering.
+
+Contact agency : Kamphaeng Saen Flying Training School, Air Traffic Control branch, Tel. +662 534 6000 ext 37517, 37522
+
+VTD20TAIRSPACE;CODE_ID;145 HUA HINTAIRSPACE;TXT_NAME;145
+
+Area bounded by lines joining the following points:
+
+1300NTAIRSPACE_VERTEX;GEO_LAT;401 09937ETAIRSPACE_VERTEX;GEO_LONG;401 -
+
+1300NTAIRSPACE_VERTEX;GEO_LAT;402 10010ETAIRSPACE_VERTEX;GEO_LONG;402 -
+
+1210NTAIRSPACE_VERTEX;GEO_LAT;403 10010ETAIRSPACE_VERTEX;GEO_LONG;403 -
+
+then along the arc of 30 NM radius centred on HHNTNAVAID;CODE_ID;141 DVOR/DMETNAVAID;CODE_TYPE;141 (123804.04NTNAVAID;GEO_LAT;141 0995704.23ETNAVAID;GEO_LONG;141)
+
+1300NTAIRSPACE_VERTEX;GEO_LAT;404 09937ETAIRSPACE_VERTEX;GEO_LONG;404
+
+Excluding Hua Hin CTRTAIRSPACE;CODE_ID;421, Hua HinTAIRSPACE;CODE_ID;485 TMATAIRSPACE;CODE_TYPE;485 and G458TEN_ROUTE_RTE;TXT_NAME;183
+
+ALT 11 000TAIRSPACE_VOLUME;VAL_DIST_VER_UPPER;163 ftTAIRSPACE_VOLUME;UOM_DIST_VER_UPPER;163FT / GNDTAIRSPACE_VOLUME;VAL_DIST_VER_LOWER;163
+
+Type of restriction : Civil Flight Training Area
+
+Nature of hazard/activity : Flight school training
+
+Time of activity : Sunrise to Sunset
+
+Inflight information : Hua Hin Approach freq. 126.2 MHzZ
+
+Contact agency : -
+
+VTD21TAIRSPACE;CODE_ID;154 SATTAHIP BAYTAIRSPACE;TXT_NAME;154
+
+Area 1
+
+Area bounded by lines joining successively the following points:
+
+1220NTAIRSPACE_VERTEX;GEO_LAT;419 10030ETAIRSPACE_VERTEX;GEO_LONG;419 -
+
+1240NTAIRSPACE_VERTEX;GEO_LAT;420 10030ETAIRSPACE_VERTEX;GEO_LONG;420 -
+
+1240NTAIRSPACE_VERTEX;GEO_LAT;421 10040.8ETAIRSPACE_VERTEX;GEO_LONG;421 -
+
+1220NTAIRSPACE_VERTEX;GEO_LAT;422 10040.8ETAIRSPACE_VERTEX;GEO_LONG;422 -
+
+1220NTAIRSPACE_VERTEX;GEO_LAT;423 10030ETAIRSPACE_VERTEX;GEO_LONG;423
+
+ALT 6 000TAIRSPACE_VOLUME;VAL_DIST_VER_UPPER;179 ftTAIRSPACE_VOLUME;UOM_DIST_VER_UPPER;179FT / GNDTAIRSPACE_VOLUME;VAL_DIST_VER_LOWER;179
+
+Type of restriction : RTN Gun Training Range for surface ships
+
+Nature of hazard/activity : Military operations
+
+Time of activity : Notified by NOTAM
+
+Inflight information : U-Tapao Approach freq. 119.7 MHzZ or 273.3 MHzZ
+
+Pilots are advised to contact prior to entering.
+
+Contact agency : Royal Thai Naval Air Division, Tel. +663 824 5193, +663 824 5196
+
+Area 2
+
+Area bounded by lines joining successively the following points:
+
+1220NTAIRSPACE_VERTEX;GEO_LAT;424 10040.8ETAIRSPACE_VERTEX;GEO_LONG;424 -
+
+1240NTAIRSPACE_VERTEX;GEO_LAT;425 10040.8ETAIRSPACE_VERTEX;GEO_LONG;425 -
+
+1240NTAIRSPACE_VERTEX;GEO_LAT;426 10058ETAIRSPACE_VERTEX;GEO_LONG;426 -
+
+1220NTAIRSPACE_VERTEX;GEO_LAT;427 10058ETAIRSPACE_VERTEX;GEO_LONG;427 -
+
+1220NTAIRSPACE_VERTEX;GEO_LAT;428 10040.8ETAIRSPACE_VERTEX;GEO_LONG;428
+
+FLTAIRSPACE_VOLUME;UOM_DIST_VER_UPPER;180 150TAIRSPACE_VOLUME;VAL_DIST_VER_UPPER;180 / GNDTAIRSPACE_VOLUME;VAL_DIST_VER_LOWER;180
+
+Area 3
+
+Area bounded by lines joining successively the following points:
+
+1220NTAIRSPACE_VERTEX;GEO_LAT;429 10058ETAIRSPACE_VERTEX;GEO_LONG;429 -
+
+1237NTAIRSPACE_VERTEX;GEO_LAT;430 10058ETAIRSPACE_VERTEX;GEO_LONG;430 -
+
+1237NTAIRSPACE_VERTEX;GEO_LAT;431 10115ETAIRSPACE_VERTEX;GEO_LONG;431 -
+
+1220NTAIRSPACE_VERTEX;GEO_LAT;432 10115ETAIRSPACE_VERTEX;GEO_LONG;432 -
+
+1220NTAIRSPACE_VERTEX;GEO_LAT;433 10058ETAIRSPACE_VERTEX;GEO_LONG;433
+
+FLTAIRSPACE_VOLUME;UOM_DIST_VER_UPPER;181 150TAIRSPACE_VOLUME;VAL_DIST_VER_UPPER;181 / GNDTAIRSPACE_VOLUME;VAL_DIST_VER_LOWER;181
+
+VTD22TAIRSPACE;CODE_ID;155 KO KHRAM, SATTAHIPTAIRSPACE;TXT_NAME;155
+
+Area bounded by lines joining successively the following points:
+
+1251.3NTAIRSPACE_VERTEX;GEO_LAT;434 10040ETAIRSPACE_VERTEX;GEO_LONG;434 -
+
+1251.3NTAIRSPACE_VERTEX;GEO_LAT;435 10051ETAIRSPACE_VERTEX;GEO_LONG;435 -
+
+1240NTAIRSPACE_VERTEX;GEO_LAT;436 10051ETAIRSPACE_VERTEX;GEO_LONG;436 -
+
+1240NTAIRSPACE_VERTEX;GEO_LAT;437 10040ETAIRSPACE_VERTEX;GEO_LONG;437 -
+
+1251.3NTAIRSPACE_VERTEX;GEO_LAT;438 10040ETAIRSPACE_VERTEX;GEO_LONG;438
+
+FLTAIRSPACE_VOLUME;UOM_DIST_VER_UPPER;182 150TAIRSPACE_VOLUME;VAL_DIST_VER_UPPER;182 / GNDTAIRSPACE_VOLUME;VAL_DIST_VER_LOWER;182
+
+Type of restriction : RTN Gun Training Range for surface ships and aircraft
+
+Nature of hazard/activity : Military operations
+
+Time of activity : Notified by NOTAM
+
+Inflight information : U-Tapao Approach freq. 119.7 MHzZ or 273.3 MHzZ
+
+Pilots are advised to contact prior to entering.
+
+Contact agency : Royal Thai Naval Air Division, Tel. +663 824 5193, +663 824 5196
+
+VTD23TAIRSPACE;CODE_ID;156 KO PHAITAIRSPACE;TXT_NAME;156
+
+Area bounded by lines joining successively the following points:
+
+1250NTAIRSPACE_VERTEX;GEO_LAT;439 10030ETAIRSPACE_VERTEX;GEO_LONG;439 -
+
+1305NTAIRSPACE_VERTEX;GEO_LAT;440 10030ETAIRSPACE_VERTEX;GEO_LONG;440 -
+
+1305NTAIRSPACE_VERTEX;GEO_LAT;441 10045ETAIRSPACE_VERTEX;GEO_LONG;441 -
+
+1250NTAIRSPACE_VERTEX;GEO_LAT;442 10045ETAIRSPACE_VERTEX;GEO_LONG;442 -
+
+1250NTAIRSPACE_VERTEX;GEO_LAT;443 10030ETAIRSPACE_VERTEX;GEO_LONG;443
+
+ALT 6 000TAIRSPACE_VOLUME;VAL_DIST_VER_UPPER;183 ftTAIRSPACE_VOLUME;UOM_DIST_VER_UPPER;183FT / GNDTAIRSPACE_VOLUME;VAL_DIST_VER_LOWER;183
+
+Type of restriction : RTN Gun Training Range for surface ships and aircraft
+
+Nature of hazard/activity : Military operations
+
+Time of activity : Notified by NOTAM
+
+Inflight information : U-Tapao Approach freq. 119.7 MHzZ or 273.3 MHzZ
+
+Pilots are advised to contact prior to entering.
+
+Contact agency : Royal Thai Naval Air Division, Tel. +663 824 5193, +663 824 5196
+
+VTD24TAIRSPACE;CODE_ID;157 KO CHANG, TRATTAIRSPACE;TXT_NAME;157
+
+CircleTAIRSPACE_VERTEX;CODE_TYPE;444 of 5TAIRSPACE_VERTEX;VAL_RADIUS_ARC;444 NMTAIRSPACE_VERTEX;UOM_RADIUS_ARC;444 radius centred on point
+
+1203.1NTAIRSPACE_VERTEX;GEO_LAT_ARC;444 10214.6ETAIRSPACE_VERTEX;GEO_LONG_ARC;444
+
+FLTAIRSPACE_VOLUME;UOM_DIST_VER_UPPER;184 150TAIRSPACE_VOLUME;VAL_DIST_VER_UPPER;184 / GNDTAIRSPACE_VOLUME;VAL_DIST_VER_LOWER;184
+
+Type of restriction : RTN Gun Training Range for surface ships and aircraft
+
+Nature of hazard/activity : Military operations
+
+Time of activity : Notified by NOTAM
+
+Inflight information : U-Tapao Approach freq. 119.7 MHzZ or 273.3 MHzZ, if unable contact Trat Approach freq. 120.25 MHzZ
+
+Pilots are advised to contact prior to entering.
+
+Contact agency : Royal Thai Naval Air Division, Tel. +663 824 5193, +663 824 5196
+
+VTD25TAIRSPACE;CODE_ID;158 KO TAO, CHUMPHONTAIRSPACE;TXT_NAME;158
+
+CircleTAIRSPACE_VERTEX;CODE_TYPE;445 of 5TAIRSPACE_VERTEX;VAL_RADIUS_ARC;445 NMTAIRSPACE_VERTEX;UOM_RADIUS_ARC;445 radius centred on point
+
+0956.6NTAIRSPACE_VERTEX;GEO_LAT_ARC;445 09959.8ETAIRSPACE_VERTEX;GEO_LONG_ARC;445
+
+FLTAIRSPACE_VOLUME;UOM_DIST_VER_UPPER;185 150TAIRSPACE_VOLUME;VAL_DIST_VER_UPPER;185 / GNDTAIRSPACE_VOLUME;VAL_DIST_VER_LOWER;185
+
+Type of restriction : RTN Weapon Training Range for surface ships and aircraft
+
+Nature of hazard/activity : Military operations
+
+Time of activity : Notified by NOTAM
+
+Inflight information : Samui Approach freq. 129.6 MHzZ or 305.4 MHzZ
+
+Pilots are advised to contact prior to entering.
+
+Contact agency : Wing 7, Surat Thani Air Force Base, Tel. +667 744 1132
+
+VTD26TAIRSPACE;CODE_ID;159 CHONG SAMAE SAN, SATTAHIPTAIRSPACE;TXT_NAME;159
+
+Area bounded by lines joining successively the following points:
+
+1233.5NTAIRSPACE_VERTEX;GEO_LAT;446 10055.3ETAIRSPACE_VERTEX;GEO_LONG;446 -
+
+1237.3NTAIRSPACE_VERTEX;GEO_LAT;447 10055.3ETAIRSPACE_VERTEX;GEO_LONG;447 -
+
+1237.3NTAIRSPACE_VERTEX;GEO_LAT;448 10057.3ETAIRSPACE_VERTEX;GEO_LONG;448 -
+
+1233.5NTAIRSPACE_VERTEX;GEO_LAT;449 10057.3ETAIRSPACE_VERTEX;GEO_LONG;449 -
+
+1233.5NTAIRSPACE_VERTEX;GEO_LAT;450 10055.3ETAIRSPACE_VERTEX;GEO_LONG;450
+
+FLTAIRSPACE_VOLUME;UOM_DIST_VER_UPPER;187 150TAIRSPACE_VOLUME;VAL_DIST_VER_UPPER;187 / GNDTAIRSPACE_VOLUME;VAL_DIST_VER_LOWER;187
+
+Type of restriction : RTN Gun Training Range
+
+Nature of hazard/activity : Military operations
+
+Time of activity : Notified by NOTAM
+
+Inflight information : U-Tapao Approach freq. 119.7 MHzZ or 273.3 MHzZ
+
+Pilots are advised to contact prior to entering.
+
+Contact agency : Royal Thai Naval Air Division, Tel. +663 824 5193, +663 824 5196
+
+VTD27TAIRSPACE;CODE_ID;160 PONG NAM RON, CHANTHABURITAIRSPACE;TXT_NAME;160
+
+Area bounded by lines joining successively the following points:
+
+1255.2NTAIRSPACE_VERTEX;GEO_LAT;451 10217.1ETAIRSPACE_VERTEX;GEO_LONG;451 -
+
+1250.6NTAIRSPACE_VERTEX;GEO_LAT;452 10220.4ETAIRSPACE_VERTEX;GEO_LONG;452 -
+
+1255.8NTAIRSPACE_VERTEX;GEO_LAT;453 10222.8ETAIRSPACE_VERTEX;GEO_LONG;453 -
+
+1259.5NTAIRSPACE_VERTEX;GEO_LAT;454 10221.4ETAIRSPACE_VERTEX;GEO_LONG;454 -
+
+1255.2NTAIRSPACE_VERTEX;GEO_LAT;455 10217.1ETAIRSPACE_VERTEX;GEO_LONG;455
+
+ALT 8 000TAIRSPACE_VOLUME;VAL_DIST_VER_UPPER;188 ftTAIRSPACE_VOLUME;UOM_DIST_VER_UPPER;188FT / GNDTAIRSPACE_VOLUME;VAL_DIST_VER_LOWER;188
+
+Type of restriction : RTN Gun Training Range
+
+Nature of hazard/activity : Military operations
+
+Time of activity : Notified by NOTAM
+
+Inflight information : U-Tapao Approach freq. 119.7 MHzZ or 273.3 MHzZ
+
+Pilots are advised to contact prior to entering.
+
+Contact agency : Royal Thai Naval Air Division, Tel. +663 824 5193, +663 824 5196
+
+VTD28TAIRSPACE;CODE_ID;161 SATTAHIPTAIRSPACE;TXT_NAME;161
+
+Area bounded by lines joining successively the following points:
+
+1250.5NTAIRSPACE_VERTEX;GEO_LAT;456 10049.7ETAIRSPACE_VERTEX;GEO_LONG;456 -
+
+1251.3NTAIRSPACE_VERTEX;GEO_LAT;457 10051.7ETAIRSPACE_VERTEX;GEO_LONG;457 -
+
+1246.8NTAIRSPACE_VERTEX;GEO_LAT;458 10053.5ETAIRSPACE_VERTEX;GEO_LONG;458 -
+
+1245.8NTAIRSPACE_VERTEX;GEO_LAT;459 10051.6ETAIRSPACE_VERTEX;GEO_LONG;459 -
+
+1250.5NTAIRSPACE_VERTEX;GEO_LAT;460 10049.7ETAIRSPACE_VERTEX;GEO_LONG;460
+
+FLTAIRSPACE_VOLUME;UOM_DIST_VER_UPPER;189 150TAIRSPACE_VOLUME;VAL_DIST_VER_UPPER;189 / GNDTAIRSPACE_VOLUME;VAL_DIST_VER_LOWER;189
+
+Type of restriction : RTN Gun Training Range
+
+Nature of hazard/activity : Military operations
+
+Time of activity : Notified by NOTAM
+
+Inflight information : U-Tapao Approach freq. 119.7 MHzZ or 273.3 MHzZ
+
+Pilots are advised to contact prior to entering.
+
+Contact agency : Royal Thai Naval Air Division, Tel. +663 824 5193, +663 824 5196
+
+VTD29TAIRSPACE;CODE_ID;162 HIN RAKIT PATTANITAIRSPACE;TXT_NAME;162
+
+CircleTAIRSPACE_VERTEX;CODE_TYPE;461 of 3TAIRSPACE_VERTEX;VAL_RADIUS_ARC;461 NMTAIRSPACE_VERTEX;UOM_RADIUS_ARC;461 radius centred on point
+
+0644NTAIRSPACE_VERTEX;GEO_LAT_ARC;461 10144ETAIRSPACE_VERTEX;GEO_LONG_ARC;461
+
+FLTAIRSPACE_VOLUME;UOM_DIST_VER_UPPER;190 150TAIRSPACE_VOLUME;VAL_DIST_VER_UPPER;190 / GNDTAIRSPACE_VOLUME;VAL_DIST_VER_LOWER;190
+
+Type of restriction : RTN Weapon Training Range for surface ships and aircraft
+
+Nature of hazard/activity : Military operations
+
+Time of activity : Notified by NOTAM
+
+Inflight information : Narathiwat Approach freq. 125.55 MHzZ
+
+Pilots are advised to contact prior to entering.
+
+Contact agency : 2nd Naval Area Command, Tel. +667 432 5804
+
+VTD30TAIRSPACE;CODE_ID;163W NAKHON RATCHASIMA
+
+Area 1
+
+Area bounded by lines joining successively the following points:
+
+144905.7NTAIRSPACE_VERTEX;GEO_LAT;462 1011547.8ETAIRSPACE_VERTEX;GEO_LONG;462 -
+
+162005.4NTAIRSPACE_VERTEX;GEO_LAT;463 1021047.3ETAIRSPACE_VERTEX;GEO_LONG;463 -
+
+160405.5NTAIRSPACE_VERTEX;GEO_LAT;464 1022847.2ETAIRSPACE_VERTEX;GEO_LONG;464 -
+
+145935.7NTAIRSPACE_VERTEX;GEO_LAT;465 1015947.5ETAIRSPACE_VERTEX;GEO_LONG;465 -
+
+144305.8NTAIRSPACE_VERTEX;GEO_LAT;466 1012247.8ETAIRSPACE_VERTEX;GEO_LONG;466
+
+UNLTAIRSPACE_VOLUME;VAL_DIST_VER_UPPER;191 / GNDTAIRSPACE_VOLUME;VAL_DIST_VER_LOWER;191
+
+Type of restriction : RTAF Flying Training
+
+Nature of hazard/activity : High speed combat manoeuvring
+
+Time of activity : MON - FRI, 2300-1000
+
+Inflight information : OSCAR Control freq. 127.0 MHzZ or 331.3 MHzZ, if unable contact Khorat Approach freq. 129.75 MHzZ or 349.0 MHZz
+
+Pilots are advised to contact prior to entering.
+
+Contact agency : Wing 1 Air Traffic Control branch, Tel. +662 534 6000 ext 40555, 40556
+
+VTD30TAIRSPACE;CODE_ID;163W NAKHON RATCHASIMA
+
+Area 2
+
+Area bounded by lines joining successively the following points:
+
+150905.7NTAIRSPACE_VERTEX;GEO_LAT;467 1021947.3ETAIRSPACE_VERTEX;GEO_LONG;467 -
+
+160005.5NTAIRSPACE_VERTEX;GEO_LAT;468 1024247.1ETAIRSPACE_VERTEX;GEO_LONG;468 -
+
+154905.6NTAIRSPACE_VERTEX;GEO_LAT;469 1032146.8ETAIRSPACE_VERTEX;GEO_LONG;469 -
+
+151305.7NTAIRSPACE_VERTEX;GEO_LAT;470 1032146.8ETAIRSPACE_VERTEX;GEO_LONG;470
+
+UNLTAIRSPACE_VOLUME;VAL_DIST_VER_UPPER;193 / GNDTAIRSPACE_VOLUME;VAL_DIST_VER_LOWER;193
+
+VTD31TAIRSPACE;CODE_ID;164 LOP BURITAIRSPACE;TXT_NAME;164
+
+Area bounded by lines joining successively the following points:
+
+1503NTAIRSPACE_VERTEX;GEO_LAT;471 10010ETAIRSPACE_VERTEX;GEO_LONG;471 -
+
+1505NTAIRSPACE_VERTEX;GEO_LAT;472 10100ETAIRSPACE_VERTEX;GEO_LONG;472 -
+
+1430NTAIRSPACE_VERTEX;GEO_LAT;473 10055ETAIRSPACE_VERTEX;GEO_LONG;473 -
+
+1437NTAIRSPACE_VERTEX;GEO_LAT;474 10009ETAIRSPACE_VERTEX;GEO_LONG;474 -
+
+1503NTAIRSPACE_VERTEX;GEO_LAT;475 10010ETAIRSPACE_VERTEX;GEO_LONG;475
+
+Excluding VTP4TAIRSPACE;CODE_ID;117 (MUANG KOMTAIRSPACE;TXT_NAME;117)
+
+ALT 5 500TAIRSPACE_VOLUME;VAL_DIST_VER_UPPER;194 ftTAIRSPACE_VOLUME;UOM_DIST_VER_UPPER;194FT / GNDTAIRSPACE_VOLUME;VAL_DIST_VER_LOWER;194
+
+Type of restriction : RTAF Flying Training
+
+Nature of hazard/activity : High speed combat manoeuvring
+
+Time of activity : MON - FRI, 2200-1700
+
+Inflight information : Khok Kathiam Tower freq. 122.6 MHzZ or 238.6 MHzZ
+
+Pilots are advised to contact prior to entering.
+
+Contact agency : Wing 2 Air Traffic Control branch, Tel. +662 534 6000 ext 50520
+
+VTD32TAIRSPACE;CODE_ID;165 NAKHON RATCHASIMATAIRSPACE;TXT_NAME;165
+
+Circle of 50 NM radius centred on point KRTTNAVAID;CODE_ID;358 TACANTNAVAID;CODE_TYPE;358 (145606.0NTNAVAID;GEO_LAT;358 1020421.8ETNAVAID;GEO_LONG;358).
+
+Excluding Khorat Control ZoneTAIRSPACE;CODE_ID;409 and Buri RamTAIRSPACE;CODE_ID;480 Terminal Control AreaTAIRSPACE;CODE_TYPE;480.
+
+ALT 5 500TAIRSPACE_VOLUME;VAL_DIST_VER_UPPER;262 ftTAIRSPACE_VOLUME;UOM_DIST_VER_UPPER;262FT / GNDTAIRSPACE_VOLUME;VAL_DIST_VER_LOWER;262
+
+Type of restriction : RTAF Flying Training
+
+Nature of hazard/activity : High speed combat manoeuvring
+
+Time of activity : MON - FRI, 2300-1400
+
+Inflight information : OSCAR Control freq. 127.0 MHzZ or 331.3 MHzZ, if unable Khorat Approach freq. 129.75 MHzZ or 349.0 MHzZ
+
+Pilots are advised to contact prior to entering.
+
+Contact agency : Wing 1 Air Traffic Control branch, Tel. +662 534 6000 ext 40555, 40556
+
+VTD33TAIRSPACE;CODE_ID;234 NAKHON SAWAN, CHAI NATTAIRSPACE;TXT_NAME;234
+
+Area1
+
+Area bounded by lines joining successively the following points:
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164 154125.79NTAIRSPACE_VERTEX;GEO_LAT;1164 0994345.28ETAIRSPACE_VERTEX;GEO_LONG;1164 -
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164 154124.14NTAIRSPACE_VERTEX;GEO_LAT;1165 0995122.80ETAIRSPACE_VERTEX;GEO_LONG;1165 -
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164 150656.33NTAIRSPACE_VERTEX;GEO_LAT;1166 1000238.89ETAIRSPACE_VERTEX;GEO_LONG;1166 -
+
+150006.18NTAIRSPACE_VERTEX;GEO_LAT;1167 0995717.24ETAIRSPACE_VERTEX;GEO_LONG;1167 -
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164 154125.79NTAIRSPACE_VERTEX;GEO_LAT;1164 0994345.28ETAIRSPACE_VERTEX;GEO_LONG;1164
+
+FLTAIRSPACE_VOLUME;UOM_DIST_VER_UPPER;821 240TAIRSPACE_VOLUME;VAL_DIST_VER_UPPER;821 / GNDTAIRSPACE_VOLUME;VAL_DIST_VER_LOWER;821
+
+Type of restriction : RTAF Flying Training
+
+Nature of hazard/activity : High speed combat manoeuvring
+
+Time of activity : MON - FRI, 2200-1700
+
+Inflight information : OSCAR Control freq. 127.0 MHzZ or 331.3 MHzZ, if unable contact Takhli Approach freq. 124.0 MHzZ or 325.0 MHzZ
+
+Pilots are advised to contact prior to entering.
+
+Contact agency : Wing 4 Air Traffic Control branch, Tel. +662 534 6000 ext 53544, 53546
+
+Area 2
+
+Area bounded by lines joining successively the Following points:
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164163705.34N 0992523.13E -
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164154125.79N 0994345.28E -
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164150006.18N 0995717.24E -
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164150012.17N 0992327.39E -
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164153847.73N 0983417.53E -
+
+then follow the boundary to
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164163508.84N 0983522.41E -
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164163705.10N 0985248.80E -
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164163705.34N 0992523.13E
+
+UNLTAIRSPACE_VOLUME;VAL_DIST_VER_UPPER;822 / GNDTAIRSPACE_VOLUME;VAL_DIST_VER_LOWER;822
+
+VTD34TAIRSPACE;CODE_ID;235 PHETCHABUN, PHICHITTAIRSPACE;TXT_NAME;235
+
+Area 1
+
+Area bounded by lines joining successively the following points:
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164151305.60N 1010147.90E -
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164151305.60N 1002648.10E -
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164152405.50N 1002148.20E -
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164161623.05N 1002148.10E -
+
+then follow the arc 30 NM counter clockwise from PSLTNAVAID;CODE_ID;156 DVOR/DMETNAVAID;CODE_TYPE;156 (164613.34N 1001728.70E) to
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164163458.20N 1004628.25E -
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164163205.30N 1012647.60E -
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164151305.60N 1010147.90E
+
+Excluding Airway W21TEN_ROUTE_RTE;TXT_NAME;264
+
+FL 280 / GND
+
+Type of restriction : RTAF Flying Training
+
+Nature of hazard/activity : High speed combat manoeuvring
+
+Time of activity : MON - FRI, 2200-1700
+
+Inflight information : FOCAL Control freq. 127.0 MHzZ or 331.3 MHzZ, if unable contact Takhli Approach freq. 124.0 MHzZ or 325.0 MHzZ or Phetchabun Approach freq. 126 MHzZ
+
+Pilots are advised to contact prior to entering.
+
+Contact agency : Wing 4 Air Traffic Control branch, Tel. +662 534 6000 ext 53544, 53546
+
+Area 2
+
+Area bounded by lines joining successively the following points:
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164151305.60N 1010147.90E -
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164151305.69N 1002803.35E -
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164153222.66N 1002148.11E -
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164161623.05N 1002148.10E -
+
+then follow the arc 30 NM counter clockwise from PSLTNAVAID;CODE_ID;156 DVOR/DMETNAVAID;CODE_TYPE;156 (164613.34N 1001728.70E) to
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164163458.20N 1004628.25E -
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164163205.30N 1012647.60E -
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164151305.60N 1010147.90E
+
+Excluding Airway W21TEN_ROUTE_RTE;TXT_NAME;264
+
+UNL / GND
+
+VTD35TAIRSPACE;CODE_ID;236 PRACHUAP, KHIRI KHANTAIRSPACE;TXT_NAME;236
+
+Area bounded by lines joining successively the following points:
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164 120300NTAIRSPACE_VERTEX;GEO_LAT;539 0993300ETAIRSPACE_VERTEX;GEO_LONG;539 -
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164 120800NTAIRSPACE_VERTEX;GEO_LAT;540 1000300ETAIRSPACE_VERTEX;GEO_LONG;540 -
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164 114700NTAIRSPACE_VERTEX;GEO_LAT;541 0995000ETAIRSPACE_VERTEX;GEO_LONG;541 -
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164 112900NTAIRSPACE_VERTEX;GEO_LAT;542 0993800ETAIRSPACE_VERTEX;GEO_LONG;542 -
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164 110000NTAIRSPACE_VERTEX;GEO_LAT;543 0993200ETAIRSPACE_VERTEX;GEO_LONG;543 -
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164 110000NTAIRSPACE_VERTEX;GEO_LAT;544 0990700ETAIRSPACE_VERTEX;GEO_LONG;544 -
+
+then follow the boundary to
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164 120800NTAIRSPACE_VERTEX;GEO_LAT;545 0993300ETAIRSPACE_VERTEX;GEO_LONG;545
+
+Excluding ChumphonTAIRSPACE;CODE_ID;483 TMATAIRSPACE;CODE_TYPE;483
+
+ALT 6 500TAIRSPACE_VOLUME;VAL_DIST_VER_UPPER;260 ftTAIRSPACE_VOLUME;UOM_DIST_VER_UPPER;260FT / GNDTAIRSPACE_VOLUME;VAL_DIST_VER_LOWER;260
+
+Type of restriction : RTAF Flying Training
+
+Nature of hazard/activity : High speed combat manoeuvring
+
+Time of activity : MON - FRI, 2300-1100
+
+Inflight information : Prachuap Tower freq. 135.9 MHzZ or 351.1 MHzZ
+
+Pilots are advised to contact prior to entering.
+
+Contact agency : Wing 5 Air Traffic Control branch, Tel. +662 534 6000 ext 40555, 40556
+
+VTD40TAIRSPACE;CODE_ID;237 KABIN BURI/WATTANA NAKHON, PRACHIN BURITAIRSPACE;TXT_NAME;237
+
+Area 1
+
+Area bounded by lines joining successively the following points:
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164 135900NTAIRSPACE_VERTEX;GEO_LAT;546 1013800ETAIRSPACE_VERTEX;GEO_LONG;546 -
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164 135900NTAIRSPACE_VERTEX;GEO_LAT;547 1022000ETAIRSPACE_VERTEX;GEO_LONG;547 -
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164 133000NTAIRSPACE_VERTEX;GEO_LAT;548 1022000ETAIRSPACE_VERTEX;GEO_LONG;548 -
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164 133000NTAIRSPACE_VERTEX;GEO_LAT;549 1011900ETAIRSPACE_VERTEX;GEO_LONG;549 -
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164 135900NTAIRSPACE_VERTEX;GEO_LAT;550 1013800ETAIRSPACE_VERTEX;GEO_LONG;550
+
+ALT 10 000TAIRSPACE_VOLUME;VAL_DIST_VER_UPPER;263 ftTAIRSPACE_VOLUME;UOM_DIST_VER_UPPER;263FT / ALT 5 000TAIRSPACE_VOLUME;VAL_DIST_VER_LOWER;263 ftTAIRSPACE_VOLUME;UOM_DIST_VER_LOWER;263FT
+
+Type of restriction : RTAF Flying Training
+
+Nature of hazard/activity : High speed combat manoeuvring
+
+Time of activity : MON - FRI, 2300-1500
+
+Inflight information : OSCAR Control freq. 127.0 MHzZ or 331.3 MHzZ
+
+Pilots are advised to contact prior to entering.
+
+Contact agency: Wattana Nakhon Tower, Tel. +662 534 6000 ext 42908, 42909
+
+ALT 5 000 ftFT / GND
+
+Type of restriction : RTAF Flying Training
+
+Nature of hazard/activity : High speed combat manoeuvring
+
+Time of activity : MON - FRI, 2300-1500
+
+Inflight information: Wattana nakhon Tower freq. 118.1 MHzZ or 236.6 MHZz
+
+Pilots are advised to contact prior to entering.
+
+Contact agency: Wattana Nakhon Tower, Tel. +662 534 6000 ext 42908, 42909
+
+Area 2
+
+Area bounded by lines joining successively the following points:
+
+135900NTAIRSPACE_VERTEX;GEO_LAT;2680 1015400ETAIRSPACE_VERTEX;GEO_LONG;2680 -
+
+135900NTAIRSPACE_VERTEX;GEO_LAT;2681 1022000ETAIRSPACE_VERTEX;GEO_LONG;2681 -
+
+133000NTAIRSPACE_VERTEX;GEO_LAT;2682 1022000ETAIRSPACE_VERTEX;GEO_LONG;2682 -
+
+133000NTAIRSPACE_VERTEX;GEO_LAT;2683 1015400ETAIRSPACE_VERTEX;GEO_LONG;2683 -
+
+135900NTAIRSPACE_VERTEX;GEO_LAT;2684 1015400ETAIRSPACE_VERTEX;GEO_LONG;2684
+
+FLTAIRSPACE_VOLUME;UOM_DIST_VER_UPPER;1340 140TAIRSPACE_VOLUME;VAL_DIST_VER_UPPER;1340 / ALT 10 000TAIRSPACE_VOLUME;VAL_DIST_VER_LOWER;1340 ftTAIRSPACE_VOLUME;UOM_DIST_VER_LOWER;1340FT
+
+Type of restriction : RTAF Flying Training
+
+Nature of hazard/activity : High speed combat manoeuvring
+
+Time of activity : Activation period will be notified by NOTAM.
+
+Inflight information: OSCAR Control freq. 127.0 MHzZ or 331.3 MHZz
+
+Pilots are advised to contact prior to entering.
+
+Contact agency: Wattana Nakhon Tower, Tel. +662 534 6000 ext 42908, 42909
+
+VTD41TAIRSPACE;CODE_ID;238 MAE RIM, CHIANG MAITAIRSPACE;TXT_NAME;238
+
+Area bounded by lines joining successively the following points:
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164202700N 0995400E on Thai-Myanmar border to
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164184700N 0995400E -
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164184700N 0990900E -
+
+then follow the arc 10 NM counter clockwise from CHMTNAVAID;CODE_ID;258 TACANTNAVAID;CODE_TYPE;258 (184612N 0985812E)
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164185600N 0985400E -
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164191800N 0984200E -
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164194600N 0984200E on Thai-Myanmar border then follow the boundary to the starting point.
+
+Excluding Airway W20TEN_ROUTE_RTE;TXT_NAME;263 between altitude 7500 ft to FL200 Chiang MaiTAIRSPACE;CODE_ID;481 TMATAIRSPACE;CODE_TYPE;481 and Chiang RaiTAIRSPACE;CODE_ID;482 TMATAIRSPACE;CODE_TYPE;482.
+
+UNLTAIRSPACE_VOLUME;VAL_DIST_VER_UPPER;265 / GNDTAIRSPACE_VOLUME;VAL_DIST_VER_LOWER;265
+
+Type of restriction : RTAF Flying Training
+
+Nature of hazard/activity : High speed combat manoeuvring
+
+Time of activity : MON - FRI, 0100-1400
+
+Inflight information : FOCAL Control freq. 127.0 MHzZ or 331.3 MHzZ, if unable contact Chiang Mai Approach freq. 129.6 MHzZ or 305.4 MHzZ
+
+Pilots are advised to contact prior to entering.
+
+Contact agency: Wing 41 Air Traffic Control branch, Tel. +662 534 6000 ext 57504, 57503
+
+VTD42TAIRSPACE;CODE_ID;239 CHOM THONG, CHIANG MAITAIRSPACE;TXT_NAME;239
+
+Area bounded by lines joining successively the following points:
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164184700N 0974500E on Thai-Myanmar border to
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164184700N 0984800E -
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164182000N 0985800E -
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164173000N 0985800E -
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164173000N 0980000E on Thai-Myanmar border then follow the boundary to the starting point.
+
+UNLTAIRSPACE_VOLUME;VAL_DIST_VER_UPPER;267 / GNDTAIRSPACE_VOLUME;VAL_DIST_VER_LOWER;267
+
+Type of restriction : RTAF Flying Training
+
+Nature of hazard/activity : High speed combat manoeuvring
+
+Time of activity : MON - FRI, 0100-1400
+
+Inflight information : FOCAL Control freq. 127.0 MHzZ or 331.3 MHzZ , if unable contact Chiang Mai Approach freq. 129.6 MHzZ or 305.4 MHZz
+
+Pilots are advised to contact prior to entering.
+
+Contact agency : Wing 41 Air Traffic Control branch, Tel. +662 534 6000 ext 57504, 57503
+
+VTD43TAIRSPACE;CODE_ID;240 LOP BURITAIRSPACE;TXT_NAME;240
+
+Area bounded by lines joining successively the following points:
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164 151305.6NTAIRSPACE_VERTEX;GEO_LAT;551 1004748.0ETAIRSPACE_VERTEX;GEO_LONG;551 -
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164 162705.3NTAIRSPACE_VERTEX;GEO_LAT;552 1015547.4ETAIRSPACE_VERTEX;GEO_LONG;552 -
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164 162005.4NTAIRSPACE_VERTEX;GEO_LAT;553 1021047.3ETAIRSPACE_VERTEX;GEO_LONG;553 -
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164 144905.7NTAIRSPACE_VERTEX;GEO_LAT;554 1011547.8ETAIRSPACE_VERTEX;GEO_LONG;554
+
+FLTAIRSPACE_VOLUME;UOM_DIST_VER_UPPER;268 350TAIRSPACE_VOLUME;VAL_DIST_VER_UPPER;268 / GNDTAIRSPACE_VOLUME;VAL_DIST_VER_LOWER;268
+
+Type of restriction : RTAF Flying Training
+
+Nature of hazard/activity : High speed combat manoeuvring
+
+Time of activity : MON - FRI, 0100-0900
+
+Inflight information : OSCAR Control freq. 127.0 or 331.3 MHzZ , if unable contact Khorat Approach freq. 129.75 MHzZ or 285.0 MHzZ
+
+Pilots are advised to contact prior to entering.
+
+Contact agency : Wing 1 Air Traffic Control branch, Tel. +662 534 6000 ext 40555, 40556
+
+VTD44TAIRSPACE;CODE_ID;241 UBON, YASOTHONTAIRSPACE;TXT_NAME;241
+
+Area bounded by lines joining successively the following points:
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164 152100NTAIRSPACE_VERTEX;GEO_LAT;555 1043800ETAIRSPACE_VERTEX;GEO_LONG;555 -
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164 152100NTAIRSPACE_VERTEX;GEO_LAT;556 1032200ETAIRSPACE_VERTEX;GEO_LONG;556 -
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164 161500NTAIRSPACE_VERTEX;GEO_LAT;557 1032200ETAIRSPACE_VERTEX;GEO_LONG;557 -
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164 152100NTAIRSPACE_VERTEX;GEO_LAT;558 1043800ETAIRSPACE_VERTEX;GEO_LONG;558
+
+FLTAIRSPACE_VOLUME;UOM_DIST_VER_UPPER;269 200TAIRSPACE_VOLUME;VAL_DIST_VER_UPPER;269 / GNDTAIRSPACE_VOLUME;VAL_DIST_VER_LOWER;269
+
+Type of restriction : RTAF Flying Training
+
+Nature of hazard/activity : High speed combat manoeuvring
+
+Time of activity : MON - FRI, 2300-1000
+
+Inflight information : OSCAR Control freq. 127.0 or 331.3 MHzZ , if unable contact Khorat Approach freq. 123.5 MHzZ or 257.8 MHZz
+
+Pilots are advised to contact prior to entering.
+
+Contact agency : Wing 21 Air Traffic Control branch, Tel. +662 534 6000 ext 43506, 43502
+
+VTD45TAIRSPACE;CODE_ID;242 UBON, SI SA KETTAIRSPACE;TXT_NAME;242
+
+Area bounded by lines joining successively the following points:
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164 145800NTAIRSPACE_VERTEX;GEO_LAT;559 1053700ETAIRSPACE_VERTEX;GEO_LONG;559 -
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164 150400NTAIRSPACE_VERTEX;GEO_LAT;560 1050000ETAIRSPACE_VERTEX;GEO_LONG;560 -
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164 150200NTAIRSPACE_VERTEX;GEO_LAT;561 1045200ETAIRSPACE_VERTEX;GEO_LONG;561 -
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164 143800NTAIRSPACE_VERTEX;GEO_LAT;562 1034000ETAIRSPACE_VERTEX;GEO_LONG;562 -
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164 142500NTAIRSPACE_VERTEX;GEO_LAT;563 1034000ETAIRSPACE_VERTEX;GEO_LONG;563 -
+
+then follow the boundary to
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164 145800NTAIRSPACE_VERTEX;GEO_LAT;564 1053700ETAIRSPACE_VERTEX;GEO_LONG;564
+
+UNLTAIRSPACE_VOLUME;VAL_DIST_VER_UPPER;270 / ALT 3 000TAIRSPACE_VOLUME;VAL_DIST_VER_LOWER;270 ftTAIRSPACE_VOLUME;UOM_DIST_VER_LOWER;270FT
+
+Type of restriction : RTAF Flying Training
+
+Nature of hazard/activity : High speed combat manoeuvring
+
+Time of activity : MON - FRI, 2200-1300
+
+Inflight information : OSCAR Control freq. 127.0 or 331.3 MHZz , if unable contact Khorat Approach freq. 123.5 MHzZ or 257.8 MHZz
+
+Pilots are advised to contact prior to entering.
+
+Contact agency : Wing 21 Air Traffic Control branch, Tel. +662 534 6000 ext 43506, 43502
+
+VTD46TAIRSPACE;CODE_ID;243 NAKHON RATCHASIMATAIRSPACE;TXT_NAME;243
+
+Area bounded by 20 NM arc from KRTTNAVAID;CODE_ID;358 TACANTNAVAID;CODE_TYPE;358 (145606.0NTNAVAID;GEO_LAT;358 1020421.8ETNAVAID;GEO_LONG;358)
+
+beginning at pointTAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164143600N 1020200E -
+
+then counter clockwise, along the arc to
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164145100N 1022500E -
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164145100N 1032500E -
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164142200N 1032500E -
+
+then follow the boundary to
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164135600N 1024700E -
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164135600N 1015600E -
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164143600N 1020200E
+
+FLTAIRSPACE_VOLUME;UOM_DIST_VER_UPPER;272 200TAIRSPACE_VOLUME;VAL_DIST_VER_UPPER;272 / GNDTAIRSPACE_VOLUME;VAL_DIST_VER_LOWER;272
+
+Type of restriction : RTAF Flying Training
+
+Nature of hazard/activity : High speed combat manoeuvring
+
+Time of activity : MON - FRI, 2300-1000
+
+Inflight information : OSCAR Control freq. 127.0 or 331.3 MHzZ , if unable contact Khorat Approach freq. 129.75 MHzZ or 349.0 MHZz
+
+Pilots are advised to contact prior to entering.
+
+Contact agency : Wing 1 Air Traffic Control branch, Tel. +662 534 6000 ext 40555, 40556
+
+VTD47TAIRSPACE;CODE_ID;244 SAMUT SAKHONTAIRSPACE;TXT_NAME;244
+
+Area bounded by lines joining successively the following points:
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164 134700NTAIRSPACE_VERTEX;GEO_LAT;565 1002700ETAIRSPACE_VERTEX;GEO_LONG;565 -
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164 133800NTAIRSPACE_VERTEX;GEO_LAT;566 1002700ETAIRSPACE_VERTEX;GEO_LONG;566 -
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164 132900NTAIRSPACE_VERTEX;GEO_LAT;567 1002100ETAIRSPACE_VERTEX;GEO_LONG;567 -
+
+then follow the coast line to
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164 133200NTAIRSPACE_VERTEX;GEO_LAT;568 1001600ETAIRSPACE_VERTEX;GEO_LONG;568 -
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164 134800NTAIRSPACE_VERTEX;GEO_LAT;569 1001100ETAIRSPACE_VERTEX;GEO_LONG;569 -
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164 134700NTAIRSPACE_VERTEX;GEO_LAT;570 1002700ETAIRSPACE_VERTEX;GEO_LONG;570
+
+UNLTAIRSPACE_VOLUME;VAL_DIST_VER_UPPER;274 / FLTAIRSPACE_VOLUME;UOM_DIST_VER_LOWER;274 120TAIRSPACE_VOLUME;VAL_DIST_VER_LOWER;274
+
+Type of restriction : RTAF Flying Training
+
+Nature of hazard/activity : High speed combat manoeuvring
+
+Time of activity : MON - FRI, 0130-0930
+
+Inflight information : Bangkok Approach freq. 124.35 MHzZ or 262.5 MHzZ
+
+Pilots are advised to contact prior to entering.
+
+Contact agency : -
+
+VTD48TAIRSPACE;CODE_ID;245 SONGKHLATAIRSPACE;TXT_NAME;245
+
+Area bounded by lines joining successively the following points:
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164 063600NTAIRSPACE_VERTEX;GEO_LAT;571 1000400ETAIRSPACE_VERTEX;GEO_LONG;571 -
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164 063000NTAIRSPACE_VERTEX;GEO_LAT;572 0994000ETAIRSPACE_VERTEX;GEO_LONG;572 -
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164 070600NTAIRSPACE_VERTEX;GEO_LAT;573 0993300ETAIRSPACE_VERTEX;GEO_LONG;573 -
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164 070000NTAIRSPACE_VERTEX;GEO_LAT;574 1000500ETAIRSPACE_VERTEX;GEO_LONG;574 -
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164 064500NTAIRSPACE_VERTEX;GEO_LAT;575 1000700ETAIRSPACE_VERTEX;GEO_LONG;575 -
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164 063600NTAIRSPACE_VERTEX;GEO_LAT;576 1000400ETAIRSPACE_VERTEX;GEO_LONG;576
+
+UNLTAIRSPACE_VOLUME;VAL_DIST_VER_UPPER;275 / GNDTAIRSPACE_VOLUME;VAL_DIST_VER_LOWER;275
+
+Type of restriction : RTAF Flying Training
+
+Nature of hazard/activity : High speed combat manoeuvring
+
+Time of activity : MON - FRI, 0200-0800
+
+Inflight information : BIG SHELL Control freq. 127.0 MHzZ or 331.3 MHzZ, if unable contact Hat Yai Approach freq. 126.7 MHzZ or 301.5 MHzZ
+
+Pilots are advised to contact prior to entering.
+
+Contact agency : Wing 56 Air Traffic Control branch, Tel. +662 534 6000 ext 63555, 63520
+
+VTD49TAIRSPACE;CODE_ID;246 SONGKHLATAIRSPACE;TXT_NAME;246
+
+Area bounded by lines joining successively the following points
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164 063600NTAIRSPACE_VERTEX;GEO_LAT;577 1003900ETAIRSPACE_VERTEX;GEO_LONG;577 -
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164 065600NTAIRSPACE_VERTEX;GEO_LAT;578 1004600ETAIRSPACE_VERTEX;GEO_LONG;578 -
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164 065600NTAIRSPACE_VERTEX;GEO_LAT;579 1012500ETAIRSPACE_VERTEX;GEO_LONG;579 -
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164 062400NTAIRSPACE_VERTEX;GEO_LAT;580 1014300ETAIRSPACE_VERTEX;GEO_LONG;580 -
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164 061500NTAIRSPACE_VERTEX;GEO_LAT;581 1011000ETAIRSPACE_VERTEX;GEO_LONG;581 -
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164 063600NTAIRSPACE_VERTEX;GEO_LAT;582 1003900ETAIRSPACE_VERTEX;GEO_LONG;582
+
+Excluding HAT YAITAIRSPACE;CODE_ID;484 TMATAIRSPACE;CODE_TYPE;484.
+
+UNLTAIRSPACE_VOLUME;VAL_DIST_VER_UPPER;276 / ALT 2 000TAIRSPACE_VOLUME;VAL_DIST_VER_LOWER;276 ftTAIRSPACE_VOLUME;UOM_DIST_VER_LOWER;276FT
+
+Type of restriction : RTAF Flying Training
+
+Nature of hazard/activity : High speed combat manoeuvring
+
+Time of activity : MON - FRI, 2300-1100
+
+Inflight information : BIG SHELL Control freq. 127.0 MHzZ or 331.3 MHzZ, if unable contact Hat Yai Approach freq. 126.7 MHzZ or 301.5 MHzZ except in Narathiwat TMA contact Narathiwat Tower freq. 122.7 MHzZ or 236.6 MHzZ
+
+Pilots are advised to contact prior to entering.
+
+Contact agency : Wing 56 Air Traffic Control branch, Tel. +662 534 6000 ext 63555, 63520
+
+VTD50TAIRSPACE;CODE_ID;247 SONGKHLATAIRSPACE;TXT_NAME;247
+
+Area bounded by lines joining successively the following points:
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164 0656.0NTAIRSPACE_VERTEX;GEO_LAT;583 10046.0ETAIRSPACE_VERTEX;GEO_LONG;583 -
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164 0711.0NTAIRSPACE_VERTEX;GEO_LAT;584 10037.0ETAIRSPACE_VERTEX;GEO_LONG;584 -
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164 0754.0NTAIRSPACE_VERTEX;GEO_LAT;585 10039.0ETAIRSPACE_VERTEX;GEO_LONG;585 -
+
+then follow the arc 60 NM clockwise from HAT YAITVOR;TXT_NAME;110 DVOR/DME (065602.75NTVOR;GEO_LAT;110 1002316.47ETVOR;GEO_LONG;110)
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164 0656.0NTAIRSPACE_VERTEX;GEO_LAT;587 10124.0ETAIRSPACE_VERTEX;GEO_LONG;587 -
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164 0656.0NTAIRSPACE_VERTEX;GEO_LAT;583 10046.0ETAIRSPACE_VERTEX;GEO_LONG;583
+
+UNLTAIRSPACE_VOLUME;VAL_DIST_VER_UPPER;277 / ALT 8 000TAIRSPACE_VOLUME;VAL_DIST_VER_LOWER;277ftTAIRSPACE_VOLUME;UOM_DIST_VER_LOWER;277FT
+
+Type of restriction : RTAF Flying Training
+
+Nature of hazard/activity : High speed combat manoeuvring
+
+Time of activity : MON - FRI, 2300-1100
+
+Inflight information : BIG SHELL Control freq. 127.0 MHzZ or 331.3 MHzZ, if unable contact Hat Yai Approach freq. 126.7 MHzZ or 301.5 MHzZ
+
+Pilots are advised to contact prior to entering.
+
+Contact agency : Wing 56 Air Traffic Control branch, Tel. +662 534 6000 ext 63555, 63520
+
+ALT 6 000 ftFT / GND
+
+Type of restriction : RTN Flying Training
+
+Nature of hazard/activity : Military operations
+
+Time of activity : MON - FRI, 2300-1100
+
+Inflight information: Songkhla Tower freq. 126.2 MHzZ or 227.0 MHzZ
+
+Pilots are advised to contact prior to entering.
+
+Contact agency: 2nd Naval Area Command, Tel. +667 432 5804
+
+VTD53TAIRSPACE;CODE_ID;248 PHITSANULOKTAIRSPACE;TXT_NAME;248
+
+Area bounded by lines joining successively the following points:
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164 1653.0NTAIRSPACE_VERTEX;GEO_LAT;588 09930.0ETAIRSPACE_VERTEX;GEO_LONG;588 -
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164 1653.0NTAIRSPACE_VERTEX;GEO_LAT;589 09909.0ETAIRSPACE_VERTEX;GEO_LONG;589 -
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164 1610.0NTAIRSPACE_VERTEX;GEO_LAT;590 09934.0ETAIRSPACE_VERTEX;GEO_LONG;590 -
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164 1523.0NTAIRSPACE_VERTEX;GEO_LAT;591 10005.0ETAIRSPACE_VERTEX;GEO_LONG;591 -
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164 1523.0NTAIRSPACE_VERTEX;GEO_LAT;592 10017.0ETAIRSPACE_VERTEX;GEO_LONG;592 -
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164 1602.0NTAIRSPACE_VERTEX;GEO_LAT;593 10017.0ETAIRSPACE_VERTEX;GEO_LONG;593 -
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164 1653.0NTAIRSPACE_VERTEX;GEO_LAT;594 09930.0ETAIRSPACE_VERTEX;GEO_LONG;594
+
+ALT 6 500TAIRSPACE_VOLUME;VAL_DIST_VER_UPPER;278 ftTAIRSPACE_VOLUME;UOM_DIST_VER_UPPER;278FT / GNDTAIRSPACE_VOLUME;VAL_DIST_VER_LOWER;278
+
+Type of restriction : RTAF Flying Training
+
+Nature of hazard/activity : High speed combat manoeuvring
+
+Time of activity : MON - FRI, 0200-0500 and 0600-0800
+
+Inflight information : FOCAL freq. 127.0 MHzZ or 331.3 MHzZ, if unable contact Phitsanulok Approach freq. 120.7 MHzZ or 284.0 MHZz
+
+Pilots are advised to contact prior to entering.
+
+Contact agency : Wing 46 Air Traffic Control branch , Tel. +662 534 6000 ext 55164, 55157
+
+VTD54TAIRSPACE;CODE_ID;254 UBONTAIRSPACE;TXT_NAME;254
+
+Area bounded by 15 NM arc from UBLTTACAN;CODE_ID;125 TACAN (151544.70NTTACAN;GEO_LAT;125 1045300.00ETTACAN;GEO_LONG;125) beginning at point
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164 152900NTAIRSPACE_VERTEX;GEO_LAT;1021 1044900ETAIRSPACE_VERTEX;GEO_LONG;1021 -
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164 152900NTAIRSPACE_VERTEX;GEO_LAT;1022 1045300ETAIRSPACE_VERTEX;GEO_LONG;1022 -
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164 161400NTAIRSPACE_VERTEX;GEO_LAT;1023 1045500ETAIRSPACE_VERTEX;GEO_LONG;1023 -
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164 161400NTAIRSPACE_VERTEX;GEO_LAT;1024 1040900ETAIRSPACE_VERTEX;GEO_LONG;1024 -
+
+then along the arc to the starting point.
+
+UNLTAIRSPACE_VOLUME;VAL_DIST_VER_UPPER;279 / GNDTAIRSPACE_VOLUME;VAL_DIST_VER_LOWER;279
+
+Type of restriction : RTAF Flying Training
+
+Nature of hazard/activity : High speed combat manoeuvring
+
+Time of activity : MON - FRI, 2200-1700
+
+Inflight information : OSCAR Control freq. 127.0 MHzZ or 331.3 MHzZ, if unable contact Ubon Approach freq. 123.5 MHzZ or 257.8 MHzZ
+
+Pilots are advised to contact prior to entering.
+
+Contact agency : Wing 21 Air Traffic Control branch , Tel. +662 534 6000 ext 43506, 43502
+
+VTD55TAIRSPACE;CODE_ID;255 UBONTAIRSPACE;TXT_NAME;255
+
+Area bounded by 15 NM arc from UBLTNAVAID;CODE_ID;293 TACANTNAVAID;CODE_TYPE;293 (151544.70NTTACAN;GEO_LAT;125 1045300.00ETTACAN;GEO_LONG;125) beginning at point
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164 152900NTAIRSPACE_VERTEX;GEO_LAT;1025 1045300ETAIRSPACE_VERTEX;GEO_LONG;1025 -
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164 161400NTAIRSPACE_VERTEX;GEO_LAT;1026 1045500ETAIRSPACE_VERTEX;GEO_LONG;1026 -
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164 161400NTAIRSPACE_VERTEX;GEO_LAT;1027 1050100ETAIRSPACE_VERTEX;GEO_LONG;1027
+
+then clockwise along the FIR boundary to
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164 153600NTAIRSPACE_VERTEX;GEO_LAT;1028 1053700ETAIRSPACE_VERTEX;GEO_LONG;1028 -
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164 152700NTAIRSPACE_VERTEX;GEO_LAT;1029 1050000ETAIRSPACE_VERTEX;GEO_LONG;1029 -
+
+then along the arc to the starting point.
+
+UNLTAIRSPACE_VOLUME;VAL_DIST_VER_UPPER;281 / GNDTAIRSPACE_VOLUME;VAL_DIST_VER_LOWER;281
+
+Type of restriction : RTAF Flying Training
+
+Nature of hazard/activity : High speed combat manoeuvring
+
+Time of activity : MON - FRI, 2200-1700
+
+Inflight information : OSCAR Control freq. 127.0 MHzZ or 331.3 MHzZ, if unable contact Ubon Approach freq. 123.5 MHzZ or 257.8 MHzZ
+
+Pilots are advised to contact prior to entering.
+
+Contact agency : Wing 46 Air Traffic Control branch , Tel. +662 534 6000 ext 55164, 55157
+
+VTD57TAIRSPACE;CODE_ID;257 PHITSANULOKTAIRSPACE;TXT_NAME;257
+
+Area 1
+
+Area bounded by lines joining successively the following points:
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164152405.50N 1002148.20E -
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164163005.20N 1000408.30E -
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164163605.20N 0995848.30E -
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164163559.33N 1001648.06E -
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164163458.20N 1004628.25E -
+
+then follow the arc 30 NM clockwise from PSLTNAVAID;CODE_ID;156 DVOR/DMETNAVAID;CODE_TYPE;156 (164613.34NTNAVAID;GEO_LAT;156 1001728.70ETNAVAID;GEO_LONG;156) to
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164161623.05N 1002148.10E -
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164152405.50N 1002148.20E
+
+Excluding Airway W9TEN_ROUTE_RTE;TXT_DESIG;254.
+
+FLTAIRSPACE_VOLUME;UOM_DIST_VER_UPPER;285 280TAIRSPACE_VOLUME;VAL_DIST_VER_UPPER;285 / FLTAIRSPACE_VOLUME;UOM_DIST_VER_LOWER;285 120TAIRSPACE_VOLUME;VAL_DIST_VER_LOWER;285
+
+Type of restriction : RTAF Flying Training
+
+Nature of hazard/activity : High speed combat manoeuvring
+
+Time of activity : MON - FRI, 0000-1000
+
+Inflight information : OSCAR Control freq. 127.0 MHzZ or 331.3 MHzZ, if unable contact Takhli Approach freq. 124.0 MHzZ or 325.0 MHzZ
+
+Pilots are advised to contact prior to entering.
+
+Contact agency : Wing 46 Air Traffic Control branch , Tel. +662 534 6000 ext 55164, 55157
+
+Area 2
+
+Area bounded by lines joining successively the following points:
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164153222.66N 1002148.11E -
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164163604.56N 1000100.74E -
+
+TAIRSPACE_VERTEX;VAL_RADIUS_ARC;1164163559.33N 1001648.06E -
+
+163458.20N 1004628.25E -
+
+then follow the arc 30 NM clockwise from PSLTNAVAID;CODE_ID;156 DVOR/DMETNAVAID;CODE_TYPE;156 (164613.34NTNAVAID;GEO_LAT;156 1001728.70ETNAVAID;GEO_LONG;156) to
+
+161623.05N 1002148.10E -
+
+153222.66N 1002148.11E
+
+Excluding Airway W9TEN_ROUTE_RTE;TXT_DESIG;254.
+
+UNLTAIRSPACE_VOLUME;VAL_DIST_VER_UPPER;287 / FLTAIRSPACE_VOLUME;UOM_DIST_VER_LOWER;287 120TAIRSPACE_VOLUME;VAL_DIST_VER_LOWER;287
+
+VTD58TAIRSPACE;CODE_ID;258 SURAT THANITAIRSPACE;TXT_NAME;258
+
+Area bounded by lines joining successively the following points:
+
+112554.32N 0992354.41E Thai-Myanmar border to
+
+105129.09N 0994016.74E -
+
+092518.00N 0994006.00E -
+
+083301.22N 0983331.55E -
+
+then follow the arc 30 NM clockwise from
+
+PUTTVOR;CODE_ID;107 DVOR/DMETNAVAID;CODE_TYPE;137 (080654.83NTVOR;GEO_LAT;107 0981822.69ETVOR;GEO_LONG;107) to
+
+083625.96N 0982432.98E -
+
+090818.00N 0975118.00E -
+
+092900.00N 0971600.00E -
+
+095000.00N 0982500.00E -
+
+100004.46N 0983705.87E -
+
+then follow the boundary to the starting point.
+
+FL 390 / GND
+
+Type of restriction : RTAF Flying Training
+
+Nature of hazard/activity : High speed combat manoeuvring
+
+Time of activity : Notified by NOTAM
+
+Inflight information : BIG SHELL Control freq. 127.0 MHzZ or 331.3 MHzZ, if unable, contact Surat Approach freq. 119.3 MHzZ or 236.6 MHZz
+
+Pilots are advised to contact prior to entering.
+
+Contact agency : Wing 7 Air Traffic Control branch, Tel. +662 534 6000 ext 65556, 65513
+
+VTD59TAIRSPACE;CODE_ID;259 SURAT THANITAIRSPACE;TXT_NAME;259
+
+Area 1
+
+Area bounded by lines joining successively the following points:
+
+1058.0N 09906.0E Thai-Myanmar border to
+
+1058.0N 09934.5E -
+
+0933.0N 09911.0E -
+
+then follow the arc 25 NM counter clockwise from STNTNAVAID;CODE_ID;163 DVOR/DMETNAVAID;CODE_TYPE;163 (090746.24NTNAVAID;GEO_LAT;163 0990805.09ETNAVAID;GEO_LONG;163) to
+
+0852.3N 09849.5E -
+
+0833.0N 09833.5E -
+
+then follow the arc 30 NM counter clockwise from PUTTVOR;CODE_ID;107 DVOR/DMETNAVAID;CODE_TYPE;137 (080654.83NTVOR;GEO_LAT;107 0981822.69ETVOR;GEO_LONG;107) to
+
+0836.0N 09812.0E -
+
+0929.0N 09736.0E -
+
+0929.0N 09816.0E -
+
+0950.0N 09825.0E -
+
+0955.0N 09832.0E -
+
+then follow the boundary to the starting point.
+
+Excluding ChumponTAIRSPACE;CODE_ID;483 TMATAIRSPACE;CODE_TYPE;483 and RanongTAIRSPACE;CODE_ID;500 TMATAIRSPACE;CODE_TYPE;500 and CTRTAIRSPACE;CODE_ID;422.
+
+UNLTAIRSPACE_VOLUME;VAL_DIST_VER_UPPER;289 / GNDTAIRSPACE_VOLUME;VAL_DIST_VER_LOWER;289
+
+Type of restriction : RTAF Flying Training
+
+Nature of hazard/activity : High speed combat manoeuvring
+
+Time of activity : MON - FRI, 2300-1700
+
+Inflight information : BIG SHELL control freq. 127.0 MHzZ or 331.3 MHzZ, if unable contact Surat Approach freq. 123.35 MHzZ or 240.0 MHzZ
+
+Pilots are advised to contact prior to entering.
+
+Contact agency : Wing 7 Air Traffic Control branch, Tel. +662 534 6000 ext 65556, 65513
+
+Area 2
+
+Beginning at
+
+0929.0N 09736.0E -
+
+0836.0N 09812.0E -
+
+then follow the arc 30 NM counter clockwise from PUTTNAVAID;CODE_ID;137 DVOR/DMETNAVAID;CODE_TYPE;137 (080654.83NTVOR;GEO_LAT;107 0981822.69ETVOR;GEO_LONG;107) to
+
+0820.0N 09751.5E -
+
+0820.0N 09730.0E -
+
+0929.0N 09730.0E -
+
+0929.0N 09736.0E
+
+ALT 12 000TAIRSPACE_VOLUME;VAL_DIST_VER_UPPER;291 ftTAIRSPACE_VOLUME;UOM_DIST_VER_UPPER;291FT / GNDTAIRSPACE_VOLUME;VAL_DIST_VER_LOWER;291
+
+VTD60TAIRSPACE;CODE_ID;260 SURAT THANITAIRSPACE;TXT_NAME;260
+
+Area 1
+
+Area bounded by lines joining successively the following points:
+
+092108.45N 0993149.01E -
+
+103415.64N 0995439.12E -
+
+094830.78N 1001754.79E -
+
+081808.39N 1001550.28E -
+
+081828.66N 0994352.24E -
+
+083107.99N 0993638.33E -
+
+085743.18N 0993640.94E -
+
+092108.45N 0993149.01E
+
+UNLTAIRSPACE_VOLUME;VAL_DIST_VER_UPPER;293 / GNDTAIRSPACE_VOLUME;VAL_DIST_VER_LOWER;293
+
+Type of restriction : RTAF Flying Training
+
+Nature of hazard/activity : High speed combat manoeuvring
+
+Time of activity : MON - FRI, 2300-1700
+
+Inflight information : BIG SHELL control freq. 127.0 MHzZ or 331.3 MHzZ, if unable contact Samui Approach freq. 129.6 MHzZ or 305.4 MHzZ
+
+Pilots are advised to contact prior to entering.
+
+Contact agency : Wing 7 Air Traffic Control branch, Tel. +662 534 6000 ext 65556, 65513
+
+Area 2
+
+Area bounded by lines joining successively the following points:
+
+092847.28N 0993411.75E -
+
+100005.16N 0994357.26E -
+
+100000.95N 0995504.62E -
+
+093017.70N 0994547.49E -
+
+092847.28N 0993411.75E
+
+UNL / GND
+
+Type of restriction : RTAF Flying Training
+
+Nature of hazard/activity : High speed combat manoeuvring
+
+Time of activity : Notified by NOTAM
+
+Inflight information : BIG SHELL control freq. 127.0 MHzZ or 331.3 MHzZ, if unable contact Samui Approach freq. 129.6 MHzZ or 305.4 MHzZ
+
+Pilots are advised to contact prior to entering.
+
+Contact agency : Wing 7 Air Traffic Control branch, Tel. +662 534 6000 ext 65556, 65513
+
+VTD61TAIRSPACE;CODE_ID;261 SURAT THANITAIRSPACE;TXT_NAME;261
+
+Area bounded by lines joining successively the following points:
+
+0845.0N 09929.0E -
+
+0827.0N 09951.0E -
+
+0816.0N 09947.0E -
+
+0828.0N 09842.0E -
+
+0845.7N 09857.2E -
+
+then follow the arc 25 NM from STNTNAVAID;CODE_ID;163 DVOR/DMETNAVAID;CODE_TYPE;163 (090746.24NTNAVAID;GEO_LAT;163 0990805.09ETNAVAID;GEO_LONG;163) counter clockwise to
+
+0844.5N 09917.3E -
+
+0840.4N 09919.7E -
+
+0845.0N 09929.0E
+
+ALT 7 000TAIRSPACE_VOLUME;VAL_DIST_VER_UPPER;297 ftTAIRSPACE_VOLUME;UOM_DIST_VER_UPPER;297FT / GNDTAIRSPACE_VOLUME;VAL_DIST_VER_LOWER;297
+
+Type of restriction : RTAF Flying Training
+
+Nature of hazard/activity : High speed combat manoeuvring
+
+Time of activity : MON - FRI, 2300-1700
+
+Inflight information : BIG SHELL control freq. 127.0 MHzZ or 331.3 MHzZ, if unable contact Surat Approach freq. 123.35 MHzZ or 240.0 MHZz
+
+Pilots are advised to contact prior to entering.
+
+Contact agency : Wing 7 Air Traffic Control branch, Tel. +662 534 6000 ext 65556, 65513
+
+VTD63TAIRSPACE;CODE_ID;262 UDON, LOEITAIRSPACE;TXT_NAME;262
+
+Area 1 Udon, Loei
+
+Area bounded by lines joining successively the following points:
+
+1750.8N 10235.5E on Thai-Laotian border;;;;
+
+then follow the arc 30 NM counter clockwise from UDN TACAN (1722.9NTNAVAID;GEO_LAT;290 10248.1ETNAVAID;GEO_LONG;290) to
+
+1700.0N 10228.0E -
+
+1700.0N 10130.0E -
+
+1744.0N 10130.0E -
+
+then eastward along the Thai-Laotian border to the starting point.
+
+UNLTAIRSPACE_VOLUME;VAL_DIST_VER_UPPER;299 / GNDTAIRSPACE_VOLUME;VAL_DIST_VER_LOWER;299
+
+Type of restriction : RTAF Flying Training
+
+Nature of hazard/activity : High speed combat manoeuvring
+
+Time of activity : MON - FRI, 2200-1700
+
+Inflight information : OSCAR Control freq. 127.0 MHzZ or 331.3 MHzZ, if unable contact Udon Approach freq. 126.2 MHzZ or 265.9 MHzZ
+
+Pilots are advised to contact prior to entering.
+
+Contact agency : Wing 23 Air Traffic Control branch, Tel. +662 534 6000 ext 45512, 45502
+
+Area 2 Udon, Loei, Khon Kaen
+
+Beginning at
+
+1700.0N 10228.0E -
+
+then follow the arc 30 NM counter clockwise from UDNTNAVAID;CODE_ID;290 TACANTNAVAID;CODE_TYPE;290 (1722.9NTNAVAID;GEO_LAT;290 10248.1ETNAVAID;GEO_LONG;290) to
+
+1656.0N 10239.5E -
+
+then follow the arc 30 NM counter clockwise from KNTNAVAID;CODE_ID;341 NDBTNAVAID;CODE_TYPE;341 (162743.41NTNAVAID;GEO_LAT;341 1024704.18ETNAVAID;GEO_LONG;341)
+
+1630.0N 10217.0E -
+
+1630.0N 10130.0E -
+
+1700.0N 10130.0E -
+
+1700.0N 10228.0E
+
+ALT 10 000TAIRSPACE_VOLUME;VAL_DIST_VER_UPPER;301 ftTAIRSPACE_VOLUME;UOM_DIST_VER_UPPER;301FT / GNDTAIRSPACE_VOLUME;VAL_DIST_VER_LOWER;301
+
+VTD64TAIRSPACE;CODE_ID;263 UDON, NONG KHAITAIRSPACE;TXT_NAME;263 (North Area)
+
+Area bounded by lines joining successively the following points:
+
+1755.0NTAIRSPACE_VERTEX;GEO_LAT;939 10247.0ETAIRSPACE_VERTEX;GEO_LONG;939 on Thai-Laotian border to
+
+1753.0NTAIRSPACE_VERTEX;GEO_LAT;940 10247.5ETAIRSPACE_VERTEX;GEO_LONG;940 -
+
+then follow the arc 30 NM clockwise from UDNTNAVAID;CODE_ID;290 TACANTNAVAID;CODE_TYPE;290 (1722.9NTNAVAID;GEO_LAT;290 10248.1ETNAVAID;GEO_LONG;290) to
+
+1725.53NTNAVAID;GEO_LAT;290 10319.35ETNAVAID;GEO_LONG;290 -
+
+1731.94NTAIRSPACE_VERTEX;GEO_LAT;942 10441.36ETAIRSPACE_VERTEX;GEO_LONG;942
+
+then northward along the Thai-Laotian border to the starting point.
+
+UNLTAIRSPACE_VOLUME;VAL_DIST_VER_UPPER;303 / GNDTAIRSPACE_VOLUME;VAL_DIST_VER_LOWER;303
+
+Type of restriction : RTAF Flying Training
+
+Nature of hazard/activity : High speed combat manoeuvring
+
+Time of activity : MON - FRI, 2200-1700
+
+Inflight information : OSCAR Control freq. 127.0 MHzZ or 331.3 MHzZ, if unable contact Udon Approach freq. 126.2 MHzZ or 265.9 MHzZ
+
+Pilots are advised to contact prior to entering.
+
+Contact agency : Wing 23 Air Traffic Control branch, Tel. +662 534 6000 ext 45512, 45502
+
+VTD64 UDON, NONG KHAI (South Area) Area bounded by lines joining successively the following points: 1725.53N 10319.35E then follow the arc 30 NM clockwise from UDN TACAN (1722.9N 10248.1E) to1709.0N 10315.8E -1630.0N 10409.2E -1630.0N 10440.0E then northward along the Thai-Laotian border to 1731.94N 10441.36E then to the starting point.
+
+UNLTAIRSPACE_VOLUME;VAL_DIST_VER_UPPER;303 / GNDTAIRSPACE_VOLUME;VAL_DIST_VER_LOWER;303
+
+Type of restriction : RTAF Flying TrainingNature of hazard/activity : High speed combat manoeuvringTime of activity : MON - FRI, 2200-1700Inflight information : OSCAR Control freq. 127.0 MHzZ or 331.3 MHzZ, if unable contact Udon Approach freq. 126.2 MHzZ or 265.9 MHzZ Pilots are advised to contact prior to entering.Contact agency : Wing 23 Air Traffic Control branch, Tel. +662 534 6000 ext 45512, 45502
+
+NAKHON PHANOM FLYING TRAINING, AREA WITHIN VTD64TAIRSPACE;CODE_ID;263
+
+Area 1
+
+Area bounded by lines joining the following points:
+
+172800NTAIRSPACE_VERTEX;GEO_LAT;609 1041500ETAIRSPACE_VERTEX;GEO_LONG;609 -
+
+174800NTAIRSPACE_VERTEX;GEO_LAT;610 1041500ETAIRSPACE_VERTEX;GEO_LONG;610 -
+
+173600NTAIRSPACE_VERTEX;GEO_LAT;611 1042600ETAIRSPACE_VERTEX;GEO_LONG;611 -
+
+172800NTAIRSPACE_VERTEX;GEO_LAT;612 1042200ETAIRSPACE_VERTEX;GEO_LONG;612 -
+
+172800NTAIRSPACE_VERTEX;GEO_LAT;609 1041500ETAIRSPACE_VERTEX;GEO_LONG;609
+
+Area 2
+
+Area bounded by lines joining the following points:
+
+163000NTAIRSPACE_VERTEX;GEO_LAT;613 1041500ETAIRSPACE_VERTEX;GEO_LONG;613 -
+
+165600NTAIRSPACE_VERTEX;GEO_LAT;614 1041500ETAIRSPACE_VERTEX;GEO_LONG;614 -
+
+170800NTAIRSPACE_VERTEX;GEO_LAT;615 1042500ETAIRSPACE_VERTEX;GEO_LONG;615 -
+
+170800NTAIRSPACE_VERTEX;GEO_LAT;616 1043900ETAIRSPACE_VERTEX;GEO_LONG;616 -
+
+170000NTAIRSPACE_VERTEX;GEO_LAT;617 1043800ETAIRSPACE_VERTEX;GEO_LONG;617 -
+
+163000NTAIRSPACE_VERTEX;GEO_LAT;618 1043900ETAIRSPACE_VERTEX;GEO_LONG;618 -
+
+163000NTAIRSPACE_VERTEX;GEO_LAT;613 1041500ETAIRSPACE_VERTEX;GEO_LONG;613
+
+ALT 6 000TAIRSPACE_VOLUME;VAL_DIST_VER_UPPER;306 ftTAIRSPACE_VOLUME;UOM_DIST_VER_UPPER;306FT / GNDTAIRSPACE_VOLUME;VAL_DIST_VER_LOWER;306
+
+Type of restriction : Civil Flight Training Area
+
+Nature of hazard/activity : Flight school training
+
+Time of activity : Between 2300-1100
+
+Inflight information : Sakon Nakhon Approach freq. 123.35 MHzZ or 284.0 MHzZ, if unable contact Nakhon Phanom Tower freq. 122.5 MHzZ
+
+Pilots are advised to contact prior to entering.
+
+Contact agency : Nakhon Phanom Tower, Tel. +668 5911 6562
+
+VTD65TAIRSPACE;CODE_ID;264 NORTHEASTERN AREATAIRSPACE;TXT_NAME;264
+
+A circle 20 NM radius centred on point
+
+1639.0NTAIRSPACE_VERTEX;GEO_LAT_ARC;619 10258.0ETAIRSPACE_VERTEX;GEO_LONG_ARC;619
+
+FLTAIRSPACE_VOLUME;UOM_DIST_VER_UPPER;307 150TAIRSPACE_VOLUME;VAL_DIST_VER_UPPER;307 / GNDTAIRSPACE_VOLUME;VAL_DIST_VER_LOWER;307
+
+Type of restriction : RTAF Flying Training
+
+Nature of hazard/activity : High speed combat manoeuvring Bombing / Air Firing Area
+
+Time of activity : MON - FRI, 0000-1000
+
+Inflight information : Khon Kaen Approach freq. 123.4 MHzZ or 240.0 MHZz
+
+Pilots are advised to contact prior to entering.
+
+Contact agency : Air Operation Division, Tel. +662 280 2499
+
+VTD67TAIRSPACE;CODE_ID;265 KANCHANABURITAIRSPACE;TXT_NAME;265
+
+Area bounded by lines joining successively the following points:
+
+1454.0NTAIRSPACE_VERTEX;GEO_LAT;620 09830.0ETAIRSPACE_VERTEX;GEO_LONG;620 -
+
+1454.0NTAIRSPACE_VERTEX;GEO_LAT;621 09957.0ETAIRSPACE_VERTEX;GEO_LONG;621 -
+
+1415.0NTAIRSPACE_VERTEX;GEO_LAT;622 09923.0ETAIRSPACE_VERTEX;GEO_LONG;622 -
+
+1349.0NTAIRSPACE_VERTEX;GEO_LAT;623 09923.0ETAIRSPACE_VERTEX;GEO_LONG;623 -
+
+1349.0NTAIRSPACE_VERTEX;GEO_LAT;624 09914.0ETAIRSPACE_VERTEX;GEO_LONG;624 -
+
+1435.0NTAIRSPACE_VERTEX;GEO_LAT;625 09830.0ETAIRSPACE_VERTEX;GEO_LONG;625 -
+
+1454.0NTAIRSPACE_VERTEX;GEO_LAT;620 09830.0ETAIRSPACE_VERTEX;GEO_LONG;620
+
+ALT 6 000TAIRSPACE_VOLUME;VAL_DIST_VER_UPPER;308 ftTAIRSPACE_VOLUME;UOM_DIST_VER_UPPER;308FT / GNDTAIRSPACE_VOLUME;VAL_DIST_VER_LOWER;308
+
+Type of restriction : RTA Flying Training
+
+Nature of hazard/activity : Military operations
+
+Time of activity : Notified by NOTAM
+
+Inflight information : Kanchanaburi Tower freq. 122.0 MHzZ
+
+Pilots are advised to contact prior to entering.
+
+Contact agency : Air Operation Division, Tel. +662 280 2499
+
+VTD70TAIRSPACE;CODE_ID;266 CHANTHANBURITAIRSPACE;TXT_NAME;266
+
+Area bounded by the line joining the following points
+
+1253NTAIRSPACE_VERTEX;GEO_LAT;626 10213ETAIRSPACE_VERTEX;GEO_LONG;626 -
+
+1253NTAIRSPACE_VERTEX;GEO_LAT;627 10153ETAIRSPACE_VERTEX;GEO_LONG;627 -
+
+1313NTAIRSPACE_VERTEX;GEO_LAT;628 10153ETAIRSPACE_VERTEX;GEO_LONG;628 -
+
+1313NTAIRSPACE_VERTEX;GEO_LAT;629 10213ETAIRSPACE_VERTEX;GEO_LONG;629 (Banchankhtem Kitchakut District Chanthaburi Province)
+
+FLTAIRSPACE_VOLUME;UOM_DIST_VER_UPPER;309 150TAIRSPACE_VOLUME;VAL_DIST_VER_UPPER;309 / GNDTAIRSPACE_VOLUME;VAL_DIST_VER_LOWER;309
+
+Type of restriction : RTN Flight Training Area
+
+Nature of hazard/activity : Millitary flight training area
+
+Time of activity : MON - FRI, 0130-0930 except public holidays
+
+Inflight information : U-Tapao Approach freq. 119.7 MHzZ or 273.3 MHzZ
+
+Pilots are advised to contact prior to entering.
+
+Contact agency : Royal Thai Naval Air Division, Tel. +663 824 5193, +663 824 5196
+
+VTD71TAIRSPACE;CODE_ID;474 GULF OF THAILANDTAIRSPACE;TXT_NAME;474
+
+Area bounded by the line joining the following points:
+
+1100NTAIRSPACE_VERTEX;GEO_LAT;839 10135ETAIRSPACE_VERTEX;GEO_LONG;839 -
+
+1100NTAIRSPACE_VERTEX;GEO_LAT;840 10105ETAIRSPACE_VERTEX;GEO_LONG;840 -
+
+1200NTAIRSPACE_VERTEX;GEO_LAT;841 10045ETAIRSPACE_VERTEX;GEO_LONG;841 -
+
+1200NTAIRSPACE_VERTEX;GEO_LAT;842 10135ETAIRSPACE_VERTEX;GEO_LONG;842
+
+FLTAIRSPACE_VOLUME;UOM_DIST_VER_UPPER;499 300TAIRSPACE_VOLUME;VAL_DIST_VER_UPPER;499 / GNDTAIRSPACE_VOLUME;VAL_DIST_VER_LOWER;499
+
+Type of restriction : RTN Flight Training Area
+
+Nature of hazard/activity : Military operations
+
+Time of activity : Notified by NOTAM
+
+Inflight information : U-Tapao Approach freq. 119.7 MHzZ or 273.3 MHZz
+
+Pilots are advised to contact prior to entering.
+
+Contact agency : Royal Thai Naval Air Division, Tel. +663 824 5193, +663 824 5196
+
+VTD72TAIRSPACE;CODE_ID;475 BANGKOK, NONTHABURI, NAKHON PATHOM, SUPHANBURITAIRSPACE;TXT_NAME;475
+
+Area bounded by lines joining successively the following points:
+
+Area 1
+
+141820.38NTAIRSPACE_VERTEX;GEO_LAT;843 1004014.57ETAIRSPACE_VERTEX;GEO_LONG;843 -
+
+135819.51NTAIRSPACE_VERTEX;GEO_LAT;844 1002641.46ETAIRSPACE_VERTEX;GEO_LONG;844 -
+
+140459.67NTAIRSPACE_VERTEX;GEO_LAT;845 1001251.12ETAIRSPACE_VERTEX;GEO_LONG;845 -
+
+141811.10NTAIRSPACE_VERTEX;GEO_LAT;846 1002501.17ETAIRSPACE_VERTEX;GEO_LONG;846 -
+
+141820.38NTAIRSPACE_VERTEX;GEO_LAT;847 1004014.57ETAIRSPACE_VERTEX;GEO_LONG;847
+
+Area 2
+
+135819.54NTAIRSPACE_VERTEX;GEO_LAT;848 1002641.46ETAIRSPACE_VERTEX;GEO_LONG;848 -
+
+134604.48NTAIRSPACE_VERTEX;GEO_LAT;849 1002225.41ETAIRSPACE_VERTEX;GEO_LONG;849 -
+
+134630.34NTAIRSPACE_VERTEX;GEO_LAT;850 1001255.05ETAIRSPACE_VERTEX;GEO_LONG;850 -
+
+140459.67NTAIRSPACE_VERTEX;GEO_LAT;851 1001251.12ETAIRSPACE_VERTEX;GEO_LONG;851 -
+
+135819.54NTAIRSPACE_VERTEX;GEO_LAT;848 1002641.46ETAIRSPACE_VERTEX;GEO_LONG;848
+
+ALT 5 000TAIRSPACE_VOLUME;VAL_DIST_VER_UPPER;500 ftTAIRSPACE_VOLUME;UOM_DIST_VER_UPPER;500FT / GNDTAIRSPACE_VOLUME;VAL_DIST_VER_LOWER;500
+
+Type of restriction : RTAF Flying Training
+
+Nature of hazard/activity : High speed combat manoeuvring
+
+Time of activity : MON - FRI, 2300-1500
+
+Inflight information : Don Mueang Approach freq. 119.4 MHzZ or 262.5 MHZz
+
+Pilots are advised to contact prior to entering.
+
+Contact agency : 604 Squadron, Tel. +662 534 6000 ext 22553
+
+VTD74TAIRSPACE;CODE_ID;476 PHANGNGATAIRSPACE;TXT_NAME;476
+
+Area bounded by the lines joining successively the following points:
+
+Area 1
+
+091500NTAIRSPACE_VERTEX;GEO_LAT;852 0971500ETAIRSPACE_VERTEX;GEO_LONG;852 -
+
+091500NTAIRSPACE_VERTEX;GEO_LAT;853 0974000ETAIRSPACE_VERTEX;GEO_LONG;853 -
+
+084500NTAIRSPACE_VERTEX;GEO_LAT;854 0974000ETAIRSPACE_VERTEX;GEO_LONG;854 -
+
+084500NTAIRSPACE_VERTEX;GEO_LAT;855 0971500ETAIRSPACE_VERTEX;GEO_LONG;855 -
+
+091500NTAIRSPACE_VERTEX;GEO_LAT;852 0971500ETAIRSPACE_VERTEX;GEO_LONG;852
+
+FLTAIRSPACE_VOLUME;UOM_DIST_VER_UPPER;502 150TAIRSPACE_VOLUME;VAL_DIST_VER_UPPER;502 / GNDTAIRSPACE_VOLUME;VAL_DIST_VER_LOWER;502
+
+Type of restriction : RTN Weapon Training Range for surface ships
+
+Nature of hazard/activity : Military operations
+
+Time of activity : Notified by NOTAM
+
+Inflight information : Phuket Approach freq. 124.7 MHzZ or 284.0 MHZz
+
+Pilots are advised to contact prior to entering.
+
+Contact agency : 3rd Naval Area Command, Tel. +667 639 1590
+
+Area 2
+
+090000NTAIRSPACE_VERTEX;GEO_LAT;856 0975000ETAIRSPACE_VERTEX;GEO_LONG;856 -
+
+090000NTAIRSPACE_VERTEX;GEO_LAT;857 0980500ETAIRSPACE_VERTEX;GEO_LONG;857 -
+
+084000NTAIRSPACE_VERTEX;GEO_LAT;858 0980500ETAIRSPACE_VERTEX;GEO_LONG;858 -
+
+084000NTAIRSPACE_VERTEX;GEO_LAT;859 0975000ETAIRSPACE_VERTEX;GEO_LONG;859 -
+
+090000NTAIRSPACE_VERTEX;GEO_LAT;856 0975000ETAIRSPACE_VERTEX;GEO_LONG;856
+
+ALT 9 000TAIRSPACE_VOLUME;VAL_DIST_VER_UPPER;503 ftTAIRSPACE_VOLUME;UOM_DIST_VER_UPPER;503FT / GNDTAIRSPACE_VOLUME;VAL_DIST_VER_LOWER;503
+
+Area 3
+
+083300NTAIRSPACE_VERTEX;GEO_LAT;860 0975000ETAIRSPACE_VERTEX;GEO_LONG;860 -
+
+083300NTAIRSPACE_VERTEX;GEO_LAT;861 0981400ETAIRSPACE_VERTEX;GEO_LONG;861 -
+
+082700NTAIRSPACE_VERTEX;GEO_LAT;862 0981400ETAIRSPACE_VERTEX;GEO_LONG;862 -
+
+082700NTAIRSPACE_VERTEX;GEO_LAT;863 0975000ETAIRSPACE_VERTEX;GEO_LONG;863 -
+
+083300NTAIRSPACE_VERTEX;GEO_LAT;860 0975000ETAIRSPACE_VERTEX;GEO_LONG;860
+
+ALT 8 000TAIRSPACE_VOLUME;VAL_DIST_VER_UPPER;504 ftTAIRSPACE_VOLUME;UOM_DIST_VER_UPPER;504FT / GNDTAIRSPACE_VOLUME;VAL_DIST_VER_LOWER;504
+
+VTD75TAIRSPACE;CODE_ID;477 KHON KAENTAIRSPACE;TXT_NAME;477
+
+Area bounded by the lines joining successively the following points:
+
+163000NTAIRSPACE_VERTEX;GEO_LAT;864 1023700ETAIRSPACE_VERTEX;GEO_LONG;864 -
+
+161300NTAIRSPACE_VERTEX;GEO_LAT;865 1022200ETAIRSPACE_VERTEX;GEO_LONG;865 -
+
+163000NTAIRSPACE_VERTEX;GEO_LAT;866 1021700ETAIRSPACE_VERTEX;GEO_LONG;866 -
+
+163000NTAIRSPACE_VERTEX;GEO_LAT;864 1023700ETAIRSPACE_VERTEX;GEO_LONG;864
+
+ALT 6 000TAIRSPACE_VOLUME;VAL_DIST_VER_UPPER;505 ftTAIRSPACE_VOLUME;UOM_DIST_VER_UPPER;505FT / GNDTAIRSPACE_VOLUME;VAL_DIST_VER_LOWER;505
+
+Type of restriction : Civil Flight Training Area
+
+Nature of hazard/activity : Flight school training
+
+Time of activity : SAT and SUN, 2300 - 1400 after this period will be notified by NOTAM
+
+Inflight information : Roi Et Approach freq. 125.4MHzZ, if unable contact Khon Kaen Tower
+
+Pilots are advised to contact prior to entering.
+
+Contact agency : -
+
+VTD76TAIRSPACE;CODE_ID;478 KHON KAENTAIRSPACE;TXT_NAME;478
+
+Area bounded by the lines joining successively the following point:
+
+161700NTAIRSPACE_VERTEX;GEO_LAT;867 1025000ETAIRSPACE_VERTEX;GEO_LONG;867 -
+
+162000NTAIRSPACE_VERTEX;GEO_LAT;868 1031500ETAIRSPACE_VERTEX;GEO_LONG;868 -
+
+160000NTAIRSPACE_VERTEX;GEO_LAT;869 1031500ETAIRSPACE_VERTEX;GEO_LONG;869 -
+
+160000NTAIRSPACE_VERTEX;GEO_LAT;870 1025000ETAIRSPACE_VERTEX;GEO_LONG;870 -
+
+161700NTAIRSPACE_VERTEX;GEO_LAT;867 1025000ETAIRSPACE_VERTEX;GEO_LONG;867
+
+ALT 6 000TAIRSPACE_VOLUME;VAL_DIST_VER_UPPER;506 ftTAIRSPACE_VOLUME;UOM_DIST_VER_UPPER;506FT / GNDTAIRSPACE_VOLUME;VAL_DIST_VER_LOWER;506
+
+Type of restriction : Civil Flight Training Area
+
+Nature of hazard/activity : Flight school training
+
+Time of activity : SAT and SUN, 2300 - 1400 after this period will be notified by NOTAM
+
+Inflight information : Roi Et Approach freq. 125.4MHzZ, if unable contact Khon Kaen Tower
+
+Pilots are advised to contact prior to entering.
+
+Contact agency : -
+
+VTD77TAIRSPACE;CODE_ID;479 KHON KAEN / ROI-ETTAIRSPACE;TXT_NAME;479
+
+Area bounded by the lines joining successively the following point:
+
+160000N 1033915E -
+
+154615N 1032430E -
+
+then along the arc of 30 NM radius centred on ROTTNAVAID;CODE_ID;160 DVOR/DMETNAVAID;CODE_TYPE;160 (160700.59NTNAVAID;GEO_LAT;160 1034619.45ETNAVAID;GEO_LONG;160)
+
+162800N 1032430E -
+
+161400N 1033915E -
+
+then along the arc of 10 NM radius centred on ROTTNAVAID;CODE_ID;160 DVOR/DMETNAVAID;CODE_TYPE;160 to starting point.
+
+ALT 6 000TAIRSPACE_VOLUME;VAL_DIST_VER_UPPER;508 ftTAIRSPACE_VOLUME;UOM_DIST_VER_UPPER;508FT / GNDTAIRSPACE_VOLUME;VAL_DIST_VER_LOWER;508
+
+Type of restriction : Civil Flight Training Area
+
+Nature of hazard/activity : Flight school training
+
+Time of activity : SAT and SUN, 2300 - 1400 after this period will be notified by NOTAM
+
+Inflight information : Roi Et Approach freq. 125.4MHzZ, if unable contact Khon Kaen Tower
+
+Pilots are advised to contact prior to entering.
+
+Contact agency : -
+
+| Identification, name and lateral limits |
+| --- |
+| 1 | 2 | 3 |

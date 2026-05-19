@@ -1,0 +1,4208 @@
+{
+  "meta": {
+    "centerLat": 13.7563,
+    "centerLon": 100.5018,
+    "radiusKm": 900,
+    "sourceAIRAC": "AIP Thailand ENR 2.1 + ENR 5.1 (2025-08-07 AIRAC)",
+    "sourceUrls": [
+      "https://aip.caat.or.th/2025-08-07-AIRAC/html/eAIP/VT-ENR-2.1-en-GB.html",
+      "https://aip.caat.or.th/2025-08-07-AIRAC/html/eAIP/VT-ENR-5.1-en-GB.html"
+    ],
+    "disclaimer": "Educational visualization only. Not for flight planning. Parsed/approximate volumes — verify against current CAAT AIP.",
+    "volumeCount": 147
+  },
+  "airspaces": [
+    {
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "circle",
+      "id": "VTBD-CTR",
+      "shortName": "Bangkok CTR",
+      "name": "Bangkok Control Zone (VTBD/VTBS)",
+      "category": "CTR",
+      "class": "C",
+      "center": [
+        13.91444,
+        100.60556
+      ],
+      "radiusNM": 35,
+      "lowerFt": 0,
+      "upperFt": 11000,
+      "approximate": false,
+      "source": "AIP ENR 2.1",
+      "description": "Don Mueang / Suvarnabhumi CTR. ATC clearance required."
+    },
+    {
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "circle",
+      "id": "VTBW-CTR",
+      "shortName": "Betong CTR",
+      "name": "Betong Control Zone",
+      "category": "CTR",
+      "class": "C",
+      "center": [
+        5.79028,
+        101.15083
+      ],
+      "radiusNM": 10,
+      "lowerFt": 0,
+      "upperFt": 6000,
+      "approximate": true,
+      "source": "AIP ENR 2.1",
+      "description": "Betong (VTBW) CTR — southern border."
+    },
+    {
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "circle",
+      "id": "VTUC-CTR",
+      "shortName": "Buri Ram CTR",
+      "name": "Buri Ram Control Zone",
+      "category": "CTR",
+      "class": "C",
+      "center": [
+        15.22917,
+        103.25222
+      ],
+      "radiusNM": 10,
+      "lowerFt": 0,
+      "upperFt": 8000,
+      "approximate": true,
+      "source": "AIP ENR 2.1",
+      "description": "Buri Ram (VTUC) CTR."
+    },
+    {
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "circle",
+      "id": "VTCC-CTR",
+      "shortName": "Chiang Mai CTR",
+      "name": "Chiang Mai Control Zone",
+      "category": "CTR",
+      "class": "C",
+      "center": [
+        18.76685,
+        98.96264
+      ],
+      "radiusNM": 15,
+      "lowerFt": 0,
+      "upperFt": 9000,
+      "approximate": true,
+      "source": "AIP ENR 2.1",
+      "description": "Chiang Mai International (VTCC) CTR."
+    },
+    {
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "circle",
+      "id": "VTCI-CTR",
+      "shortName": "Chiang Mai Intl CTR",
+      "name": "Chiang Mai Intl Control Zone",
+      "category": "CTR",
+      "class": "C",
+      "center": [
+        18.76685,
+        98.96264
+      ],
+      "radiusNM": 15,
+      "lowerFt": 0,
+      "upperFt": 9000,
+      "approximate": true,
+      "source": "AIP ENR 2.1",
+      "description": "Alias overlay for VTCC."
+    },
+    {
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "circle",
+      "id": "VTCT-CTR",
+      "shortName": "Chiang Rai CTR",
+      "name": "Chiang Rai Control Zone",
+      "category": "CTR",
+      "class": "D",
+      "center": [
+        19.95219,
+        99.88297
+      ],
+      "radiusNM": 10,
+      "lowerFt": 0,
+      "upperFt": 8000,
+      "approximate": true,
+      "source": "AIP ENR 2.1",
+      "description": "Chiang Rai (VTCT) CTR."
+    },
+    {
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "circle",
+      "id": "VTSN-CTR",
+      "shortName": "Chumphon CTR",
+      "name": "Chumphon Control Zone",
+      "category": "CTR",
+      "class": "C",
+      "center": [
+        10.71111,
+        99.36167
+      ],
+      "radiusNM": 10,
+      "lowerFt": 0,
+      "upperFt": 6000,
+      "approximate": true,
+      "source": "AIP ENR 2.1",
+      "description": "Chumphon (VTSN) CTR."
+    },
+    {
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "circle",
+      "id": "VTSS-CTR",
+      "shortName": "Hat Yai CTR",
+      "name": "Hat Yai Control Zone",
+      "category": "CTR",
+      "class": "C",
+      "center": [
+        6.93306,
+        100.39278
+      ],
+      "radiusNM": 15,
+      "lowerFt": 0,
+      "upperFt": 8000,
+      "approximate": true,
+      "source": "AIP ENR 2.1",
+      "description": "Hat Yai International (VTSS) CTR."
+    },
+    {
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "circle",
+      "id": "KPS-CTR",
+      "shortName": "Kamphaeng Saen CTR",
+      "name": "Kamphaeng Saen Control Zone",
+      "category": "CTR",
+      "class": "C",
+      "center": [
+        14.08944,
+        99.91556
+      ],
+      "radiusNM": 25,
+      "lowerFt": 0,
+      "upperFt": 6000,
+      "approximate": false,
+      "source": "AIP ENR 2.1",
+      "description": "RTAF Kamphaeng Saen training CTR."
+    },
+    {
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "circle",
+      "id": "VTUK-CTR",
+      "shortName": "Khon Kaen CTR",
+      "name": "Khon Kaen Control Zone",
+      "category": "CTR",
+      "class": "C",
+      "center": [
+        16.46667,
+        102.78389
+      ],
+      "radiusNM": 10,
+      "lowerFt": 0,
+      "upperFt": 8000,
+      "approximate": true,
+      "source": "AIP ENR 2.1",
+      "description": "Khon Kaen (VTUK) CTR."
+    },
+    {
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "circle",
+      "id": "VTUR-KKZ",
+      "shortName": "Khorat CTR",
+      "name": "Khorat Control Zone",
+      "category": "CTR",
+      "class": "C",
+      "center": [
+        14.93556,
+        102.07861
+      ],
+      "radiusNM": 15,
+      "lowerFt": 0,
+      "upperFt": 8000,
+      "approximate": true,
+      "source": "AIP ENR 2.1",
+      "description": "RTAF Wing 1 Khorat (VTUK area) military CTR."
+    },
+    {
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "circle",
+      "id": "VTSE-CTR",
+      "shortName": "Krabi CTR",
+      "name": "Krabi Control Zone",
+      "category": "CTR",
+      "class": "C",
+      "center": [
+        8.09917,
+        98.98639
+      ],
+      "radiusNM": 10,
+      "lowerFt": 0,
+      "upperFt": 6000,
+      "approximate": true,
+      "source": "AIP ENR 2.1",
+      "description": "Krabi (VTSE) CTR."
+    },
+    {
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "circle",
+      "id": "VTCL-CTR",
+      "shortName": "Lampang CTR",
+      "name": "Lampang Control Zone",
+      "category": "CTR",
+      "class": "C",
+      "center": [
+        18.27417,
+        99.50417
+      ],
+      "radiusNM": 10,
+      "lowerFt": 0,
+      "upperFt": 8000,
+      "approximate": true,
+      "source": "AIP ENR 2.1",
+      "description": "Lampang (VTCL) CTR."
+    },
+    {
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "circle",
+      "id": "VTUL-CTR",
+      "shortName": "Loei CTR",
+      "name": "Loei Control Zone",
+      "category": "CTR",
+      "class": "C",
+      "center": [
+        17.43917,
+        101.72194
+      ],
+      "radiusNM": 10,
+      "lowerFt": 0,
+      "upperFt": 8000,
+      "approximate": true,
+      "source": "AIP ENR 2.1",
+      "description": "Loei (VTUL) CTR."
+    },
+    {
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "circle",
+      "id": "VTCH-CTR",
+      "shortName": "Mae Hong Son CTR",
+      "name": "Mae Hong Son Control Zone",
+      "category": "CTR",
+      "class": "C",
+      "center": [
+        19.30139,
+        97.97583
+      ],
+      "radiusNM": 10,
+      "lowerFt": 0,
+      "upperFt": 8000,
+      "approximate": true,
+      "source": "AIP ENR 2.1",
+      "description": "Mae Hong Son (VTCH) CTR."
+    },
+    {
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "circle",
+      "id": "VTUW-CTR",
+      "shortName": "Mae Sot CTR",
+      "name": "Mae Sot Control Zone",
+      "category": "CTR",
+      "class": "C",
+      "center": [
+        16.69972,
+        98.54528
+      ],
+      "radiusNM": 10,
+      "lowerFt": 0,
+      "upperFt": 8000,
+      "approximate": true,
+      "source": "AIP ENR 2.1",
+      "description": "Mae Sot (VTUW) CTR."
+    },
+    {
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "circle",
+      "id": "VTUP-CTR",
+      "shortName": "Nakhon Phanom CTR",
+      "name": "Nakhon Phanom Control Zone",
+      "category": "CTR",
+      "class": "C",
+      "center": [
+        17.38389,
+        104.64306
+      ],
+      "radiusNM": 10,
+      "lowerFt": 0,
+      "upperFt": 8000,
+      "approximate": true,
+      "source": "AIP ENR 2.1",
+      "description": "Nakhon Phanom (VTUP) CTR."
+    },
+    {
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "circle",
+      "id": "VTSG-CTR",
+      "shortName": "Nakhon Si Thammarat CTR",
+      "name": "Nakhon Si Thammarat Control Zone",
+      "category": "CTR",
+      "class": "C",
+      "center": [
+        8.53917,
+        99.94472
+      ],
+      "radiusNM": 10,
+      "lowerFt": 0,
+      "upperFt": 8000,
+      "approximate": true,
+      "source": "AIP ENR 2.1",
+      "description": "Nakhon Si Thammarat (VTSG) CTR."
+    },
+    {
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "circle",
+      "id": "VTUN-CTR",
+      "shortName": "Nan CTR",
+      "name": "Nan Control Zone",
+      "category": "CTR",
+      "class": "C",
+      "center": [
+        18.80778,
+        100.78333
+      ],
+      "radiusNM": 10,
+      "lowerFt": 0,
+      "upperFt": 8000,
+      "approximate": true,
+      "source": "AIP ENR 2.1",
+      "description": "Nan (VTUN) CTR."
+    },
+    {
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "circle",
+      "id": "VTSC-CTR",
+      "shortName": "Narathiwat CTR",
+      "name": "Narathiwat Control Zone",
+      "category": "CTR",
+      "class": "C",
+      "center": [
+        6.51972,
+        101.74333
+      ],
+      "radiusNM": 10,
+      "lowerFt": 0,
+      "upperFt": 6000,
+      "approximate": true,
+      "source": "AIP ENR 2.1",
+      "description": "Narathiwat (VTSC) CTR."
+    },
+    {
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "circle",
+      "id": "VTSF-CTR",
+      "shortName": "Pattani CTR",
+      "name": "Pattani Control Zone",
+      "category": "CTR",
+      "class": "C",
+      "center": [
+        6.78528,
+        101.15389
+      ],
+      "radiusNM": 10,
+      "lowerFt": 0,
+      "upperFt": 6000,
+      "approximate": true,
+      "source": "AIP ENR 2.1",
+      "description": "Pattani (VTSF) CTR."
+    },
+    {
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "circle",
+      "id": "VTPP-CTR",
+      "shortName": "Phetchabun CTR",
+      "name": "Phetchabun Control Zone",
+      "category": "CTR",
+      "class": "C",
+      "center": [
+        16.67639,
+        101.19528
+      ],
+      "radiusNM": 10,
+      "lowerFt": 0,
+      "upperFt": 8000,
+      "approximate": true,
+      "source": "AIP ENR 2.1",
+      "description": "Phetchabun (VTPP) CTR."
+    },
+    {
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "circle",
+      "id": "VTPO-CTR",
+      "shortName": "Phitsanulok CTR",
+      "name": "Phitsanulok Control Zone",
+      "category": "CTR",
+      "class": "C",
+      "center": [
+        16.78278,
+        100.27917
+      ],
+      "radiusNM": 10,
+      "lowerFt": 0,
+      "upperFt": 8000,
+      "approximate": true,
+      "source": "AIP ENR 2.1",
+      "description": "Phitsanulok (VTPO) CTR."
+    },
+    {
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "circle",
+      "id": "VTCP-CTR",
+      "shortName": "Phrae CTR",
+      "name": "Phrae Control Zone",
+      "category": "CTR",
+      "class": "C",
+      "center": [
+        18.13222,
+        100.16528
+      ],
+      "radiusNM": 10,
+      "lowerFt": 0,
+      "upperFt": 8000,
+      "approximate": true,
+      "source": "AIP ENR 2.1",
+      "description": "Phrae (VTCP) CTR."
+    },
+    {
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "circle",
+      "id": "VTSP-CTR",
+      "shortName": "Phuket CTR",
+      "name": "Phuket Control Zone",
+      "category": "CTR",
+      "class": "C",
+      "center": [
+        8.11306,
+        98.31694
+      ],
+      "radiusNM": 15,
+      "lowerFt": 0,
+      "upperFt": 8000,
+      "approximate": true,
+      "source": "AIP ENR 2.1",
+      "description": "Phuket International (VTSP) CTR."
+    },
+    {
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "circle",
+      "id": "VTSR-CTR",
+      "shortName": "Ranong CTR",
+      "name": "Ranong Control Zone",
+      "category": "CTR",
+      "class": "C",
+      "center": [
+        9.77778,
+        98.58556
+      ],
+      "radiusNM": 10,
+      "lowerFt": 0,
+      "upperFt": 6000,
+      "approximate": true,
+      "source": "AIP ENR 2.1",
+      "description": "Ranong (VTSR) CTR."
+    },
+    {
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "circle",
+      "id": "VTUR-CTR",
+      "shortName": "Roi Et CTR",
+      "name": "Roi Et Control Zone",
+      "category": "CTR",
+      "class": "C",
+      "center": [
+        16.11667,
+        103.77389
+      ],
+      "radiusNM": 10,
+      "lowerFt": 0,
+      "upperFt": 8000,
+      "approximate": true,
+      "source": "AIP ENR 2.1",
+      "description": "Roi Et (VTUR) CTR."
+    },
+    {
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "circle",
+      "id": "VTUQ-CTR",
+      "shortName": "Surat Thani CTR",
+      "name": "Surat Thani Control Zone",
+      "category": "CTR",
+      "class": "C",
+      "center": [
+        9.13278,
+        99.13556
+      ],
+      "radiusNM": 10,
+      "lowerFt": 0,
+      "upperFt": 8000,
+      "approximate": true,
+      "source": "AIP ENR 2.1",
+      "description": "Surat Thani (VTUQ) CTR."
+    },
+    {
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "circle",
+      "id": "VTBS-CTR",
+      "shortName": "Suvarnabhumi CTR",
+      "name": "Suvarnabhumi Control Zone (within Bangkok CTR)",
+      "category": "CTR",
+      "class": "C",
+      "center": [
+        13.68111,
+        100.74722
+      ],
+      "radiusNM": 20,
+      "lowerFt": 0,
+      "upperFt": 11000,
+      "approximate": true,
+      "source": "AIP ENR 2.1",
+      "description": "Suvarnabhumi (VTBS) — overlaps Bangkok CTR."
+    },
+    {
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "circle",
+      "id": "VTPT-CTR",
+      "shortName": "Tak CTR",
+      "name": "Tak Control Zone",
+      "category": "CTR",
+      "class": "C",
+      "center": [
+        16.89583,
+        99.25333
+      ],
+      "radiusNM": 10,
+      "lowerFt": 0,
+      "upperFt": 8000,
+      "approximate": true,
+      "source": "AIP ENR 2.1",
+      "description": "Tak (VTPT) CTR."
+    },
+    {
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "circle",
+      "id": "VTPI-CTR",
+      "shortName": "Takhli CTR",
+      "name": "Takhli RTAF Control Zone",
+      "category": "CTR",
+      "class": "C",
+      "center": [
+        15.27722,
+        100.29583
+      ],
+      "radiusNM": 10,
+      "lowerFt": 0,
+      "upperFt": 8000,
+      "approximate": true,
+      "source": "AIP ENR 2.1",
+      "description": "RTAF Wing 4 Takhli (VTPI) military CTR."
+    },
+    {
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "circle",
+      "id": "VTBU-CTR",
+      "shortName": "U-Tapao CTR",
+      "name": "U-Tapao Control Zone",
+      "category": "CTR",
+      "class": "C",
+      "center": [
+        12.6797,
+        101.005
+      ],
+      "radiusNM": 7,
+      "lowerFt": 0,
+      "upperFt": 3000,
+      "approximate": true,
+      "source": "AIP ENR 2.1",
+      "description": "U-Tapao (VTBU) RTN/RTAF joint base CTR."
+    },
+    {
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "circle",
+      "id": "VTUU-CTR",
+      "shortName": "Ubon Ratchathani CTR",
+      "name": "Ubon Ratchathani Control Zone",
+      "category": "CTR",
+      "class": "C",
+      "center": [
+        15.25139,
+        104.87028
+      ],
+      "radiusNM": 10,
+      "lowerFt": 0,
+      "upperFt": 8000,
+      "approximate": true,
+      "source": "AIP ENR 2.1",
+      "description": "Ubon (VTUU) CTR."
+    },
+    {
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "circle",
+      "id": "VTUD-CTR",
+      "shortName": "Udon Thani CTR",
+      "name": "Udon Thani Control Zone",
+      "category": "CTR",
+      "class": "C",
+      "center": [
+        17.38639,
+        102.78833
+      ],
+      "radiusNM": 10,
+      "lowerFt": 0,
+      "upperFt": 8000,
+      "approximate": true,
+      "source": "AIP ENR 2.1",
+      "description": "Udon Thani (VTUD) CTR."
+    },
+    {
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "circle",
+      "id": "VTBC-CTR",
+      "shortName": "Watthana Nakhon CTR",
+      "name": "Watthana Nakhon RTAF Control Zone",
+      "category": "CTR",
+      "class": "C",
+      "center": [
+        13.76806,
+        102.31389
+      ],
+      "radiusNM": 10,
+      "lowerFt": 0,
+      "upperFt": 8000,
+      "approximate": true,
+      "source": "AIP ENR 2.1",
+      "description": "RTAF Watthana Nakhon (VTBC) military CTR."
+    },
+    {
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "circle",
+      "id": "VTBP-CTR",
+      "shortName": "Hua Hin CTR",
+      "name": "Hua Hin Control Zone (VTBP)",
+      "category": "Class D",
+      "class": "D",
+      "center": [
+        12.63444,
+        99.95117
+      ],
+      "radiusNM": 10,
+      "lowerFt": 0,
+      "upperFt": 2000,
+      "approximate": false,
+      "source": "AIP ENR 2.1",
+      "description": "Hua Hin (VTBP) Class D CTR."
+    },
+    {
+      "id": "VTD16-2",
+      "name": "VTD16 Area 2",
+      "shortName": "VTD16-2",
+      "category": "Danger",
+      "class": "D",
+      "lowerFt": 0,
+      "upperFt": 60000,
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "polygon",
+      "approximate": true,
+      "source": "AIP ENR 5.1 (2025-08-07 AIRAC) — parsed",
+      "description": "Danger area VTD16 Area 2. Coast/arc segments omitted — polygon approximate. . Verify against current AIP before flight.",
+      "points": [
+        [
+          13.432158,
+          100.119258
+        ],
+        [
+          13.0,
+          100.066667
+        ],
+        [
+          13.0,
+          99.666667
+        ],
+        [
+          13.816667,
+          99.383333
+        ],
+        [
+          13.902769,
+          99.971919
+        ]
+      ]
+    },
+    {
+      "id": "VTD16-1",
+      "name": "VTD16 Ratchaburi Area 1",
+      "shortName": "VTD16-A1 Ratchaburi",
+      "category": "Danger",
+      "class": "D",
+      "lowerFt": 0,
+      "upperFt": 12000,
+      "shape": "polygon",
+      "points": [
+        [
+          13.53333,
+          100.26667
+        ],
+        [
+          13.43216,
+          100.11926
+        ],
+        [
+          13.90277,
+          99.97192
+        ],
+        [
+          13.93333,
+          100.18333
+        ],
+        [
+          13.8,
+          100.18333
+        ]
+      ],
+      "approximate": true,
+      "source": "AIP ENR 5.1",
+      "description": "RTAF high-speed combat manoeuvring west of Bangkok."
+    },
+    {
+      "id": "VTD17",
+      "name": "VTD17 Kanchanaburi",
+      "shortName": "VTD17 Kanchanaburi",
+      "category": "Danger",
+      "class": "D",
+      "lowerFt": 0,
+      "upperFt": 9000,
+      "shape": "polygon",
+      "points": [
+        [
+          13.93333,
+          100.18333
+        ],
+        [
+          13.88143,
+          99.8251
+        ],
+        [
+          13.88143,
+          99.38333
+        ],
+        [
+          14.25,
+          99.38333
+        ],
+        [
+          14.15838,
+          99.87379
+        ],
+        [
+          14.1,
+          100.18333
+        ]
+      ],
+      "approximate": true,
+      "source": "AIP ENR 5.1",
+      "description": "RTAF training area west of Kanchanaburi."
+    },
+    {
+      "id": "VTD17-1",
+      "name": "VTD17 Area 1",
+      "shortName": "VTD17-1",
+      "category": "Danger",
+      "class": "D",
+      "lowerFt": 0,
+      "upperFt": 60000,
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "polygon",
+      "approximate": true,
+      "source": "AIP ENR 5.1 (2025-08-07 AIRAC) — parsed",
+      "description": "Danger area VTD17 Area 1. RTAF Flying Training. Verify against current AIP before flight.",
+      "points": [
+        [
+          13.933333,
+          100.183333
+        ],
+        [
+          13.881433,
+          99.825103
+        ],
+        [
+          13.893556,
+          100.596194
+        ],
+        [
+          14.158375,
+          99.873792
+        ],
+        [
+          14.1,
+          100.183333
+        ]
+      ]
+    },
+    {
+      "id": "VTD17-2",
+      "name": "VTD17 Area 2",
+      "shortName": "VTD17-2",
+      "category": "Danger",
+      "class": "D",
+      "lowerFt": 0,
+      "upperFt": 60000,
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "polygon",
+      "approximate": true,
+      "source": "AIP ENR 5.1 (2025-08-07 AIRAC) — parsed",
+      "description": "Danger area VTD17 Area 2. . Verify against current AIP before flight.",
+      "points": [
+        [
+          13.881433,
+          99.825103
+        ],
+        [
+          13.816667,
+          99.383333
+        ],
+        [
+          14.25,
+          99.383333
+        ],
+        [
+          14.158375,
+          99.873792
+        ],
+        [
+          13.893556,
+          100.596194
+        ]
+      ]
+    },
+    {
+      "id": "VTD18",
+      "name": "VTD18 Suphan Buri",
+      "shortName": "VTD18 Suphan Buri",
+      "category": "Danger",
+      "class": "D",
+      "lowerFt": 0,
+      "upperFt": 8000,
+      "shape": "polygon",
+      "points": [
+        [
+          14.1,
+          100.18333
+        ],
+        [
+          14.15838,
+          99.87379
+        ],
+        [
+          14.25,
+          99.38333
+        ],
+        [
+          14.9,
+          99.95
+        ],
+        [
+          14.55117,
+          100.21945
+        ],
+        [
+          14.31667,
+          100.4
+        ]
+      ],
+      "approximate": true,
+      "source": "AIP ENR 5.1",
+      "description": "RTAF combat manoeuvring north of Suphan Buri."
+    },
+    {
+      "id": "VTD18-1",
+      "name": "VTD18 Area 1",
+      "shortName": "VTD18-1",
+      "category": "Danger",
+      "class": "D",
+      "lowerFt": 0,
+      "upperFt": 20000,
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "polygon",
+      "approximate": true,
+      "source": "AIP ENR 5.1 (2025-08-07 AIRAC) — parsed",
+      "description": "Danger area VTD18 Area 1. RTAF Flying Training. Verify against current AIP before flight.",
+      "points": [
+        [
+          14.1,
+          100.183333
+        ],
+        [
+          14.158375,
+          99.873792
+        ],
+        [
+          13.893556,
+          100.596194
+        ],
+        [
+          14.551161,
+          100.21945
+        ],
+        [
+          14.316667,
+          100.4
+        ]
+      ]
+    },
+    {
+      "id": "VTD18-2",
+      "name": "VTD18 Area 2",
+      "shortName": "VTD18-2",
+      "category": "Danger",
+      "class": "D",
+      "lowerFt": 0,
+      "upperFt": 20000,
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "polygon",
+      "approximate": true,
+      "source": "AIP ENR 5.1 (2025-08-07 AIRAC) — parsed",
+      "description": "Danger area VTD18 Area 2. . Verify against current AIP before flight.",
+      "points": [
+        [
+          14.158375,
+          99.873792
+        ],
+        [
+          14.25,
+          99.383333
+        ],
+        [
+          14.9,
+          99.95
+        ],
+        [
+          14.551161,
+          100.21945
+        ],
+        [
+          13.893556,
+          100.596194
+        ]
+      ]
+    },
+    {
+      "id": "VTD19",
+      "name": "VTD19",
+      "shortName": "VTD19",
+      "category": "Danger",
+      "class": "D",
+      "lowerFt": 0,
+      "upperFt": 60000,
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "polygon",
+      "approximate": true,
+      "source": "AIP ENR 5.1 (2025-08-07 AIRAC) — parsed",
+      "description": "Danger area VTD19. RTAF Jettison Area. Verify against current AIP before flight.",
+      "points": [
+        [
+          13.4,
+          100.25
+        ],
+        [
+          13.366667,
+          100.366667
+        ],
+        [
+          13.033333,
+          100.2
+        ],
+        [
+          13.05,
+          100.15
+        ]
+      ]
+    },
+    {
+      "id": "VTD20",
+      "name": "VTD20 Hua Hin",
+      "shortName": "VTD20 Hua Hin",
+      "category": "Danger",
+      "class": "D",
+      "lowerFt": 0,
+      "upperFt": 11000,
+      "shape": "polygon",
+      "points": [
+        [
+          13.0,
+          99.61667
+        ],
+        [
+          13.0,
+          100.16667
+        ],
+        [
+          12.16667,
+          100.16667
+        ],
+        [
+          12.16667,
+          99.45
+        ],
+        [
+          12.55,
+          99.42
+        ],
+        [
+          13.0,
+          99.61667
+        ]
+      ],
+      "approximate": true,
+      "source": "AIP ENR 5.1",
+      "description": "Civil flight school training area around Hua Hin."
+    },
+    {
+      "id": "VTD21-2",
+      "name": "VTD21 Area 2",
+      "shortName": "VTD21-2",
+      "category": "Danger",
+      "class": "D",
+      "lowerFt": 0,
+      "upperFt": 60000,
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "polygon",
+      "approximate": true,
+      "source": "AIP ENR 5.1 (2025-08-07 AIRAC) — parsed",
+      "description": "Danger area VTD21 Area 2. . Verify against current AIP before flight.",
+      "points": [
+        [
+          12.333333,
+          100.68
+        ],
+        [
+          12.666667,
+          100.68
+        ],
+        [
+          12.666667,
+          100.966667
+        ],
+        [
+          12.333333,
+          100.966667
+        ]
+      ]
+    },
+    {
+      "id": "VTD21-3",
+      "name": "VTD21 Area 3",
+      "shortName": "VTD21-3",
+      "category": "Danger",
+      "class": "D",
+      "lowerFt": 0,
+      "upperFt": 60000,
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "polygon",
+      "approximate": true,
+      "source": "AIP ENR 5.1 (2025-08-07 AIRAC) — parsed",
+      "description": "Danger area VTD21 Area 3. . Verify against current AIP before flight.",
+      "points": [
+        [
+          12.333333,
+          100.966667
+        ],
+        [
+          12.616667,
+          100.966667
+        ],
+        [
+          12.616667,
+          101.25
+        ],
+        [
+          12.333333,
+          101.25
+        ]
+      ]
+    },
+    {
+      "id": "VTD21-1",
+      "name": "VTD21 Sattahip Bay Area 1",
+      "shortName": "VTD21-A1 Sattahip",
+      "category": "Danger",
+      "class": "D",
+      "lowerFt": 0,
+      "upperFt": 6000,
+      "shape": "polygon",
+      "points": [
+        [
+          12.66667,
+          100.5
+        ],
+        [
+          12.66667,
+          100.68
+        ],
+        [
+          12.33333,
+          100.68
+        ],
+        [
+          12.33333,
+          100.5
+        ]
+      ],
+      "approximate": false,
+      "source": "AIP ENR 5.1",
+      "description": "RTN surface ship gun training range."
+    },
+    {
+      "id": "VTD22",
+      "name": "VTD22",
+      "shortName": "VTD22",
+      "category": "Danger",
+      "class": "D",
+      "lowerFt": 0,
+      "upperFt": 60000,
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "polygon",
+      "approximate": true,
+      "source": "AIP ENR 5.1 (2025-08-07 AIRAC) — parsed",
+      "description": "Danger area VTD22. RTN Gun Training Range for surface ships and aircraft. Verify against current AIP before flight.",
+      "points": [
+        [
+          12.855,
+          100.666667
+        ],
+        [
+          12.855,
+          100.85
+        ],
+        [
+          12.666667,
+          100.85
+        ],
+        [
+          12.666667,
+          100.666667
+        ]
+      ]
+    },
+    {
+      "id": "VTD23",
+      "name": "VTD23",
+      "shortName": "VTD23",
+      "category": "Danger",
+      "class": "D",
+      "lowerFt": 0,
+      "upperFt": 60000,
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "polygon",
+      "approximate": true,
+      "source": "AIP ENR 5.1 (2025-08-07 AIRAC) — parsed",
+      "description": "Danger area VTD23. RTN Gun Training Range for surface ships and aircraft. Verify against current AIP before flight.",
+      "points": [
+        [
+          12.833333,
+          100.5
+        ],
+        [
+          13.083333,
+          100.5
+        ],
+        [
+          13.083333,
+          100.75
+        ],
+        [
+          12.833333,
+          100.75
+        ]
+      ]
+    },
+    {
+      "id": "VTD24",
+      "name": "VTD24 Ko Chang (Trat)",
+      "shortName": "VTD24 Ko Chang",
+      "category": "Danger",
+      "class": "D",
+      "lowerFt": 0,
+      "upperFt": 15000,
+      "shape": "circle",
+      "center": [
+        12.051667,
+        102.243333
+      ],
+      "radiusNM": 5,
+      "approximate": false,
+      "source": "AIP ENR 5.1 (2025-08-07 AIRAC)",
+      "description": "RTN gun training range for surface ships and aircraft. Notified by NOTAM."
+    },
+    {
+      "id": "VTD25",
+      "name": "VTD25 Ko Tao (Chumphon)",
+      "shortName": "VTD25 Ko Tao",
+      "category": "Danger",
+      "class": "D",
+      "lowerFt": 0,
+      "upperFt": 15000,
+      "shape": "circle",
+      "center": [
+        9.943333,
+        99.996667
+      ],
+      "radiusNM": 5,
+      "approximate": false,
+      "source": "AIP ENR 5.1 (2025-08-07 AIRAC)",
+      "description": "RTN weapon training range for surface ships and aircraft. Notified by NOTAM."
+    },
+    {
+      "id": "VTD26",
+      "name": "VTD26",
+      "shortName": "VTD26",
+      "category": "Danger",
+      "class": "D",
+      "lowerFt": 0,
+      "upperFt": 60000,
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "polygon",
+      "approximate": true,
+      "source": "AIP ENR 5.1 (2025-08-07 AIRAC) — parsed",
+      "description": "Danger area VTD26. RTN Gun Training Range. Verify against current AIP before flight.",
+      "points": [
+        [
+          12.558333,
+          100.921667
+        ],
+        [
+          12.621667,
+          100.921667
+        ],
+        [
+          12.621667,
+          100.955
+        ],
+        [
+          12.558333,
+          100.955
+        ]
+      ]
+    },
+    {
+      "id": "VTD27",
+      "name": "VTD27",
+      "shortName": "VTD27",
+      "category": "Danger",
+      "class": "D",
+      "lowerFt": 0,
+      "upperFt": 60000,
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "polygon",
+      "approximate": true,
+      "source": "AIP ENR 5.1 (2025-08-07 AIRAC) — parsed",
+      "description": "Danger area VTD27. RTN Gun Training Range. Verify against current AIP before flight.",
+      "points": [
+        [
+          12.92,
+          102.285
+        ],
+        [
+          12.843333,
+          102.34
+        ],
+        [
+          12.93,
+          102.38
+        ],
+        [
+          12.991667,
+          102.356667
+        ]
+      ]
+    },
+    {
+      "id": "VTD28",
+      "name": "VTD28",
+      "shortName": "VTD28",
+      "category": "Danger",
+      "class": "D",
+      "lowerFt": 0,
+      "upperFt": 60000,
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "polygon",
+      "approximate": true,
+      "source": "AIP ENR 5.1 (2025-08-07 AIRAC) — parsed",
+      "description": "Danger area VTD28. RTN Gun Training Range. Verify against current AIP before flight.",
+      "points": [
+        [
+          12.841667,
+          100.828333
+        ],
+        [
+          12.855,
+          100.861667
+        ],
+        [
+          12.78,
+          100.891667
+        ],
+        [
+          12.763333,
+          100.86
+        ]
+      ]
+    },
+    {
+      "id": "VTD29",
+      "name": "VTD29 Hin Rakit (Pattani)",
+      "shortName": "VTD29 Hin Rakit",
+      "category": "Danger",
+      "class": "D",
+      "lowerFt": 0,
+      "upperFt": 15000,
+      "shape": "circle",
+      "center": [
+        6.733333,
+        101.733333
+      ],
+      "radiusNM": 3,
+      "approximate": false,
+      "source": "AIP ENR 5.1 (2025-08-07 AIRAC)",
+      "description": "RTN weapon training range for surface ships and aircraft. Notified by NOTAM."
+    },
+    {
+      "id": "VTD30-1",
+      "name": "VTD30 Area 1",
+      "shortName": "VTD30-1",
+      "category": "Danger",
+      "class": "D",
+      "lowerFt": 0,
+      "upperFt": 60000,
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "polygon",
+      "approximate": true,
+      "source": "AIP ENR 5.1 (2025-08-07 AIRAC) — parsed",
+      "description": "Danger area VTD30 Area 1. RTAF Flying Training. Verify against current AIP before flight.",
+      "points": [
+        [
+          14.81825,
+          101.263278
+        ],
+        [
+          16.334833,
+          102.179806
+        ],
+        [
+          16.068194,
+          102.479778
+        ],
+        [
+          14.99325,
+          101.996528
+        ],
+        [
+          14.718278,
+          101.379944
+        ]
+      ]
+    },
+    {
+      "id": "VTD30-2",
+      "name": "VTD30 Area 2",
+      "shortName": "VTD30-2",
+      "category": "Danger",
+      "class": "D",
+      "lowerFt": 0,
+      "upperFt": 60000,
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "polygon",
+      "approximate": true,
+      "source": "AIP ENR 5.1 (2025-08-07 AIRAC) — parsed",
+      "description": "Danger area VTD30 Area 2. . Verify against current AIP before flight.",
+      "points": [
+        [
+          15.151583,
+          102.329806
+        ],
+        [
+          16.001528,
+          102.713083
+        ],
+        [
+          15.818222,
+          103.363
+        ],
+        [
+          15.21825,
+          103.363
+        ]
+      ]
+    },
+    {
+      "id": "VTD31",
+      "name": "VTD31",
+      "shortName": "VTD31",
+      "category": "Danger",
+      "class": "D",
+      "lowerFt": 0,
+      "upperFt": 60000,
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "polygon",
+      "approximate": true,
+      "source": "AIP ENR 5.1 (2025-08-07 AIRAC) — parsed",
+      "description": "Danger area VTD31. RTAF Flying Training. Verify against current AIP before flight.",
+      "points": [
+        [
+          15.05,
+          100.166667
+        ],
+        [
+          15.083333,
+          101.0
+        ],
+        [
+          14.5,
+          100.916667
+        ],
+        [
+          14.616667,
+          100.15
+        ]
+      ]
+    },
+    {
+      "id": "VTD32",
+      "name": "VTD32",
+      "shortName": "VTD32",
+      "category": "Danger",
+      "class": "D",
+      "lowerFt": 0,
+      "upperFt": 60000,
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "circle",
+      "approximate": true,
+      "source": "AIP ENR 5.1 (2025-08-07 AIRAC) — parsed",
+      "description": "Danger area VTD32. RTAF Flying Training. Verify against current AIP before flight.",
+      "center": [
+        14.935,
+        102.072722
+      ],
+      "radiusNM": 50.0
+    },
+    {
+      "id": "VTD33-1",
+      "name": "VTD33 Area 1",
+      "shortName": "VTD33-1",
+      "category": "Danger",
+      "class": "D",
+      "lowerFt": 0,
+      "upperFt": 60000,
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "polygon",
+      "approximate": true,
+      "source": "AIP ENR 5.1 (2025-08-07 AIRAC) — parsed",
+      "description": "Danger area VTD33 Area 1. RTAF Flying Training. Verify against current AIP before flight.",
+      "points": [
+        [
+          15.690497,
+          99.729244
+        ],
+        [
+          15.690039,
+          99.856333
+        ],
+        [
+          15.115647,
+          100.044136
+        ],
+        [
+          15.001717,
+          99.954789
+        ]
+      ]
+    },
+    {
+      "id": "VTD33-2",
+      "name": "VTD33 Area 2",
+      "shortName": "VTD33-2",
+      "category": "Danger",
+      "class": "D",
+      "lowerFt": 0,
+      "upperFt": 60000,
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "polygon",
+      "approximate": true,
+      "source": "AIP ENR 5.1 (2025-08-07 AIRAC) — parsed",
+      "description": "Danger area VTD33 Area 2. . Verify against current AIP before flight.",
+      "points": [
+        [
+          16.61815,
+          99.423092
+        ],
+        [
+          15.690497,
+          99.729244
+        ],
+        [
+          15.001717,
+          99.954789
+        ],
+        [
+          15.003381,
+          99.390942
+        ],
+        [
+          15.646592,
+          98.571536
+        ],
+        [
+          16.585789,
+          98.589558
+        ],
+        [
+          16.618083,
+          98.880222
+        ]
+      ]
+    },
+    {
+      "id": "VTD34-1",
+      "name": "VTD34 Area 1",
+      "shortName": "VTD34-1",
+      "category": "Danger",
+      "class": "D",
+      "lowerFt": 0,
+      "upperFt": 28000,
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "polygon",
+      "approximate": true,
+      "source": "AIP ENR 5.1 (2025-08-07 AIRAC) — parsed",
+      "description": "Danger area VTD34 Area 1. Coast/arc segments omitted — polygon approximate. RTAF Flying Training. Verify against current AIP before flight.",
+      "points": [
+        [
+          15.218222,
+          101.029972
+        ],
+        [
+          15.218222,
+          100.446694
+        ],
+        [
+          15.401528,
+          100.363389
+        ],
+        [
+          16.273069,
+          100.363361
+        ],
+        [
+          16.582833,
+          100.774514
+        ],
+        [
+          16.534806,
+          101.446556
+        ],
+        [
+          16.770372,
+          100.291306
+        ]
+      ]
+    },
+    {
+      "id": "VTD34-2",
+      "name": "VTD34 Area 2",
+      "shortName": "VTD34-2",
+      "category": "Danger",
+      "class": "D",
+      "lowerFt": 0,
+      "upperFt": 60000,
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "polygon",
+      "approximate": true,
+      "source": "AIP ENR 5.1 (2025-08-07 AIRAC) — parsed",
+      "description": "Danger area VTD34 Area 2. Coast/arc segments omitted — polygon approximate. . Verify against current AIP before flight.",
+      "points": [
+        [
+          15.218222,
+          101.029972
+        ],
+        [
+          15.218247,
+          100.467597
+        ],
+        [
+          15.539628,
+          100.363364
+        ],
+        [
+          16.273069,
+          100.363361
+        ],
+        [
+          16.582833,
+          100.774514
+        ],
+        [
+          16.534806,
+          101.446556
+        ],
+        [
+          16.770372,
+          100.291306
+        ]
+      ]
+    },
+    {
+      "id": "VTD35",
+      "name": "VTD35",
+      "shortName": "VTD35",
+      "category": "Danger",
+      "class": "D",
+      "lowerFt": 0,
+      "upperFt": 60000,
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "polygon",
+      "approximate": true,
+      "source": "AIP ENR 5.1 (2025-08-07 AIRAC) — parsed",
+      "description": "Danger area VTD35. RTAF Flying Training. Verify against current AIP before flight.",
+      "points": [
+        [
+          12.05,
+          99.55
+        ],
+        [
+          12.133333,
+          100.05
+        ],
+        [
+          11.783333,
+          99.833333
+        ],
+        [
+          11.483333,
+          99.633333
+        ],
+        [
+          11.0,
+          99.533333
+        ],
+        [
+          11.0,
+          99.116667
+        ],
+        [
+          12.133333,
+          99.55
+        ]
+      ]
+    },
+    {
+      "id": "VTD40-1",
+      "name": "VTD40 Area 1",
+      "shortName": "VTD40-1",
+      "category": "Danger",
+      "class": "D",
+      "lowerFt": 0,
+      "upperFt": 5000,
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "polygon",
+      "approximate": true,
+      "source": "AIP ENR 5.1 (2025-08-07 AIRAC) — parsed",
+      "description": "Danger area VTD40 Area 1. RTAF Flying Training. Verify against current AIP before flight.",
+      "points": [
+        [
+          13.983333,
+          101.633333
+        ],
+        [
+          13.983333,
+          102.333333
+        ],
+        [
+          13.5,
+          102.333333
+        ],
+        [
+          13.5,
+          101.316667
+        ]
+      ]
+    },
+    {
+      "id": "VTD40-2",
+      "name": "VTD40 Area 2",
+      "shortName": "VTD40-2",
+      "category": "Danger",
+      "class": "D",
+      "lowerFt": 0,
+      "upperFt": 60000,
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "polygon",
+      "approximate": true,
+      "source": "AIP ENR 5.1 (2025-08-07 AIRAC) — parsed",
+      "description": "Danger area VTD40 Area 2. RTAF Flying Training. Verify against current AIP before flight.",
+      "points": [
+        [
+          13.983333,
+          101.9
+        ],
+        [
+          13.983333,
+          102.333333
+        ],
+        [
+          13.5,
+          102.333333
+        ],
+        [
+          13.5,
+          101.9
+        ]
+      ]
+    },
+    {
+      "id": "VTD41",
+      "name": "VTD41",
+      "shortName": "VTD41",
+      "category": "Danger",
+      "class": "D",
+      "lowerFt": 0,
+      "upperFt": 20000,
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "polygon",
+      "approximate": true,
+      "source": "AIP ENR 5.1 (2025-08-07 AIRAC) — parsed",
+      "description": "Danger area VTD41. Coast/arc segments omitted — polygon approximate. RTAF Flying Training. Verify against current AIP before flight.",
+      "points": [
+        [
+          20.45,
+          99.9
+        ],
+        [
+          18.783333,
+          99.9
+        ],
+        [
+          18.783333,
+          99.15
+        ],
+        [
+          18.933333,
+          98.9
+        ],
+        [
+          19.3,
+          98.7
+        ],
+        [
+          19.766667,
+          98.7
+        ],
+        [
+          18.77,
+          98.97
+        ]
+      ]
+    },
+    {
+      "id": "VTD42",
+      "name": "VTD42",
+      "shortName": "VTD42",
+      "category": "Danger",
+      "class": "D",
+      "lowerFt": 0,
+      "upperFt": 60000,
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "polygon",
+      "approximate": true,
+      "source": "AIP ENR 5.1 (2025-08-07 AIRAC) — parsed",
+      "description": "Danger area VTD42. RTAF Flying Training. Verify against current AIP before flight.",
+      "points": [
+        [
+          18.783333,
+          97.75
+        ],
+        [
+          18.783333,
+          98.8
+        ],
+        [
+          18.333333,
+          98.966667
+        ],
+        [
+          17.5,
+          98.966667
+        ],
+        [
+          17.5,
+          98.0
+        ]
+      ]
+    },
+    {
+      "id": "VTD43",
+      "name": "VTD43",
+      "shortName": "VTD43",
+      "category": "Danger",
+      "class": "D",
+      "lowerFt": 0,
+      "upperFt": 60000,
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "polygon",
+      "approximate": true,
+      "source": "AIP ENR 5.1 (2025-08-07 AIRAC) — parsed",
+      "description": "Danger area VTD43. RTAF Flying Training. Verify against current AIP before flight.",
+      "points": [
+        [
+          15.218222,
+          100.796667
+        ],
+        [
+          16.451472,
+          101.929833
+        ],
+        [
+          16.334833,
+          102.179806
+        ],
+        [
+          14.81825,
+          101.263278
+        ]
+      ]
+    },
+    {
+      "id": "VTD44",
+      "name": "VTD44",
+      "shortName": "VTD44",
+      "category": "Danger",
+      "class": "D",
+      "lowerFt": 0,
+      "upperFt": 60000,
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "polygon",
+      "approximate": true,
+      "source": "AIP ENR 5.1 (2025-08-07 AIRAC) — parsed",
+      "description": "Danger area VTD44. RTAF Flying Training. Verify against current AIP before flight.",
+      "points": [
+        [
+          15.35,
+          104.633333
+        ],
+        [
+          15.35,
+          103.366667
+        ],
+        [
+          16.25,
+          103.366667
+        ]
+      ]
+    },
+    {
+      "id": "VTD45",
+      "name": "VTD45",
+      "shortName": "VTD45",
+      "category": "Danger",
+      "class": "D",
+      "lowerFt": 0,
+      "upperFt": 60000,
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "polygon",
+      "approximate": true,
+      "source": "AIP ENR 5.1 (2025-08-07 AIRAC) — parsed",
+      "description": "Danger area VTD45. RTAF Flying Training. Verify against current AIP before flight.",
+      "points": [
+        [
+          14.966667,
+          105.616667
+        ],
+        [
+          15.066667,
+          105.0
+        ],
+        [
+          15.033333,
+          104.866667
+        ],
+        [
+          14.633333,
+          103.666667
+        ],
+        [
+          14.416667,
+          103.666667
+        ]
+      ]
+    },
+    {
+      "id": "VTD46",
+      "name": "VTD46",
+      "shortName": "VTD46",
+      "category": "Danger",
+      "class": "D",
+      "lowerFt": 0,
+      "upperFt": 60000,
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "polygon",
+      "approximate": true,
+      "source": "AIP ENR 5.1 (2025-08-07 AIRAC) — parsed",
+      "description": "Danger area VTD46. RTAF Flying Training. Verify against current AIP before flight.",
+      "points": [
+        [
+          14.6,
+          102.033333
+        ],
+        [
+          14.85,
+          102.416667
+        ],
+        [
+          14.85,
+          103.416667
+        ],
+        [
+          14.366667,
+          103.416667
+        ],
+        [
+          13.933333,
+          102.783333
+        ],
+        [
+          13.933333,
+          101.933333
+        ]
+      ]
+    },
+    {
+      "id": "VTD47",
+      "name": "VTD47",
+      "shortName": "VTD47",
+      "category": "Danger",
+      "class": "D",
+      "lowerFt": 0,
+      "upperFt": 60000,
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "polygon",
+      "approximate": true,
+      "source": "AIP ENR 5.1 (2025-08-07 AIRAC) — parsed",
+      "description": "Danger area VTD47. Coast/arc segments omitted — polygon approximate. RTAF Flying Training. Verify against current AIP before flight.",
+      "points": [
+        [
+          13.783333,
+          100.45
+        ],
+        [
+          13.633333,
+          100.45
+        ],
+        [
+          13.483333,
+          100.35
+        ],
+        [
+          13.533333,
+          100.266667
+        ],
+        [
+          13.8,
+          100.183333
+        ]
+      ]
+    },
+    {
+      "id": "VTD48",
+      "name": "VTD48",
+      "shortName": "VTD48",
+      "category": "Danger",
+      "class": "D",
+      "lowerFt": 0,
+      "upperFt": 60000,
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "polygon",
+      "approximate": true,
+      "source": "AIP ENR 5.1 (2025-08-07 AIRAC) — parsed",
+      "description": "Danger area VTD48. RTAF Flying Training. Verify against current AIP before flight.",
+      "points": [
+        [
+          6.6,
+          100.066667
+        ],
+        [
+          6.5,
+          99.666667
+        ],
+        [
+          7.1,
+          99.55
+        ],
+        [
+          7.0,
+          100.083333
+        ],
+        [
+          6.75,
+          100.116667
+        ]
+      ]
+    },
+    {
+      "id": "VTD49",
+      "name": "VTD49",
+      "shortName": "VTD49",
+      "category": "Danger",
+      "class": "D",
+      "lowerFt": 0,
+      "upperFt": 60000,
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "polygon",
+      "approximate": true,
+      "source": "AIP ENR 5.1 (2025-08-07 AIRAC) — parsed",
+      "description": "Danger area VTD49. RTAF Flying Training. Verify against current AIP before flight.",
+      "points": [
+        [
+          6.6,
+          100.65
+        ],
+        [
+          6.933333,
+          100.766667
+        ],
+        [
+          6.933333,
+          101.416667
+        ],
+        [
+          6.4,
+          101.716667
+        ],
+        [
+          6.25,
+          101.166667
+        ]
+      ]
+    },
+    {
+      "id": "VTD50",
+      "name": "VTD50",
+      "shortName": "VTD50",
+      "category": "Danger",
+      "class": "D",
+      "lowerFt": 0,
+      "upperFt": 6000,
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "polygon",
+      "approximate": true,
+      "source": "AIP ENR 5.1 (2025-08-07 AIRAC) — parsed",
+      "description": "Danger area VTD50. Coast/arc segments omitted — polygon approximate. RTAF Flying Training. Verify against current AIP before flight.",
+      "points": [
+        [
+          6.933333,
+          100.766667
+        ],
+        [
+          7.183333,
+          100.616667
+        ],
+        [
+          7.9,
+          100.65
+        ],
+        [
+          6.933333,
+          101.4
+        ]
+      ]
+    },
+    {
+      "id": "VTD53",
+      "name": "VTD53",
+      "shortName": "VTD53",
+      "category": "Danger",
+      "class": "D",
+      "lowerFt": 0,
+      "upperFt": 60000,
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "polygon",
+      "approximate": true,
+      "source": "AIP ENR 5.1 (2025-08-07 AIRAC) — parsed",
+      "description": "Danger area VTD53. RTAF Flying Training. Verify against current AIP before flight.",
+      "points": [
+        [
+          16.883333,
+          99.5
+        ],
+        [
+          16.883333,
+          99.15
+        ],
+        [
+          16.166667,
+          99.566667
+        ],
+        [
+          15.383333,
+          100.083333
+        ],
+        [
+          15.383333,
+          100.283333
+        ],
+        [
+          16.033333,
+          100.283333
+        ]
+      ]
+    },
+    {
+      "id": "VTD54",
+      "name": "VTD54",
+      "shortName": "VTD54",
+      "category": "Danger",
+      "class": "D",
+      "lowerFt": 0,
+      "upperFt": 60000,
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "polygon",
+      "approximate": true,
+      "source": "AIP ENR 5.1 (2025-08-07 AIRAC) — parsed",
+      "description": "Danger area VTD54. RTAF Flying Training. Verify against current AIP before flight.",
+      "points": [
+        [
+          15.483333,
+          104.816667
+        ],
+        [
+          15.483333,
+          104.883333
+        ],
+        [
+          16.233333,
+          104.916667
+        ],
+        [
+          16.233333,
+          104.15
+        ]
+      ]
+    },
+    {
+      "id": "VTD55",
+      "name": "VTD55",
+      "shortName": "VTD55",
+      "category": "Danger",
+      "class": "D",
+      "lowerFt": 0,
+      "upperFt": 60000,
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "polygon",
+      "approximate": true,
+      "source": "AIP ENR 5.1 (2025-08-07 AIRAC) — parsed",
+      "description": "Danger area VTD55. RTAF Flying Training. Verify against current AIP before flight.",
+      "points": [
+        [
+          15.483333,
+          104.883333
+        ],
+        [
+          16.233333,
+          104.916667
+        ],
+        [
+          16.233333,
+          105.016667
+        ],
+        [
+          15.6,
+          105.616667
+        ],
+        [
+          15.45,
+          105.0
+        ]
+      ]
+    },
+    {
+      "id": "VTD57-1",
+      "name": "VTD57 Area 1",
+      "shortName": "VTD57-1",
+      "category": "Danger",
+      "class": "D",
+      "lowerFt": 0,
+      "upperFt": 60000,
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "polygon",
+      "approximate": true,
+      "source": "AIP ENR 5.1 (2025-08-07 AIRAC) — parsed",
+      "description": "Danger area VTD57 Area 1. Coast/arc segments omitted — polygon approximate. RTAF Flying Training. Verify against current AIP before flight.",
+      "points": [
+        [
+          15.401528,
+          100.363389
+        ],
+        [
+          16.501444,
+          100.068972
+        ],
+        [
+          16.601444,
+          99.980083
+        ],
+        [
+          16.599814,
+          100.280017
+        ],
+        [
+          16.582833,
+          100.774514
+        ],
+        [
+          16.273069,
+          100.363361
+        ]
+      ]
+    },
+    {
+      "id": "VTD57-2",
+      "name": "VTD57 Area 2",
+      "shortName": "VTD57-2",
+      "category": "Danger",
+      "class": "D",
+      "lowerFt": 0,
+      "upperFt": 60000,
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "polygon",
+      "approximate": true,
+      "source": "AIP ENR 5.1 (2025-08-07 AIRAC) — parsed",
+      "description": "Danger area VTD57 Area 2. Coast/arc segments omitted — polygon approximate. . Verify against current AIP before flight.",
+      "points": [
+        [
+          15.539628,
+          100.363364
+        ],
+        [
+          16.601267,
+          100.016872
+        ],
+        [
+          16.599814,
+          100.280017
+        ],
+        [
+          16.582833,
+          100.774514
+        ],
+        [
+          16.273069,
+          100.363361
+        ]
+      ]
+    },
+    {
+      "id": "VTD58",
+      "name": "VTD58",
+      "shortName": "VTD58",
+      "category": "Danger",
+      "class": "D",
+      "lowerFt": 0,
+      "upperFt": 39000,
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "polygon",
+      "approximate": true,
+      "source": "AIP ENR 5.1 (2025-08-07 AIRAC) — parsed",
+      "description": "Danger area VTD58. Coast/arc segments omitted — polygon approximate. RTAF Flying Training. Verify against current AIP before flight.",
+      "points": [
+        [
+          11.431756,
+          99.398447
+        ],
+        [
+          10.858081,
+          99.671317
+        ],
+        [
+          9.421667,
+          99.668333
+        ],
+        [
+          8.550339,
+          98.558764
+        ],
+        [
+          8.607211,
+          98.409161
+        ],
+        [
+          9.138333,
+          97.855
+        ],
+        [
+          9.483333,
+          97.266667
+        ],
+        [
+          9.833333,
+          98.416667
+        ],
+        [
+          10.001239,
+          98.618297
+        ]
+      ]
+    },
+    {
+      "id": "VTD59-1",
+      "name": "VTD59 Area 1",
+      "shortName": "VTD59-1",
+      "category": "Danger",
+      "class": "D",
+      "lowerFt": 0,
+      "upperFt": 60000,
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "polygon",
+      "approximate": true,
+      "source": "AIP ENR 5.1 (2025-08-07 AIRAC) — parsed",
+      "description": "Danger area VTD59 Area 1. Coast/arc segments omitted — polygon approximate. RTAF Flying Training. Verify against current AIP before flight.",
+      "points": [
+        [
+          10.966667,
+          99.1
+        ],
+        [
+          10.966667,
+          99.575
+        ],
+        [
+          9.55,
+          99.183333
+        ],
+        [
+          8.871667,
+          98.825
+        ],
+        [
+          8.55,
+          98.558333
+        ],
+        [
+          8.6,
+          98.2
+        ],
+        [
+          9.483333,
+          97.6
+        ],
+        [
+          9.483333,
+          98.266667
+        ],
+        [
+          9.833333,
+          98.416667
+        ],
+        [
+          9.916667,
+          98.533333
+        ]
+      ]
+    },
+    {
+      "id": "VTD59-2",
+      "name": "VTD59 Area 2",
+      "shortName": "VTD59-2",
+      "category": "Danger",
+      "class": "D",
+      "lowerFt": 0,
+      "upperFt": 60000,
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "polygon",
+      "approximate": true,
+      "source": "AIP ENR 5.1 (2025-08-07 AIRAC) — parsed",
+      "description": "Danger area VTD59 Area 2. Coast/arc segments omitted — polygon approximate. . Verify against current AIP before flight.",
+      "points": [
+        [
+          9.483333,
+          97.6
+        ],
+        [
+          8.6,
+          98.2
+        ],
+        [
+          8.333333,
+          97.858333
+        ],
+        [
+          8.333333,
+          97.5
+        ],
+        [
+          9.483333,
+          97.5
+        ]
+      ]
+    },
+    {
+      "id": "VTD60-1",
+      "name": "VTD60 Area 1",
+      "shortName": "VTD60-1",
+      "category": "Danger",
+      "class": "D",
+      "lowerFt": 0,
+      "upperFt": 60000,
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "polygon",
+      "approximate": true,
+      "source": "AIP ENR 5.1 (2025-08-07 AIRAC) — parsed",
+      "description": "Danger area VTD60 Area 1. RTAF Flying Training. Verify against current AIP before flight.",
+      "points": [
+        [
+          9.352347,
+          99.530281
+        ],
+        [
+          10.571011,
+          99.910867
+        ],
+        [
+          9.80855,
+          100.298553
+        ],
+        [
+          8.302331,
+          100.263967
+        ],
+        [
+          8.307961,
+          99.731178
+        ],
+        [
+          8.518886,
+          99.610647
+        ],
+        [
+          8.961994,
+          99.611372
+        ]
+      ]
+    },
+    {
+      "id": "VTD60-2",
+      "name": "VTD60 Area 2",
+      "shortName": "VTD60-2",
+      "category": "Danger",
+      "class": "D",
+      "lowerFt": 0,
+      "upperFt": 60000,
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "polygon",
+      "approximate": true,
+      "source": "AIP ENR 5.1 (2025-08-07 AIRAC) — parsed",
+      "description": "Danger area VTD60 Area 2. RTAF Flying Training. Verify against current AIP before flight.",
+      "points": [
+        [
+          9.4798,
+          99.569931
+        ],
+        [
+          10.001433,
+          99.732572
+        ],
+        [
+          10.000264,
+          99.91795
+        ],
+        [
+          9.504917,
+          99.763192
+        ]
+      ]
+    },
+    {
+      "id": "VTD61",
+      "name": "VTD61",
+      "shortName": "VTD61",
+      "category": "Danger",
+      "class": "D",
+      "lowerFt": 0,
+      "upperFt": 60000,
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "polygon",
+      "approximate": true,
+      "source": "AIP ENR 5.1 (2025-08-07 AIRAC) — parsed",
+      "description": "Danger area VTD61. Coast/arc segments omitted — polygon approximate. RTAF Flying Training. Verify against current AIP before flight.",
+      "points": [
+        [
+          8.75,
+          99.483333
+        ],
+        [
+          8.45,
+          99.85
+        ],
+        [
+          8.266667,
+          99.783333
+        ],
+        [
+          8.466667,
+          98.7
+        ],
+        [
+          8.761667,
+          98.953333
+        ],
+        [
+          8.741667,
+          99.288333
+        ],
+        [
+          8.673333,
+          99.328333
+        ]
+      ]
+    },
+    {
+      "id": "VTD63-1",
+      "name": "VTD63 Area 1",
+      "shortName": "VTD63-1",
+      "category": "Danger",
+      "class": "D",
+      "lowerFt": 0,
+      "upperFt": 60000,
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "polygon",
+      "approximate": true,
+      "source": "AIP ENR 5.1 (2025-08-07 AIRAC) — parsed",
+      "description": "Danger area VTD63 Area 1. Coast/arc segments omitted — polygon approximate. RTAF Flying Training. Verify against current AIP before flight.",
+      "points": [
+        [
+          17.846667,
+          102.591667
+        ],
+        [
+          17.0,
+          102.466667
+        ],
+        [
+          17.0,
+          101.5
+        ],
+        [
+          17.733333,
+          101.5
+        ]
+      ]
+    },
+    {
+      "id": "VTD63-2",
+      "name": "VTD63 Area 2",
+      "shortName": "VTD63-2",
+      "category": "Danger",
+      "class": "D",
+      "lowerFt": 0,
+      "upperFt": 60000,
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "polygon",
+      "approximate": true,
+      "source": "AIP ENR 5.1 (2025-08-07 AIRAC) — parsed",
+      "description": "Danger area VTD63 Area 2. Coast/arc segments omitted — polygon approximate. . Verify against current AIP before flight.",
+      "points": [
+        [
+          17.0,
+          102.466667
+        ],
+        [
+          16.933333,
+          102.658333
+        ],
+        [
+          16.5,
+          102.283333
+        ],
+        [
+          16.5,
+          101.5
+        ],
+        [
+          17.0,
+          101.5
+        ]
+      ]
+    },
+    {
+      "id": "VTD64",
+      "name": "VTD64",
+      "shortName": "VTD64",
+      "category": "Danger",
+      "class": "D",
+      "lowerFt": 0,
+      "upperFt": 60000,
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "polygon",
+      "approximate": true,
+      "source": "AIP ENR 5.1 (2025-08-07 AIRAC) — parsed",
+      "description": "Danger area VTD64. Coast/arc segments omitted — polygon approximate. RTAF Flying Training. Verify against current AIP before flight.",
+      "points": [
+        [
+          17.916667,
+          102.783333
+        ],
+        [
+          17.883333,
+          102.791667
+        ],
+        [
+          17.532333,
+          104.689333
+        ]
+      ]
+    },
+    {
+      "id": "VTD64-1",
+      "name": "UDON, NONG KHAI (S Area 1",
+      "shortName": "VTD64-1",
+      "category": "Danger",
+      "class": "D",
+      "lowerFt": 0,
+      "upperFt": 60000,
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "polygon",
+      "approximate": true,
+      "source": "AIP ENR 5.1 (2025-08-07 AIRAC) — parsed",
+      "description": "Danger area UDON, NONG KHAI (S Area 1. Coast/arc segments omitted — polygon approximate. RTAF Flying TrainingNature of hazard/activity : High speed combat manoeuvringTime of activity : MON - FRI, 2200-1700Inflight information : OSCAR Control freq. 127.0 MHzZ or 331.3 MHzZ, if unable contact Udon Approach freq. 126.2 MHzZ or 265.9 MHzZ Pilots are advised to contact prior to entering.Contact agency : Wing 23 Air Traffic Control branch, Tel. +662 534 6000 ext 45512, 45502. Verify against current AIP before flight.",
+      "points": [
+        [
+          17.4255,
+          103.3225
+        ],
+        [
+          17.381667,
+          102.801667
+        ],
+        [
+          17.15,
+          103.263333
+        ],
+        [
+          16.5,
+          104.153333
+        ],
+        [
+          16.5,
+          104.666667
+        ],
+        [
+          17.532333,
+          104.689333
+        ],
+        [
+          17.466667,
+          104.25
+        ],
+        [
+          17.8,
+          104.25
+        ],
+        [
+          17.6,
+          104.433333
+        ],
+        [
+          17.466667,
+          104.366667
+        ]
+      ]
+    },
+    {
+      "id": "VTD64-2",
+      "name": "UDON, NONG KHAI (S Area 2",
+      "shortName": "VTD64-2",
+      "category": "Danger",
+      "class": "D",
+      "lowerFt": 0,
+      "upperFt": 60000,
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "polygon",
+      "approximate": true,
+      "source": "AIP ENR 5.1 (2025-08-07 AIRAC) — parsed",
+      "description": "Danger area UDON, NONG KHAI (S Area 2. Coast/arc segments omitted — polygon approximate. RTAF Flying TrainingNature of hazard/activity : High speed combat manoeuvringTime of activity : MON - FRI, 2200-1700Inflight information : OSCAR Control freq. 127.0 MHzZ or 331.3 MHzZ, if unable contact Udon Approach freq. 126.2 MHzZ or 265.9 MHzZ Pilots are advised to contact prior to entering.Contact agency : Wing 23 Air Traffic Control branch, Tel. +662 534 6000 ext 45512, 45502. Verify against current AIP before flight.",
+      "points": [
+        [
+          17.4255,
+          103.3225
+        ],
+        [
+          17.381667,
+          102.801667
+        ],
+        [
+          17.15,
+          103.263333
+        ],
+        [
+          16.5,
+          104.153333
+        ],
+        [
+          16.5,
+          104.666667
+        ],
+        [
+          17.532333,
+          104.689333
+        ],
+        [
+          16.5,
+          104.25
+        ],
+        [
+          16.933333,
+          104.25
+        ],
+        [
+          17.133333,
+          104.416667
+        ],
+        [
+          17.133333,
+          104.65
+        ],
+        [
+          17.0,
+          104.633333
+        ],
+        [
+          16.5,
+          104.65
+        ]
+      ]
+    },
+    {
+      "id": "VTD64-S",
+      "name": "UDON, NONG KHAI (S South Area",
+      "shortName": "VTD64-S",
+      "category": "Danger",
+      "class": "D",
+      "lowerFt": 0,
+      "upperFt": 60000,
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "polygon",
+      "approximate": true,
+      "source": "AIP ENR 5.1 (2025-08-07 AIRAC) — parsed",
+      "description": "Danger area UDON, NONG KHAI (S South Area. Coast/arc segments omitted — polygon approximate. . Verify against current AIP before flight.",
+      "points": [
+        [
+          17.4255,
+          103.3225
+        ],
+        [
+          17.381667,
+          102.801667
+        ],
+        [
+          17.15,
+          103.263333
+        ],
+        [
+          16.5,
+          104.153333
+        ],
+        [
+          16.5,
+          104.666667
+        ],
+        [
+          17.532333,
+          104.689333
+        ]
+      ]
+    },
+    {
+      "id": "VTD65",
+      "name": "VTD65",
+      "shortName": "VTD65",
+      "category": "Danger",
+      "class": "D",
+      "lowerFt": 0,
+      "upperFt": 60000,
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "circle",
+      "approximate": true,
+      "source": "AIP ENR 5.1 (2025-08-07 AIRAC) — parsed",
+      "description": "Danger area VTD65. RTAF Flying Training. Verify against current AIP before flight.",
+      "center": [
+        16.65,
+        102.966667
+      ],
+      "radiusNM": 20.0
+    },
+    {
+      "id": "VTD67",
+      "name": "VTD67",
+      "shortName": "VTD67",
+      "category": "Danger",
+      "class": "D",
+      "lowerFt": 0,
+      "upperFt": 60000,
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "polygon",
+      "approximate": true,
+      "source": "AIP ENR 5.1 (2025-08-07 AIRAC) — parsed",
+      "description": "Danger area VTD67. RTA Flying Training. Verify against current AIP before flight.",
+      "points": [
+        [
+          14.9,
+          98.5
+        ],
+        [
+          14.9,
+          99.95
+        ],
+        [
+          14.25,
+          99.383333
+        ],
+        [
+          13.816667,
+          99.383333
+        ],
+        [
+          13.816667,
+          99.233333
+        ],
+        [
+          14.583333,
+          98.5
+        ]
+      ]
+    },
+    {
+      "id": "VTD70",
+      "name": "VTD70",
+      "shortName": "VTD70",
+      "category": "Danger",
+      "class": "D",
+      "lowerFt": 0,
+      "upperFt": 60000,
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "polygon",
+      "approximate": true,
+      "source": "AIP ENR 5.1 (2025-08-07 AIRAC) — parsed",
+      "description": "Danger area VTD70. RTN Flight Training Area. Verify against current AIP before flight.",
+      "points": [
+        [
+          12.883333,
+          102.216667
+        ],
+        [
+          12.883333,
+          101.883333
+        ],
+        [
+          13.216667,
+          101.883333
+        ],
+        [
+          13.216667,
+          102.216667
+        ]
+      ]
+    },
+    {
+      "id": "VTD71",
+      "name": "VTD71",
+      "shortName": "VTD71",
+      "category": "Danger",
+      "class": "D",
+      "lowerFt": 0,
+      "upperFt": 60000,
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "polygon",
+      "approximate": true,
+      "source": "AIP ENR 5.1 (2025-08-07 AIRAC) — parsed",
+      "description": "Danger area VTD71. RTN Flight Training Area. Verify against current AIP before flight.",
+      "points": [
+        [
+          11.0,
+          101.583333
+        ],
+        [
+          11.0,
+          101.083333
+        ],
+        [
+          12.0,
+          100.75
+        ],
+        [
+          12.0,
+          101.583333
+        ]
+      ]
+    },
+    {
+      "id": "VTD72-1",
+      "name": "VTD72 Area 1",
+      "shortName": "VTD72-1",
+      "category": "Danger",
+      "class": "D",
+      "lowerFt": 0,
+      "upperFt": 60000,
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "polygon",
+      "approximate": true,
+      "source": "AIP ENR 5.1 (2025-08-07 AIRAC) — parsed",
+      "description": "Danger area VTD72 Area 1. . Verify against current AIP before flight.",
+      "points": [
+        [
+          14.305661,
+          100.670714
+        ],
+        [
+          13.972086,
+          100.44485
+        ],
+        [
+          14.083242,
+          100.2142
+        ],
+        [
+          14.303083,
+          100.416992
+        ]
+      ]
+    },
+    {
+      "id": "VTD72-2",
+      "name": "VTD72 Area 2",
+      "shortName": "VTD72-2",
+      "category": "Danger",
+      "class": "D",
+      "lowerFt": 0,
+      "upperFt": 60000,
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "polygon",
+      "approximate": true,
+      "source": "AIP ENR 5.1 (2025-08-07 AIRAC) — parsed",
+      "description": "Danger area VTD72 Area 2. RTAF Flying Training. Verify against current AIP before flight.",
+      "points": [
+        [
+          13.972094,
+          100.44485
+        ],
+        [
+          13.767911,
+          100.373725
+        ],
+        [
+          13.775094,
+          100.215292
+        ],
+        [
+          14.083242,
+          100.2142
+        ]
+      ]
+    },
+    {
+      "id": "VTD74-1",
+      "name": "VTD74 Area 1",
+      "shortName": "VTD74-1",
+      "category": "Danger",
+      "class": "D",
+      "lowerFt": 0,
+      "upperFt": 60000,
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "polygon",
+      "approximate": true,
+      "source": "AIP ENR 5.1 (2025-08-07 AIRAC) — parsed",
+      "description": "Danger area VTD74 Area 1. RTN Weapon Training Range for surface ships. Verify against current AIP before flight.",
+      "points": [
+        [
+          9.25,
+          97.25
+        ],
+        [
+          9.25,
+          97.666667
+        ],
+        [
+          8.75,
+          97.666667
+        ],
+        [
+          8.75,
+          97.25
+        ]
+      ]
+    },
+    {
+      "id": "VTD74-2",
+      "name": "VTD74 Area 2",
+      "shortName": "VTD74-2",
+      "category": "Danger",
+      "class": "D",
+      "lowerFt": 0,
+      "upperFt": 60000,
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "polygon",
+      "approximate": true,
+      "source": "AIP ENR 5.1 (2025-08-07 AIRAC) — parsed",
+      "description": "Danger area VTD74 Area 2. . Verify against current AIP before flight.",
+      "points": [
+        [
+          9.0,
+          97.833333
+        ],
+        [
+          9.0,
+          98.083333
+        ],
+        [
+          8.666667,
+          98.083333
+        ],
+        [
+          8.666667,
+          97.833333
+        ]
+      ]
+    },
+    {
+      "id": "VTD74-3",
+      "name": "VTD74 Area 3",
+      "shortName": "VTD74-3",
+      "category": "Danger",
+      "class": "D",
+      "lowerFt": 0,
+      "upperFt": 60000,
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "polygon",
+      "approximate": true,
+      "source": "AIP ENR 5.1 (2025-08-07 AIRAC) — parsed",
+      "description": "Danger area VTD74 Area 3. . Verify against current AIP before flight.",
+      "points": [
+        [
+          8.55,
+          97.833333
+        ],
+        [
+          8.55,
+          98.233333
+        ],
+        [
+          8.45,
+          98.233333
+        ],
+        [
+          8.45,
+          97.833333
+        ]
+      ]
+    },
+    {
+      "id": "VTD75",
+      "name": "VTD75",
+      "shortName": "VTD75",
+      "category": "Danger",
+      "class": "D",
+      "lowerFt": 0,
+      "upperFt": 60000,
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "polygon",
+      "approximate": true,
+      "source": "AIP ENR 5.1 (2025-08-07 AIRAC) — parsed",
+      "description": "Danger area VTD75. Civil Flight Training Area. Verify against current AIP before flight.",
+      "points": [
+        [
+          16.5,
+          102.616667
+        ],
+        [
+          16.216667,
+          102.366667
+        ],
+        [
+          16.5,
+          102.283333
+        ]
+      ]
+    },
+    {
+      "id": "VTD76",
+      "name": "VTD76",
+      "shortName": "VTD76",
+      "category": "Danger",
+      "class": "D",
+      "lowerFt": 0,
+      "upperFt": 60000,
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "polygon",
+      "approximate": true,
+      "source": "AIP ENR 5.1 (2025-08-07 AIRAC) — parsed",
+      "description": "Danger area VTD76. Civil Flight Training Area. Verify against current AIP before flight.",
+      "points": [
+        [
+          16.283333,
+          102.833333
+        ],
+        [
+          16.333333,
+          103.25
+        ],
+        [
+          16.0,
+          103.25
+        ],
+        [
+          16.0,
+          102.833333
+        ]
+      ]
+    },
+    {
+      "id": "VTD77",
+      "name": "VTD77",
+      "shortName": "VTD77",
+      "category": "Danger",
+      "class": "D",
+      "lowerFt": 0,
+      "upperFt": 60000,
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "polygon",
+      "approximate": true,
+      "source": "AIP ENR 5.1 (2025-08-07 AIRAC) — parsed",
+      "description": "Danger area VTD77. Civil Flight Training Area. Verify against current AIP before flight.",
+      "points": [
+        [
+          16.0,
+          103.654167
+        ],
+        [
+          15.770833,
+          103.408333
+        ],
+        [
+          16.466667,
+          103.408333
+        ],
+        [
+          16.233333,
+          103.654167
+        ]
+      ]
+    },
+    {
+      "id": "VTP36",
+      "name": "VTP36 Khao Soi Dao Tai (RTN)",
+      "shortName": "VTP36 Khao Soi Dao Tai",
+      "category": "Prohibited",
+      "class": "P",
+      "lowerFt": 0,
+      "upperFt": 5000,
+      "shape": "circle",
+      "center": [
+        12.936944,
+        102.213889
+      ],
+      "radiusNM": 17,
+      "approximate": true,
+      "source": "AIP ENR 5.1 (2025-08-07 AIRAC) — semi-circle 0°–180° approximated as full circle",
+      "description": "RTN area — AIP defines as a semi-circle of 17 NM from 0° to 180°; rendered as full circle (slightly overstates the boundary)."
+    },
+    {
+      "id": "VTP37",
+      "name": "VTP37 Khao Khlong Oa (RTN)",
+      "shortName": "VTP37 Khao Khlong Oa",
+      "category": "Prohibited",
+      "class": "P",
+      "lowerFt": 0,
+      "upperFt": 5000,
+      "shape": "circle",
+      "center": [
+        12.571944,
+        102.609722
+      ],
+      "radiusNM": 14,
+      "approximate": true,
+      "source": "AIP ENR 5.1 (2025-08-07 AIRAC) — semi-circle 135°–315° approximated as full circle",
+      "description": "RTN area — AIP defines as a semi-circle of 14 NM from 135° to 315°; rendered as full circle (slightly overstates the boundary)."
+    },
+    {
+      "id": "VTP38",
+      "name": "VTP38",
+      "shortName": "VTP38",
+      "category": "Prohibited",
+      "class": "P",
+      "lowerFt": 0,
+      "upperFt": 60000,
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "polygon",
+      "approximate": true,
+      "source": "AIP ENR 5.1 (2025-08-07 AIRAC) — parsed",
+      "description": "Prohibited area VTP38. RTN Area. Verify against current AIP before flight.",
+      "points": [
+        [
+          12.293611,
+          102.24
+        ],
+        [
+          12.1625,
+          102.575556
+        ],
+        [
+          11.775,
+          102.89
+        ],
+        [
+          11.633333,
+          102.925
+        ],
+        [
+          11.5,
+          102.5
+        ],
+        [
+          12.0,
+          102.183333
+        ]
+      ]
+    },
+    {
+      "id": "VTP4",
+      "name": "VTP4 Muang Kom (Prohibited — Bombing/Air Firing)",
+      "shortName": "VTP4 Muang Kom",
+      "category": "Prohibited",
+      "class": "P",
+      "lowerFt": 0,
+      "upperFt": 24000,
+      "lowerRef": "GND",
+      "upperRef": "FL",
+      "shape": "polygon",
+      "points": [
+        [
+          15.11667,
+          100.98333
+        ],
+        [
+          15.11667,
+          100.83333
+        ],
+        [
+          14.91667,
+          100.83333
+        ],
+        [
+          14.91667,
+          100.98333
+        ]
+      ],
+      "approximate": false,
+      "source": "AIP ENR 5.1",
+      "description": "RTAF Chandy bombing & air firing area. MON–FRI H24."
+    },
+    {
+      "id": "VTP7",
+      "name": "VTP7 Sattahip (Prohibited — Naval Base)",
+      "shortName": "VTP7 Sattahip",
+      "category": "Prohibited",
+      "class": "P",
+      "lowerFt": 0,
+      "upperFt": 60000,
+      "shape": "circle",
+      "center": [
+        12.64583,
+        100.88333
+      ],
+      "radiusNM": 4,
+      "approximate": false,
+      "source": "AIP ENR 5.1",
+      "description": "Sattahip Naval Base — national security area. H24."
+    },
+    {
+      "id": "VTR1",
+      "name": "VTR1 Bangkok City",
+      "shortName": "VTR1 Bangkok City",
+      "category": "Restricted",
+      "class": "R",
+      "lowerFt": 0,
+      "upperFt": 3000,
+      "shape": "circle",
+      "center": [
+        13.765,
+        100.53833
+      ],
+      "radiusNM": 10,
+      "approximate": false,
+      "source": "AIP ENR 5.1",
+      "description": "Bangkok inner-city restricted — 10 NM ring, CAAT permission required."
+    },
+    {
+      "id": "VTR11",
+      "name": "VTR11 Ko Hin Chalam",
+      "shortName": "VTR11 Ko Hin Chalam",
+      "category": "Restricted",
+      "class": "R",
+      "lowerFt": 0,
+      "upperFt": 60000,
+      "shape": "circle",
+      "center": [
+        12.46472,
+        100.97194
+      ],
+      "radiusNM": 2,
+      "approximate": false,
+      "source": "AIP ENR 5.1",
+      "description": "Royal Thai Navy jettison/gunnery, H24."
+    },
+    {
+      "id": "VTR12",
+      "name": "VTR12 Ko Luam Jettison (Prachuap Khiri Khan)",
+      "shortName": "VTR12 Ko Luam",
+      "category": "Restricted",
+      "class": "R",
+      "lowerFt": 0,
+      "upperFt": 9000,
+      "shape": "circle",
+      "center": [
+        11.758333,
+        99.833333
+      ],
+      "radiusNM": 0.5,
+      "approximate": false,
+      "source": "AIP ENR 5.1 (2025-08-07 AIRAC)",
+      "description": "RTN jettison area — 0.5 NM column. Notified by NOTAM."
+    },
+    {
+      "id": "VTR13",
+      "name": "VTR13 Ko Samet",
+      "shortName": "VTR13 Ko Samet",
+      "category": "Restricted",
+      "class": "R",
+      "lowerFt": 0,
+      "upperFt": 60000,
+      "shape": "circle",
+      "center": [
+        12.2,
+        101.35
+      ],
+      "radiusNM": 7.1,
+      "approximate": false,
+      "source": "AIP ENR 5.1",
+      "description": "RTN jettison/gunnery range, H24."
+    },
+    {
+      "id": "VTR15",
+      "name": "VTR15",
+      "shortName": "VTR15",
+      "category": "Restricted",
+      "class": "R",
+      "lowerFt": 0,
+      "upperFt": 60000,
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "polygon",
+      "approximate": true,
+      "source": "AIP ENR 5.1 (2025-08-07 AIRAC) — parsed",
+      "description": "Restricted area VTR15. RTAF Flying Training. Verify against current AIP before flight.",
+      "points": [
+        [
+          15.170278,
+          104.936111
+        ],
+        [
+          15.179444,
+          104.945
+        ],
+        [
+          15.179444,
+          104.963611
+        ],
+        [
+          15.161667,
+          104.946944
+        ],
+        [
+          15.161667,
+          104.945
+        ]
+      ]
+    },
+    {
+      "id": "VTR2",
+      "name": "VTR2 Chitralada Palace",
+      "shortName": "VTR2 Chitralada",
+      "category": "Restricted",
+      "class": "R",
+      "lowerFt": 0,
+      "upperFt": 6000,
+      "shape": "circle",
+      "center": [
+        13.76811,
+        100.52123
+      ],
+      "radiusNM": 1,
+      "approximate": false,
+      "source": "AIP ENR 5.1",
+      "description": "Royal residence — 1 NM no-fly column, H24."
+    },
+    {
+      "id": "VTR3",
+      "name": "VTR3 Hua Hin Palace",
+      "shortName": "VTR3 Hua Hin Palace",
+      "category": "Restricted",
+      "class": "R",
+      "lowerFt": 0,
+      "upperFt": 6000,
+      "shape": "circle",
+      "center": [
+        12.589497,
+        99.952969
+      ],
+      "radiusNM": 1,
+      "approximate": false,
+      "source": "AIP ENR 5.1 (2025-08-07 AIRAC)",
+      "description": "Royal residence (Klai Kang Won, Hua Hin) — 1 NM no-fly column, H24."
+    },
+    {
+      "id": "VTR5",
+      "name": "VTR5 Phu Phing Palace",
+      "shortName": "VTR5 Phu Phing Palace",
+      "category": "Restricted",
+      "class": "R",
+      "lowerFt": 0,
+      "upperFt": 12000,
+      "shape": "circle",
+      "center": [
+        18.805556,
+        98.899167
+      ],
+      "radiusNM": 2,
+      "approximate": false,
+      "source": "AIP ENR 5.1 (2025-08-07 AIRAC)",
+      "description": "Royal residence (Doi Suthep, Chiang Mai) — 2 NM no-fly column to 12 000 ft."
+    },
+    {
+      "id": "VTR51",
+      "name": "VTR51",
+      "shortName": "VTR51",
+      "category": "Restricted",
+      "class": "R",
+      "lowerFt": 0,
+      "upperFt": 60000,
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "polygon",
+      "approximate": true,
+      "source": "AIP ENR 5.1 (2025-08-07 AIRAC) — parsed",
+      "description": "Restricted area VTR51. RTAF Jettison Area. Verify against current AIP before flight.",
+      "points": [
+        [
+          7.283333,
+          99.9
+        ],
+        [
+          7.283333,
+          99.983333
+        ],
+        [
+          7.25,
+          99.983333
+        ],
+        [
+          7.216667,
+          99.9
+        ]
+      ]
+    },
+    {
+      "id": "VTR52",
+      "name": "VTR52",
+      "shortName": "VTR52",
+      "category": "Restricted",
+      "class": "R",
+      "lowerFt": 0,
+      "upperFt": 60000,
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "polygon",
+      "approximate": true,
+      "source": "AIP ENR 5.1 (2025-08-07 AIRAC) — parsed",
+      "description": "Restricted area VTR52. RTAF Jettison Area. Verify against current AIP before flight.",
+      "points": [
+        [
+          6.483333,
+          100.533333
+        ],
+        [
+          6.6,
+          100.533333
+        ],
+        [
+          6.6,
+          100.633333
+        ],
+        [
+          6.483333,
+          100.633333
+        ]
+      ]
+    },
+    {
+      "id": "VTR6",
+      "name": "VTR6 Thaksin Palace",
+      "shortName": "VTR6 Thaksin Palace",
+      "category": "Restricted",
+      "class": "R",
+      "lowerFt": 0,
+      "upperFt": 6000,
+      "shape": "circle",
+      "center": [
+        6.422808,
+        101.871925
+      ],
+      "radiusNM": 5,
+      "approximate": false,
+      "source": "AIP ENR 5.1 (2025-08-07 AIRAC)",
+      "description": "Royal residence (Narathiwat) — 5 NM no-fly column."
+    },
+    {
+      "id": "VTR62",
+      "name": "VTR62",
+      "shortName": "VTR62",
+      "category": "Restricted",
+      "class": "R",
+      "lowerFt": 0,
+      "upperFt": 60000,
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "polygon",
+      "approximate": true,
+      "source": "AIP ENR 5.1 (2025-08-07 AIRAC) — parsed",
+      "description": "Restricted area VTR62. RTN Area. Verify against current AIP before flight.",
+      "points": [
+        [
+          11.633333,
+          102.925
+        ],
+        [
+          11.5,
+          102.5
+        ],
+        [
+          12.1625,
+          102.575556
+        ],
+        [
+          12.936944,
+          102.213889
+        ],
+        [
+          13.833333,
+          102.213889
+        ],
+        [
+          14.466667,
+          103.166667
+        ],
+        [
+          14.75,
+          104.0
+        ],
+        [
+          14.75,
+          104.683333
+        ],
+        [
+          14.4,
+          104.85
+        ]
+      ]
+    },
+    {
+      "id": "VTR66",
+      "name": "VTR66",
+      "shortName": "VTR66",
+      "category": "Restricted",
+      "class": "R",
+      "lowerFt": 0,
+      "upperFt": 60000,
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "circle",
+      "approximate": true,
+      "source": "AIP ENR 5.1 (2025-08-07 AIRAC) — parsed",
+      "description": "Restricted area VTR66. Royal Residence Area. Verify against current AIP before flight.",
+      "center": [
+        17.12725,
+        104.022156
+      ],
+      "radiusNM": 5.0
+    },
+    {
+      "id": "VTR68",
+      "name": "VTR68",
+      "shortName": "VTR68",
+      "category": "Restricted",
+      "class": "R",
+      "lowerFt": 0,
+      "upperFt": 60000,
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "polygon",
+      "approximate": true,
+      "source": "AIP ENR 5.1 (2025-08-07 AIRAC) — parsed",
+      "description": "Restricted area VTR68. RTAF Jettison Area. Verify against current AIP before flight.",
+      "points": [
+        [
+          16.680161,
+          102.933108
+        ],
+        [
+          16.636361,
+          102.934983
+        ],
+        [
+          16.680347,
+          102.951853
+        ],
+        [
+          16.637436,
+          102.952308
+        ]
+      ]
+    },
+    {
+      "id": "VTR79",
+      "name": "VTR79",
+      "shortName": "VTR79",
+      "category": "Restricted",
+      "class": "R",
+      "lowerFt": 0,
+      "upperFt": 60000,
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "circle",
+      "approximate": true,
+      "source": "AIP ENR 5.1 (2025-08-07 AIRAC) — parsed",
+      "description": "Restricted area VTR79. Royal Residence Area. Verify against current AIP before flight.",
+      "center": [
+        12.652222,
+        100.98
+      ],
+      "radiusNM": 0.5
+    },
+    {
+      "id": "VTR8",
+      "name": "VTR8 Kamphaeng Saen Jettison",
+      "shortName": "VTR8 KPS Jettison",
+      "category": "Restricted",
+      "class": "R",
+      "lowerFt": 0,
+      "upperFt": 7000,
+      "shape": "polygon",
+      "points": [
+        [
+          12.88333,
+          100.33333
+        ],
+        [
+          12.88333,
+          100.41667
+        ],
+        [
+          12.58333,
+          100.28333
+        ],
+        [
+          12.58333,
+          100.19167
+        ]
+      ],
+      "approximate": true,
+      "source": "AIP ENR 5.1",
+      "description": "RTAF jettison area near Kamphaeng Saen, H24."
+    },
+    {
+      "id": "VTR80",
+      "name": "VTR80 Srapathum Palace",
+      "shortName": "VTR80 Srapathum",
+      "category": "Restricted",
+      "class": "R",
+      "lowerFt": 0,
+      "upperFt": 6000,
+      "shape": "circle",
+      "center": [
+        13.74797,
+        100.5322
+      ],
+      "radiusNM": 1,
+      "approximate": false,
+      "source": "AIP ENR 5.1",
+      "description": "Royal residence column, H24."
+    },
+    {
+      "id": "VTR81",
+      "name": "VTR81",
+      "shortName": "VTR81",
+      "category": "Restricted",
+      "class": "R",
+      "lowerFt": 0,
+      "upperFt": 60000,
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "circle",
+      "approximate": true,
+      "source": "AIP ENR 5.1 (2025-08-07 AIRAC) — parsed",
+      "description": "Restricted area VTR81. Royal Residence Area. Verify against current AIP before flight.",
+      "center": [
+        13.946753,
+        100.524139
+      ],
+      "radiusNM": 1.0
+    },
+    {
+      "id": "VTR82",
+      "name": "AMPHORN ROYAL PALACE",
+      "shortName": "VTR82",
+      "category": "Restricted",
+      "class": "R",
+      "lowerFt": 0,
+      "upperFt": 6000,
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "circle",
+      "approximate": true,
+      "source": "AIP ENR 5.1 (2025-08-07 AIRAC) — parsed",
+      "description": "Restricted area AMPHORN ROYAL PALACE. Royal Residence Area. Verify against current AIP before flight.",
+      "center": [
+        13.772639,
+        100.511189
+      ],
+      "radiusNM": 1.0
+    },
+    {
+      "id": "VTR83",
+      "name": "SUKOTHAI PALACE",
+      "shortName": "VTR83",
+      "category": "Restricted",
+      "class": "R",
+      "lowerFt": 0,
+      "upperFt": 6000,
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "circle",
+      "approximate": true,
+      "source": "AIP ENR 5.1 (2025-08-07 AIRAC) — parsed",
+      "description": "Restricted area SUKOTHAI PALACE. Royal Residence Area. Verify against current AIP before flight.",
+      "center": [
+        13.782406,
+        100.509308
+      ],
+      "radiusNM": 1.0
+    },
+    {
+      "id": "VTR84",
+      "name": "VTR84",
+      "shortName": "VTR84",
+      "category": "Restricted",
+      "class": "R",
+      "lowerFt": 0,
+      "upperFt": 60000,
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "circle",
+      "approximate": true,
+      "source": "AIP ENR 5.1 (2025-08-07 AIRAC) — parsed",
+      "description": "Restricted area VTR84. Royal Residence Area. Verify against current AIP before flight.",
+      "center": [
+        14.491617,
+        101.529411
+      ],
+      "radiusNM": 1.0
+    },
+    {
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "circle",
+      "id": "VTBD-TMA",
+      "shortName": "Bangkok TMA",
+      "name": "Bangkok Terminal Control Area",
+      "category": "TMA",
+      "class": "C",
+      "center": [
+        13.91444,
+        100.60556
+      ],
+      "radiusNM": 50,
+      "lowerFt": 3000,
+      "upperFt": 16500,
+      "approximate": false,
+      "source": "AIP ENR 2.1",
+      "description": "Bangkok terminal area FL160–3000 ft."
+    },
+    {
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "circle",
+      "id": "VTCC-TMA",
+      "shortName": "Chiang Mai TMA",
+      "name": "Chiang Mai Terminal Control Area",
+      "category": "TMA",
+      "class": "C",
+      "center": [
+        18.76685,
+        98.96264
+      ],
+      "radiusNM": 40,
+      "lowerFt": 3000,
+      "upperFt": 11000,
+      "approximate": true,
+      "source": "AIP ENR 2.1",
+      "description": "Chiang Mai terminal area."
+    },
+    {
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "circle",
+      "id": "VTCT-TMA",
+      "shortName": "Chiang Rai TMA",
+      "name": "Chiang Rai Terminal Control Area",
+      "category": "TMA",
+      "class": "C",
+      "center": [
+        19.95219,
+        99.88297
+      ],
+      "radiusNM": 30,
+      "lowerFt": 3000,
+      "upperFt": 11000,
+      "approximate": true,
+      "source": "AIP ENR 2.1",
+      "description": "Chiang Rai terminal area."
+    },
+    {
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "circle",
+      "id": "VTSS-TMA",
+      "shortName": "Hat Yai TMA",
+      "name": "Hat Yai Terminal Control Area",
+      "category": "TMA",
+      "class": "C",
+      "center": [
+        6.93306,
+        100.39278
+      ],
+      "radiusNM": 40,
+      "lowerFt": 3000,
+      "upperFt": 11000,
+      "approximate": true,
+      "source": "AIP ENR 2.1",
+      "description": "Hat Yai terminal area."
+    },
+    {
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "circle",
+      "id": "VTPR-CTR",
+      "shortName": "Hua Hin TMA CTR",
+      "name": "Hua Hin Terminal Control Area",
+      "category": "TMA",
+      "class": "C",
+      "center": [
+        12.63444,
+        99.95117
+      ],
+      "radiusNM": 25,
+      "lowerFt": 3000,
+      "upperFt": 11000,
+      "approximate": true,
+      "source": "AIP ENR 2.1",
+      "description": "Hua Hin terminal area."
+    },
+    {
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "circle",
+      "id": "VTUK-TMA",
+      "shortName": "Khon Kaen TMA",
+      "name": "Khon Kaen Terminal Control Area",
+      "category": "TMA",
+      "class": "C",
+      "center": [
+        16.46667,
+        102.78389
+      ],
+      "radiusNM": 30,
+      "lowerFt": 3000,
+      "upperFt": 11000,
+      "approximate": true,
+      "source": "AIP ENR 2.1",
+      "description": "Khon Kaen terminal area."
+    },
+    {
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "circle",
+      "id": "VTSE-TMA",
+      "shortName": "Krabi TMA",
+      "name": "Krabi Terminal Control Area",
+      "category": "TMA",
+      "class": "C",
+      "center": [
+        8.09917,
+        98.98639
+      ],
+      "radiusNM": 30,
+      "lowerFt": 3000,
+      "upperFt": 11000,
+      "approximate": true,
+      "source": "AIP ENR 2.1",
+      "description": "Krabi terminal area."
+    },
+    {
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "circle",
+      "id": "VTCL-TMA",
+      "shortName": "Lampang TMA",
+      "name": "Lampang Terminal Control Area",
+      "category": "TMA",
+      "class": "C",
+      "center": [
+        18.27417,
+        99.50417
+      ],
+      "radiusNM": 25,
+      "lowerFt": 3000,
+      "upperFt": 11000,
+      "approximate": true,
+      "source": "AIP ENR 2.1",
+      "description": "Lampang terminal area."
+    },
+    {
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "circle",
+      "id": "VTPO-TMA",
+      "shortName": "Phitsanulok TMA",
+      "name": "Phitsanulok Terminal Control Area",
+      "category": "TMA",
+      "class": "C",
+      "center": [
+        16.78278,
+        100.27917
+      ],
+      "radiusNM": 30,
+      "lowerFt": 3000,
+      "upperFt": 11000,
+      "approximate": true,
+      "source": "AIP ENR 2.1",
+      "description": "Phitsanulok terminal area."
+    },
+    {
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "circle",
+      "id": "VTSP-TMA",
+      "shortName": "Phuket TMA",
+      "name": "Phuket Terminal Control Area",
+      "category": "TMA",
+      "class": "C",
+      "center": [
+        8.11306,
+        98.31694
+      ],
+      "radiusNM": 40,
+      "lowerFt": 3000,
+      "upperFt": 11000,
+      "approximate": true,
+      "source": "AIP ENR 2.1",
+      "description": "Phuket terminal area."
+    },
+    {
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "circle",
+      "id": "VTUQ-TMA",
+      "shortName": "Surat Thani TMA",
+      "name": "Surat Thani Terminal Control Area",
+      "category": "TMA",
+      "class": "C",
+      "center": [
+        9.13278,
+        99.13556
+      ],
+      "radiusNM": 30,
+      "lowerFt": 3000,
+      "upperFt": 11000,
+      "approximate": true,
+      "source": "AIP ENR 2.1",
+      "description": "Surat Thani terminal area."
+    },
+    {
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "circle",
+      "id": "VTBU-TMA",
+      "shortName": "U-Tapao TMA",
+      "name": "U-Tapao Terminal Control Area",
+      "category": "TMA",
+      "class": "C",
+      "center": [
+        12.6797,
+        101.005
+      ],
+      "radiusNM": 30,
+      "lowerFt": 3000,
+      "upperFt": 11000,
+      "approximate": true,
+      "source": "AIP ENR 2.1",
+      "description": "U-Tapao terminal area."
+    },
+    {
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "circle",
+      "id": "VTUU-TMA",
+      "shortName": "Ubon TMA",
+      "name": "Ubon Terminal Control Area",
+      "category": "TMA",
+      "class": "C",
+      "center": [
+        15.25139,
+        104.87028
+      ],
+      "radiusNM": 30,
+      "lowerFt": 3000,
+      "upperFt": 11000,
+      "approximate": true,
+      "source": "AIP ENR 2.1",
+      "description": "Ubon terminal area."
+    },
+    {
+      "lowerRef": "GND",
+      "upperRef": "AMSL",
+      "shape": "circle",
+      "id": "VTUD-TMA",
+      "shortName": "Udon Thani TMA",
+      "name": "Udon Thani Terminal Control Area",
+      "category": "TMA",
+      "class": "C",
+      "center": [
+        17.38639,
+        102.78833
+      ],
+      "radiusNM": 30,
+      "lowerFt": 3000,
+      "upperFt": 11000,
+      "approximate": true,
+      "source": "AIP ENR 2.1",
+      "description": "Udon Thani terminal area."
+    }
+  ]
+}

@@ -1,0 +1,390 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Thai Airspace Sim — Bangkok (Phase 1)</title>
+  <style>
+    :root {
+      --bg: #0a0e15;
+      --panel: rgba(16, 22, 32, 0.86);
+      --panel-border: rgba(255,255,255,0.08);
+      --text: #e6edf3;
+      --muted: #8a96a7;
+      --accent: #66ffcc;
+      --warn: #ffb84a;
+      --danger: #ff5050;
+      --ok: #66ffcc;
+      --shadow: 0 8px 28px rgba(0,0,0,0.5);
+      --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; height: 100%; background: var(--bg); color: var(--text); font-family: var(--sans); overflow: hidden; }
+    a { color: var(--accent); }
+    #app { position: fixed; inset: 0; }
+    canvas { display: block; }
+
+    /* ---- Loading ---- */
+    #loading {
+      position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
+      background: linear-gradient(180deg, #0a1530, #1d4a8c);
+      color: var(--text); font-family: var(--mono); font-size: 14px; z-index: 100;
+    }
+
+    /* ---- HUD ---- */
+    #hud {
+      position: fixed; left: 14px; top: 14px;
+      background: var(--panel); border: 1px solid var(--panel-border); border-radius: 10px;
+      padding: 10px 14px; font-family: var(--mono); font-size: 13px;
+      box-shadow: var(--shadow); min-width: 240px;
+      backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+    }
+    #hud .row { display: flex; justify-content: space-between; gap: 12px; padding: 2px 0; }
+    #hud .label { color: var(--muted); }
+    #hud .val { color: var(--text); }
+    #speedRow { flex-direction: column; align-items: stretch; gap: 6px; margin-top: 4px; }
+    #speedControls { display: flex; gap: 4px; flex-wrap: wrap; }
+    #speedControls .speed-btn {
+      flex: 1 1 auto; min-width: 52px; padding: 4px 5px; font-family: var(--mono); font-size: 10px;
+    }
+    #speedControls .speed-btn.active {
+      background: rgba(102,255,204,0.22); border-color: rgba(102,255,204,0.55); color: #b8ffea;
+    }
+    #historyRow { flex-direction: column; align-items: stretch; gap: 6px; margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--panel-border); }
+    #historyControls { display: flex; gap: 6px; }
+    #historyControls button { flex: 1; font-family: var(--mono); font-size: 11px; }
+    #historyControls button:disabled { opacity: 0.35; cursor: not-allowed; }
+    #historyLabel { font-size: 10px; color: var(--muted); line-height: 1.3; }
+    #currentInside { margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--panel-border); font-size: 11px; line-height: 1.5; }
+    #currentInside .ok { color: var(--ok); }
+    #placeLabel {
+      position: fixed; left: 50%; transform: translateX(-50%); bottom: 52px;
+      font-family: var(--mono); font-size: 12px; color: var(--text);
+      text-align: center; line-height: 1.35; max-width: min(520px, calc(100vw - 40px));
+      pointer-events: none;
+      text-shadow: 0 1px 4px rgba(0, 0, 0, 0.85), 0 0 12px rgba(0, 0, 0, 0.5);
+    }
+    #hdgRow { align-items: center; gap: 8px; }
+    #hdgRow .label { flex-shrink: 0; }
+    .hdg-display { display: flex; align-items: center; gap: 8px; flex: 1; justify-content: flex-end; }
+    #hdgCompass {
+      display: block; width: 176px; height: 44px;
+      background: rgba(0,0,0,0.25); border-radius: 5px;
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+    #heading { font-size: 12px; min-width: 72px; text-align: right; white-space: nowrap; }
+    .chip { display: inline-block; padding: 2px 6px; border-radius: 999px; margin: 2px 2px 0 0; background: rgba(255,255,255,0.08); font-size: 11px; }
+    .chip.cat-CTR { background: rgba(255,51,68,0.25); color: #ffd8de; }
+    .chip.cat-TMA { background: rgba(255,153,51,0.22); color: #ffe6cc; }
+    .chip.cat-ClassD { background: rgba(255,225,74,0.22); color: #fff6c2; }
+    .chip.cat-Prohibited { background: rgba(255,0,0,0.30); color: #ffd0d0; }
+    .chip.cat-Restricted { background: rgba(160,80,255,0.25); color: #e5d6ff; }
+    .chip.cat-Danger { background: rgba(255,106,31,0.25); color: #ffd5b3; }
+
+    /* ---- Minimap ---- */
+    #minimap {
+      position: fixed; left: 14px; bottom: 14px;
+      width: 260px; height: 260px;
+      border: 1px solid var(--panel-border); border-radius: 10px;
+      box-shadow: var(--shadow); background: #11161e;
+      cursor: grab;
+    }
+    #minimap.active { cursor: grabbing; border-color: rgba(102,255,204,0.35); }
+    #minimapLabel {
+      position: fixed; left: 14px; bottom: 280px;
+      background: var(--panel); border: 1px solid var(--panel-border);
+      padding: 4px 8px; border-radius: 6px; font-family: var(--mono); font-size: 11px;
+      color: var(--muted); max-width: 260px;
+    }
+    #radarOptions {
+      position: fixed; left: 14px; bottom: 308px;
+      background: var(--panel); border: 1px solid var(--panel-border);
+      padding: 6px 8px; border-radius: 6px; font-family: var(--mono); font-size: 10px;
+      color: var(--muted); max-width: 260px; display: flex; flex-direction: column; gap: 4px;
+    }
+    #radarOptions .opt { display: flex; align-items: center; gap: 6px; cursor: pointer; color: var(--text); }
+    #radarOptions input { accent-color: var(--accent); }
+    #displayOptions { display: flex; flex-direction: column; gap: 6px; margin: 4px 0 10px 0; }
+    #displayOptions .opt { display: flex; align-items: center; gap: 8px; font-size: 12px; cursor: pointer; }
+    #displayOptions input { accent-color: var(--accent); }
+
+    /* ---- Educational panel ---- */
+    #panel {
+      position: fixed; right: 14px; top: 14px; width: 360px; max-height: calc(100% - 28px);
+      background: var(--panel); border: 1px solid var(--panel-border); border-radius: 12px;
+      box-shadow: var(--shadow); display: flex; flex-direction: column;
+      backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    }
+    #panel.collapsed .panel-body { display: none; }
+    #panel.collapsed { width: auto; }
+    .panel-head {
+      display: flex; align-items: center; justify-content: space-between; gap: 8px;
+      padding: 10px 12px; border-bottom: 1px solid var(--panel-border);
+    }
+    .panel-head h2 { margin: 0; font-size: 14px; font-weight: 600; letter-spacing: 0.2px; }
+    .panel-body { padding: 10px 12px; overflow: auto; }
+    #panel.collapsed .panel-head { border: 0; }
+    button {
+      background: rgba(255,255,255,0.06); color: var(--text); border: 1px solid var(--panel-border);
+      border-radius: 6px; padding: 4px 10px; font-family: var(--sans); cursor: pointer; font-size: 12px;
+    }
+    button:hover { background: rgba(255,255,255,0.10); }
+    button.primary { background: rgba(102,255,204,0.16); border-color: rgba(102,255,204,0.4); color: #b8ffea; }
+
+    /* Legend */
+    #legend { display: flex; flex-direction: column; gap: 6px; margin: 6px 0 10px 0; }
+    .legend-row { display: flex; gap: 8px; align-items: flex-start; }
+    .swatch { width: 14px; height: 14px; border-radius: 3px; flex-shrink: 0; margin-top: 3px; opacity: 0.85; }
+    .legend-label { font-weight: 600; font-size: 12px; }
+    .legend-desc { color: var(--muted); font-size: 11px; line-height: 1.4; }
+
+    /* Drone rules */
+    #droneRules { font-size: 12px; line-height: 1.5; color: var(--text); }
+    #droneRules ul { padding-left: 18px; margin: 6px 0; }
+    #droneRules li { margin: 3px 0; }
+    .collapsible-head {
+      cursor: pointer; user-select: none; display: flex; align-items: center; gap: 6px;
+    }
+    .collapsible-head::before {
+      content: "▶"; font-size: 9px; color: var(--muted); transition: transform 0.15s;
+    }
+    .collapsible-head.expanded::before { transform: rotate(90deg); }
+    .collapsible-body.collapsed { display: none; }
+
+    /* Airspace list */
+    #airspaceList { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 4px; }
+    #airspaceList button.teleport {
+      width: 100%; text-align: left; display: flex; flex-direction: column; gap: 2px;
+      padding: 8px 10px; line-height: 1.3;
+    }
+    #airspaceList .row1 { font-weight: 600; font-size: 12px; display: flex; gap: 6px; align-items: center; }
+    #airspaceList .row2 { font-size: 11px; color: var(--muted); }
+    #airspaceList button.teleport.active-target {
+      background: rgba(102,255,204,0.14); border-color: rgba(102,255,204,0.45);
+    }
+    #airspaceFilter {
+      width: 100%; margin: 4px 0 8px 0; padding: 6px 8px; border-radius: 6px;
+      border: 1px solid var(--panel-border); background: rgba(255,255,255,0.04);
+      color: var(--text); font-family: var(--mono); font-size: 11px;
+    }
+    #airspaceList .empty-list { font-size: 11px; color: var(--muted); padding: 8px; }
+    .badge { display: inline-block; padding: 1px 5px; border-radius: 4px; font-size: 9px; font-weight: 700; letter-spacing: 0.4px; }
+    .badge.auth { background: rgba(102,255,204,0.18); color: #b8ffea; }
+    .badge.approx { background: rgba(255,184,74,0.20); color: #ffd9a3; }
+    .cat { padding: 1px 4px; border-radius: 3px; font-weight: 600; font-size: 10px; }
+    .cat.cat-CTR { background: rgba(255,51,68,0.25); color: #ffd8de; }
+    .cat.cat-TMA { background: rgba(255,153,51,0.22); color: #ffe6cc; }
+    .cat.cat-ClassD { background: rgba(255,225,74,0.22); color: #fff6c2; }
+    .cat.cat-Prohibited { background: rgba(255,0,0,0.30); color: #ffd0d0; }
+    .cat.cat-Restricted { background: rgba(160,80,255,0.25); color: #e5d6ff; }
+    .cat.cat-Danger { background: rgba(255,106,31,0.25); color: #ffd5b3; }
+
+    h3 { font-size: 11px; margin: 14px 0 4px 0; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); font-weight: 600; }
+
+    /* Controls hint */
+    #controlsHint {
+      position: fixed; left: 50%; transform: translateX(-50%); bottom: 18px;
+      background: var(--panel); border: 1px solid var(--panel-border); border-radius: 12px;
+      padding: 12px 18px; box-shadow: var(--shadow); font-family: var(--mono); font-size: 12px;
+      max-width: 720px; line-height: 1.7;
+    }
+    #controlsHint.collapsed { padding: 6px 10px; font-size: 14px; cursor: pointer; }
+    #controlsHint.collapsed #controlsHintBody { display: none; }
+    #controlsHint kbd {
+      background: rgba(255,255,255,0.10); border: 1px solid rgba(255,255,255,0.18);
+      border-bottom-width: 2px; border-radius: 4px; padding: 1px 5px;
+      font-family: var(--mono); font-size: 11px; margin: 0 1px;
+    }
+    #controlsToggle {
+      position: absolute; top: -8px; right: -8px; background: var(--panel);
+      border: 1px solid var(--panel-border); border-radius: 50%;
+      width: 22px; height: 22px; line-height: 18px; text-align: center;
+      cursor: pointer; font-size: 11px;
+    }
+
+    /* Mobile fallback */
+    #mobileNotice {
+      display: none;
+      position: fixed; inset: 0; background: rgba(10,14,21,0.96); z-index: 200;
+      align-items: center; justify-content: center; padding: 20px; text-align: center;
+      font-family: var(--sans);
+    }
+
+    /* Footer disclaimer */
+    #footer {
+      position: fixed; right: 14px; bottom: 6px; font-size: 10px; color: var(--muted);
+      max-width: 480px; text-align: right; line-height: 1.4; font-family: var(--mono);
+      pointer-events: none;
+    }
+
+    /* Identify crosshairs */
+    #crosshairs {
+      position: fixed; inset: 0; pointer-events: none; z-index: 50; display: none;
+    }
+    #crosshairs.visible { display: block; }
+    #crosshairs::before, #crosshairs::after {
+      content: ""; position: absolute; left: 50%; top: 50%;
+      background: rgba(102, 255, 204, 0.85);
+      transform: translate(-50%, -50%);
+      box-shadow: 0 0 6px rgba(102, 255, 204, 0.4);
+    }
+    #crosshairs::before { width: 28px; height: 2px; }
+    #crosshairs::after { width: 2px; height: 28px; }
+    #crosshairInfo {
+      position: fixed; left: 50%; top: calc(50% + 28px); transform: translateX(-50%);
+      display: none; padding: 6px 12px; border-radius: 8px;
+      background: rgba(8, 12, 20, 0.88); border: 1px solid rgba(102, 255, 204, 0.45);
+      font-family: var(--mono); font-size: 12px; color: #b8ffea; z-index: 51;
+      pointer-events: none; white-space: nowrap;
+    }
+    #crosshairInfo.visible { display: block; }
+    #viewModeBadge {
+      position: fixed; top: 14px; left: 50%; transform: translateX(-50%);
+      display: none; padding: 4px 10px; border-radius: 999px;
+      background: rgba(102, 255, 204, 0.18); border: 1px solid rgba(102, 255, 204, 0.45);
+      font-family: var(--mono); font-size: 11px; color: #b8ffea; z-index: 51;
+    }
+    #viewModeBadge.visible { display: block; }
+
+    /* Identify info panel (bottom stack) */
+    #identifyPanel {
+      position: fixed; left: 50%; transform: translateX(-50%);
+      bottom: 64px; z-index: 55;
+      display: none; flex-direction: column; gap: 8px;
+      max-width: 520px; width: min(520px, calc(100vw - 300px));
+      pointer-events: none;
+    }
+    #identifyPanel.visible { display: flex; }
+    .identify-card {
+      padding: 10px 14px; border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.14);
+      backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+      font-family: var(--mono); font-size: 12px; line-height: 1.45;
+    }
+    .identify-card .ic-title {
+      font-weight: 700; font-size: 13px; margin-bottom: 4px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .identify-card .ic-cat {
+      font-size: 9px; font-weight: 700; letter-spacing: 0.4px;
+      padding: 2px 6px; border-radius: 4px;
+      background: rgba(0,0,0,0.25);
+    }
+    .identify-card .ic-row { color: rgba(255,255,255,0.88); }
+    .identify-card .ic-label { color: var(--muted); margin-right: 6px; }
+    .identify-card.cat-CTR { background: rgba(255,51,68,0.32); border-color: rgba(255,80,96,0.55); }
+    .identify-card.cat-TMA { background: rgba(255,153,51,0.30); border-color: rgba(255,170,80,0.5); }
+    .identify-card.cat-ClassD { background: rgba(255,225,74,0.28); border-color: rgba(255,225,74,0.45); color: #fff6c2; }
+    .identify-card.cat-ClassD .ic-row { color: rgba(255,255,240,0.92); }
+    .identify-card.cat-Prohibited { background: rgba(255,0,0,0.34); border-color: rgba(255,60,60,0.55); }
+    .identify-card.cat-Restricted { background: rgba(160,80,255,0.30); border-color: rgba(180,120,255,0.5); }
+    .identify-card.cat-Danger { background: rgba(255,106,31,0.30); border-color: rgba(255,140,60,0.5); }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+  <div id="crosshairs" aria-hidden="true"></div>
+  <div id="crosshairInfo" aria-live="polite"></div>
+  <div id="viewModeBadge"></div>
+  <div id="identifyPanel" aria-live="polite"></div>
+  <div id="loading">Loading scene & airspace data…</div>
+
+  <div id="hud">
+    <div class="row"><span class="label">LAT/LON</span> <span class="val" id="latlon">—</span></div>
+    <div class="row"><span class="label">ALT</span>     <span class="val" id="alt">—</span></div>
+    <div class="row" id="hdgRow">
+      <span class="label">HDG</span>
+      <div class="hdg-display">
+        <canvas id="hdgCompass" width="176" height="44" aria-hidden="true"></canvas>
+        <span class="val" id="heading">—</span>
+      </div>
+    </div>
+    <div class="row"><span class="label">SPD</span>     <span class="val" id="speed">—</span></div>
+    <div class="row" id="speedRow">
+      <span class="label">SIM SPEED</span>
+      <div id="speedControls"></div>
+    </div>
+    <div class="row" id="historyRow">
+      <span class="label">FLIGHT HISTORY</span>
+      <div id="historyControls">
+        <button type="button" id="undoBtn" disabled title="Undo last position">↶ Undo</button>
+        <button type="button" id="redoBtn" disabled title="Redo position">↷ Redo</button>
+      </div>
+      <div id="historyLabel">—</div>
+    </div>
+    <div id="currentInside"></div>
+  </div>
+
+  <div id="radarOptions">
+    <label class="opt"><input type="checkbox" id="optRadarMapHud" checked /> Map underlay</label>
+    <label class="opt"><input type="checkbox" id="optRadarCenter" checked /> Center aircraft</label>
+    <label class="opt"><input type="checkbox" id="optFovHud" checked /> FOV cone</label>
+  </div>
+  <div id="minimapLabel">Radar · scroll zoom · drag pan</div>
+  <canvas id="minimap" width="260" height="260"></canvas>
+
+  <div id="panel">
+    <div class="panel-head">
+      <h2 id="panelTitle">Thai Airspace · Bangkok</h2>
+      <div style="display:flex;gap:6px;">
+        <button id="resetBtn" class="primary" title="Return to central Bangkok at 200 m AMSL">Reset</button>
+        <button id="panelToggle" title="Hide/show panel">−</button>
+      </div>
+    </div>
+    <div class="panel-body">
+      <h3>Display options</h3>
+      <div id="displayOptions"></div>
+      <h3>Legend</h3>
+      <div id="legend"></div>
+      <h3 class="collapsible-head" id="droneRulesToggle">Thailand drone rules</h3>
+      <div id="droneRules" class="collapsible-body collapsed"></div>
+      <h3>Airspaces (click to warp to overview)</h3>
+      <input type="search" id="airspaceFilter" placeholder="Filter airspaces…" autocomplete="off" />
+      <ul id="airspaceList"></ul>
+    </div>
+  </div>
+
+  <div id="controlsHint">
+    <div id="controlsToggle">?</div>
+    <div id="controlsHintBody">
+      <strong>Fly the drone:</strong> click the screen to capture the mouse, then —
+      <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> move ·
+      <kbd>Q</kbd>/<kbd>E</kbd> down/up ·
+      <kbd>Shift</kbd> boost (3× on top of sim speed) ·
+      <kbd>Space</kbd> hover toggle ·
+      <kbd>↓</kbd> down view (toggle back to front) ·
+      <kbd>←</kbd> left view ·
+      <kbd>→</kbd> right view ·
+      <kbd>I</kbd> identify mode ·
+      speed presets in HUD (1× = 50 km/h … 100× = 10 000 km/h) ·
+      mouse to look. <kbd>Esc</kbd> releases the pointer.
+      Radar: <strong>Center aircraft</strong> on by default, scroll zoom, drag pan when off.
+    </div>
+  </div>
+
+  <div id="mobileNotice">
+    <div>
+      <h2>Desktop required</h2>
+      <p>This drone sim needs a real keyboard and a mouse. Open it on a laptop or desktop computer.</p>
+    </div>
+  </div>
+
+  <div id="placeLabel" aria-live="polite">…</div>
+
+  <div id="footer">
+    Map tiles © OpenStreetMap contributors (ODbL) · Airspace interpreted from AIP Thailand (CAAT).<br>
+    <strong>Educational visualization only. Not for flight planning. Data may be approximate or out of date. Consult CAAT and current AIP Thailand.</strong>
+  </div>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.170.0/build/three.module.js"
+      }
+    }
+  </script>
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>
