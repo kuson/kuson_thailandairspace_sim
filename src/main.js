@@ -271,7 +271,7 @@ drone.onIdentifyToggle = (on) => {
 
 flightHistory.onChange = (state) => ui?.updateHistoryButtons?.(state);
 
-(async function bootstrap() {
+async function bootstrap() {
   await layer.load("./data/airspaces.json");
   scene.add(layer.group);
   scene.add(layer.labelRoot);
@@ -353,16 +353,24 @@ flightHistory.onChange = (state) => ui?.updateHistoryButtons?.(state);
   });
 
   document.getElementById("loading").style.display = "none";
-})().catch((err) => {
-  console.error(err);
-  const el = document.getElementById("loading");
-  if (el) el.textContent = "Failed to load airspace data: " + err.message;
-});
+}
 
-const isTouchOnly = matchMedia("(pointer: coarse)").matches && !matchMedia("(pointer: fine)").matches;
-if (isTouchOnly) {
-  const mn = document.getElementById("mobileNotice");
-  if (mn) mn.style.display = "block";
+// P6.T3: on touch-only devices (no fine pointer) the sim is unusable —
+// it needs a keyboard + mouse. Don't run the heavy bootstrap, geolocation
+// prompt, or render loop until the user explicitly opts in via "Try
+// anyway". simStarted also guards the visibilitychange restart below so a
+// tab-focus can't sneak the loop alive before opt-in.
+let simStarted = false;
+function startSim() {
+  if (simStarted) return;
+  simStarted = true;
+  bootstrap().catch((err) => {
+    console.error(err);
+    const el = document.getElementById("loading");
+    if (el) el.textContent = "Failed to load airspace data: " + err.message;
+  });
+  lastT = performance.now();
+  rafId = requestAnimationFrame(loop);
 }
 
 let lastT = performance.now();
@@ -505,9 +513,29 @@ function loop(t) {
   _safe("render", () => renderer.render(scene, camera));
   rafId = requestAnimationFrame(loop);
 }
-rafId = requestAnimationFrame(loop);
+
+// P6.T3: gate startup on pointer capability. Touch-only → show the
+// blocking notice and wait for an explicit "Try anyway"; otherwise start
+// immediately.
+const isTouchOnly = matchMedia("(pointer: coarse)").matches && !matchMedia("(pointer: fine)").matches;
+if (isTouchOnly) {
+  const mn = document.getElementById("mobileNotice");
+  if (mn) mn.style.display = "flex";
+  const btn = document.getElementById("mobileTryAnyway");
+  if (btn) {
+    btn.addEventListener("click", () => {
+      if (mn) mn.style.display = "none";
+      startSim();
+    }, { once: true });
+  } else {
+    startSim();   // no opt-in button present → don't hard-block
+  }
+} else {
+  startSim();
+}
 
 document.addEventListener("visibilitychange", () => {
+  if (!simStarted) return;
   if (document.hidden) {
     if (rafId !== null) cancelAnimationFrame(rafId);
     rafId = null;

@@ -471,6 +471,12 @@
       align-items: center; justify-content: center; padding: 20px; text-align: center;
       font-family: var(--sans);
     }
+    #mobileTryAnyway {
+      margin-top: 18px; padding: 10px 22px; font-family: var(--mono); font-size: 13px;
+      background: rgba(102,255,204,0.16); color: #b8ffea;
+      border: 1px solid rgba(102,255,204,0.45); border-radius: 6px; cursor: pointer;
+    }
+    #mobileTryAnyway:active { background: rgba(102,255,204,0.30); }
 
     /* Footer disclaimer */
     #footer {
@@ -710,6 +716,7 @@
     <div>
       <h2>Desktop required</h2>
       <p>This drone sim needs a real keyboard and a mouse. Open it on a laptop or desktop computer.</p>
+      <button id="mobileTryAnyway" type="button">Try anyway</button>
     </div>
   </div>
 
