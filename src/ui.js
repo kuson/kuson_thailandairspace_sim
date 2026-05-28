@@ -1051,6 +1051,11 @@ export class UI {
       return hay.includes(q);
     });
 
+    if (items.length === 0) {
+      this.airspaceList.innerHTML = `<li class="empty-list">No airspaces match filter.</li>`;
+      return;
+    }
+
     // 8-way compass-rose buttons per card: clicking N puts the aircraft north
     // of the airspace looking south, etc. Default (clicking the card body)
     // keeps the historical "from the south" view.
@@ -1091,10 +1096,6 @@ export class UI {
           ${compassRose(a.id)}
         </li>`;
     }).join("");
-
-    if (items.length === 0) {
-      this.airspaceList.innerHTML = `<li class="empty-list">No airspaces match filter.</li>`;
-    }
 
     this.airspaceList.querySelectorAll("button.teleport").forEach((btn) => {
       btn.addEventListener("click", (e) => {
