@@ -13,7 +13,7 @@ import { TourGuide } from "./tourGuide.js";
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x89b4dc);
-scene.fog = new THREE.Fog(0xa9c1da, 80_000, 400_000);
+scene.fog = new THREE.Fog(0xa9c1da, 30_000, 250_000);
 
 const camera = new THREE.PerspectiveCamera(
   70,
