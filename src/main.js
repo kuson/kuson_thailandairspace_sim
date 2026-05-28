@@ -367,6 +367,22 @@ let rafId = null;
 const PHYS_DT = 1 / 120;
 const PHYS_ACCUM_CAP = 0.25;  // avoid spiral-of-death after long pauses
 let physAccum = 0;
+
+// P5.T2: throttle the identify ray-march to 10 Hz. The pick + highlight +
+// panel rebuild is the heaviest per-frame work in identify mode; 100 ms
+// cadence is imperceptible to the user but cuts that cost ~6× at 60 fps.
+let lastIdentifyT = 0;
+
+// P5.T8: dynamic DPR reduction under frame pressure. Two consecutive
+// frames slower than 25 ms (sub-40 fps) halve the device-pixel-ratio so
+// the GPU fills 4× fewer pixels; 30 consecutive frames under 15 ms
+// (60 fps+) restore it one step. Hysteresis (asymmetric counters) avoids
+// thrashing the resolution every few frames.
+const DPR_MAX = Math.min(window.devicePixelRatio || 1, 2);
+const DPR_MIN = Math.max(DPR_MAX / 2, 0.5);
+let currentDPR = DPR_MAX;
+let slowFrameRun = 0;
+let fastFrameRun = 0;
 function _safe(label, fn) {
   try { return fn(); }
   catch (err) { console.error(`[loop:${label}]`, err); return undefined; }
@@ -374,6 +390,26 @@ function _safe(label, fn) {
 function loop(t) {
   const dt = Math.min((t - lastT) / 1000, 0.1);
   lastT = t;
+
+  // P5.T8: adapt DPR to frame pressure. dt is already clamped to 0.1 s, so
+  // a single post-pause spike can't fool the counters; requiring 2 (down)
+  // / 30 (up) consecutive frames adds hysteresis. Skip the first frame
+  // (dt can be a stale-tab spike before the visibility reset kicks in).
+  const frameMs = dt * 1000;
+  if (frameMs > 25) { slowFrameRun++; fastFrameRun = 0; }
+  else if (frameMs < 15) { fastFrameRun++; slowFrameRun = 0; }
+  else { slowFrameRun = 0; fastFrameRun = 0; }
+  if (slowFrameRun >= 2 && currentDPR > DPR_MIN) {
+    currentDPR = Math.max(DPR_MIN, currentDPR * 0.5);
+    renderer.setPixelRatio(currentDPR);
+    applyRendererSize();
+    slowFrameRun = 0;
+  } else if (fastFrameRun >= 30 && currentDPR < DPR_MAX) {
+    currentDPR = Math.min(DPR_MAX, currentDPR * 2);
+    renderer.setPixelRatio(currentDPR);
+    applyRendererSize();
+    fastFrameRun = 0;
+  }
 
   // Every per-frame call wrapped so one bad subsystem never freezes the
   // entire render loop — the user gets a useful console error instead of a
@@ -417,9 +453,15 @@ function loop(t) {
 
   _safe("identify", () => {
     if (drone.identifyMode && !flyTo.active) {
-      const ids = pickAirspacesAlongRay(camera, layer);
-      layer.setHighlighted(ids);
-      ui?.updateIdentifyPanel(layer.identifyInfoForIds(ids, drone.position));
+      // P5.T2: re-pick at 10 Hz, not every frame. The highlight + panel
+      // persist between picks; 100 ms latency is imperceptible while the
+      // ray-vs-prism scan is the dominant identify-mode cost.
+      if (t - lastIdentifyT > 100) {
+        lastIdentifyT = t;
+        const ids = pickAirspacesAlongRay(camera, layer);
+        layer.setHighlighted(ids);
+        ui?.updateIdentifyPanel(layer.identifyInfoForIds(ids, drone.position));
+      }
     } else if (catalogHighlightId && !flyTo.active) {
       layer.setHighlighted(new Set([catalogHighlightId]));
       ui?.updateIdentifyPanel([]);
