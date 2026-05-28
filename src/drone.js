@@ -763,11 +763,11 @@ function thirdPersonScaleForPreset(presetId) {
  *  - `display` : friendly label for HUD/captions.
  */
 export const SPEED_PRESETS = [
-  { id: "1x",        label: "1×",         kmh: 50,     minKmh: 0,   model: "free",     display: "Mavic 3 drone" },
-  { id: "cessna172", label: "Cessna 172", kmh: 226,    minKmh: 130, model: "airplane", display: "Cessna 172" },
-  { id: "learjet",   label: "Learjet",    kmh: 850,    minKmh: 240, model: "airplane", display: "Learjet" },
-  { id: "b777",      label: "Boeing 777", kmh: 920,    minKmh: 370, model: "airplane", display: "Boeing 777" },
-  { id: "100x",      label: "100×",       kmh: 10_000, minKmh: 0,   model: "free",     display: "UFO" },
+  { id: "1x",        label: "1×",         kmh: 50,     minKmh: 0,   model: "free",     display: "Mavic 3 drone", boostCap: 4   },
+  { id: "cessna172", label: "Cessna 172", kmh: 226,    minKmh: 130, model: "airplane", display: "Cessna 172",    boostCap: 1.5 },
+  { id: "learjet",   label: "Learjet",    kmh: 850,    minKmh: 240, model: "airplane", display: "Learjet",       boostCap: 1.1 },
+  { id: "b777",      label: "Boeing 777", kmh: 920,    minKmh: 370, model: "airplane", display: "Boeing 777",    boostCap: 1.0 },
+  { id: "100x",      label: "100×",       kmh: 10_000, minKmh: 0,   model: "free",     display: "UFO",           boostCap: 5   },
 ];
 
 export function presetById(id) {
@@ -1118,7 +1118,9 @@ export class Drone {
    * Phase 3 replaces it with a real second-order controller.
    */
   _updateHovercraft(dt) {
-    const boostMult = this.keys.has("shift") ? BOOST_FACTOR : 1;
+    const preset = presetById(this.speedPresetId);
+    const cappedBoost = Math.min(BOOST_FACTOR, preset.boostCap ?? BOOST_FACTOR);
+    const boostMult = this.keys.has("shift") ? cappedBoost : 1;
     const precisionMult = this.keys.has("control") ? 1 / 3 : 1;  // Ctrl = fine positioning
     const speed = this.cruiseSpeedMs * boostMult * precisionMult;
     const fwd = this.forward();
@@ -1156,7 +1158,7 @@ export class Drone {
   _updateAirplane(dt) {
     const preset = presetById(this.speedPresetId);
     const minMs = (preset.minKmh ?? 0) * KMH_TO_MS;
-    const maxMs = preset.kmh * KMH_TO_MS * (this.keys.has("shift") ? BOOST_FACTOR : 1);
+    const maxMs = preset.kmh * KMH_TO_MS * (this.keys.has("shift") ? Math.min(BOOST_FACTOR, preset.boostCap ?? BOOST_FACTOR) : 1);
 
     // ---- Throttle (W = up, S = down) ----
     const throttleRate = (maxMs - minMs) * 0.6;       // reach min↔max in ~1.7 s
