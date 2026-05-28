@@ -825,6 +825,11 @@ export class Drone {
     this.onPresetKeySwitch = null;     // notify UI to sync speed buttons
     this.onFlightModeChange = null;    // notify UI when flightMode resolves to a different value
 
+    // Hoisted scratch vectors — avoid per-frame allocation in hot paths.
+    this._fwdVec = new THREE.Vector3();
+    this._rightVec = new THREE.Vector3();
+    this._moveVec = new THREE.Vector3();
+
     this._bindEvents();
   }
 
@@ -1032,7 +1037,7 @@ export class Drone {
   forward() {
     const yaw = this.bodyYaw;
     const pitch = this.cameraMode === "down" ? 0 : this.bodyPitch;
-    return new THREE.Vector3(
+    return this._fwdVec.set(
       -Math.sin(yaw) * Math.cos(pitch),
       Math.sin(pitch),
       -Math.cos(yaw) * Math.cos(pitch),
@@ -1040,7 +1045,7 @@ export class Drone {
   }
 
   right() {
-    return new THREE.Vector3(Math.cos(this.bodyYaw), 0, -Math.sin(this.bodyYaw));
+    return this._rightVec.set(Math.cos(this.bodyYaw), 0, -Math.sin(this.bodyYaw));
   }
 
   headingDeg() {
@@ -1126,7 +1131,7 @@ export class Drone {
     const fwd = this.forward();
     const rt = this.right();
 
-    const move = new THREE.Vector3();
+    const move = this._moveVec.set(0, 0, 0);
     let vy = 0;
 
     if (!this.hover) {
