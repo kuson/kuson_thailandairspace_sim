@@ -84,6 +84,7 @@ export class UI {
       alt: this.hud?.querySelector("#alt") ?? null,
       speed: this.hud?.querySelector("#speed") ?? null,
       vsi: this.hud?.querySelector("#vsi") ?? null,
+      wind: this.hud?.querySelector("#wind") ?? null,
     };
 
     // P3.T7: vertical speed indicator. EMA smoothing on dy/dt with
@@ -551,6 +552,22 @@ export class UI {
       return `${kt.toFixed(0)} kt · ${kmh.toFixed(0)} km/h · ${presetLabel} (${presetKt} kt)`;
     }
     return `${mps.toFixed(0)} m/s · ${kmh.toFixed(0)} km/h · ${presetLabel} (${presetKmh} km/h)`;
+  }
+
+  /**
+   * P3.T9: wind chip string for the HUD. Direction is meteorological
+   * (the direction the wind is FROM), printed as a zero-padded compass
+   * bearing. Magnitude is knots in aero, m/s in metric. Below ~0.1 m/s
+   * the chip reads "Calm" instead of a noisy direction.
+   */
+  fmtWind(dirDeg, speedMs) {
+    if (!isFinite(speedMs) || speedMs < 0.1) return "Calm";
+    const dir = String(Math.round(dirDeg) % 360).padStart(3, "0");
+    if (this.unitSystem === "aero") {
+      const kt = speedMs * 1.94384;
+      return `${dir}° / ${kt.toFixed(0)} kt`;
+    }
+    return `${dir}° / ${speedMs.toFixed(1)} m/s`;
   }
 
   /**
@@ -1365,6 +1382,15 @@ export class UI {
       if (this._el.vsi) this._el.vsi.textContent = vsiText;
     }
 
+    // P3.T9: wind chip. Drone.physicsStep publishes the latest sample on
+    // _lastWind; in Easy Mode / UFO the sample is zeros and we print "Calm".
+    const w = this.drone._lastWind ?? { dirDeg: 0, speedMs: 0 };
+    const windText = this.fmtWind(w.dirDeg, w.speedMs);
+    if (this._hudCache.wind !== windText) {
+      this._hudCache.wind = windText;
+      if (this._el.wind) this._el.wind.textContent = windText;
+    }
+
     this._drawAltTape(altM);
     this._drawAttitudeIndicator(this.drone.bodyPitch ?? 0, this.drone.bodyRoll ?? 0);
 
@@ -1588,6 +1614,48 @@ export class UI {
     ctx.closePath();
     ctx.fill();
     ctx.restore();
+
+    // P3.T9: ground-track vector. In a crosswind the aircraft crabs — its
+    // ground velocity (nose direction × airspeed + wind) points a few
+    // degrees off the nose. Drawing both vectors here is the "aha" moment
+    // the playbook spec asks for. Amber to contrast with the cyan nose.
+    const lw = this.drone._lastWind;
+    if (lw && lw.speedMs > 0.1) {
+      let avx = 0, avz = 0;
+      if (this.drone.flightMode === FlightMode.AIRPLANE) {
+        const fwd = this.drone.forward();
+        const v = this.drone.airspeedMs ?? 0;
+        avx = fwd.x * v;
+        avz = fwd.z * v;
+      } else if (this.drone.flightMode === FlightMode.DRONE) {
+        const vh = this.drone._quadrotor?.velocityHoriz;
+        if (vh) { avx = vh.x; avz = vh.z; }
+      }
+      const gx = avx + lw.vec3.x;
+      const gz = avz + lw.vec3.z;
+      const gMag = Math.hypot(gx, gz);
+      if (gMag > 0.5) {
+        const ux = gx / gMag, uz = gz / gMag;
+        const LEN = 22;
+        const tipX = dx + ux * LEN, tipY = dy + uz * LEN;
+        ctx.strokeStyle = "rgba(255, 196, 92, 0.9)";
+        ctx.lineWidth = 1.6;
+        ctx.beginPath();
+        ctx.moveTo(dx, dy);
+        ctx.lineTo(tipX, tipY);
+        ctx.stroke();
+        // Arrow head — small filled triangle aligned with track.
+        const px = -uz, pz = ux;            // perpendicular unit (rotate 90°)
+        const HW = 3.5, HB = 5;
+        ctx.fillStyle = "rgba(255, 196, 92, 0.95)";
+        ctx.beginPath();
+        ctx.moveTo(tipX, tipY);
+        ctx.lineTo(tipX - ux * HB + px * HW, tipY - uz * HB + pz * HW);
+        ctx.lineTo(tipX - ux * HB - px * HW, tipY - uz * HB - pz * HW);
+        ctx.closePath();
+        ctx.fill();
+      }
+    }
 
     if (this.drone.cameraMode === "down") {
       ctx.strokeStyle = "rgba(102, 255, 204, 0.9)";
