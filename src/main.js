@@ -15,6 +15,7 @@ import { installSky } from "./sky.js";
 import { installCityBeacons } from "./cities.js";
 import { installProvinceLines } from "./provinces.js";
 import { RigidBody, QuadrotorModel, FixedWingModel } from "./physics.js";
+import { SimMode, SimModeMachine } from "./simMode.js";
 
 const scene = new THREE.Scene();
 // Shared sun direction — the Sky shader, the sun-disc sprite, and the
@@ -187,6 +188,11 @@ let tourGuide;
 let catalogHighlightId = null;
 let _historySampleT = 0;
 let _applyingHistory = false;
+
+// P5.T7: authoritative top-level mode, derived each frame from the live
+// controller signals (see loop). Replaces the flyTo/tour/paused/replay
+// flag-AND tangle the loop used to juggle.
+const simMode = new SimModeMachine();
 
 function applySnapshot(s) {
   if (!s) return;
@@ -414,10 +420,24 @@ function loop(t) {
   // Every per-frame call wrapped so one bad subsystem never freezes the
   // entire render loop — the user gets a useful console error instead of a
   // permanent black screen.
-  const flying = _safe("flyTo", () => flyTo.update(dt)) ?? false;
-  const touring = _safe("tour-isRunning", () => tourGuide?.isRunning()) ?? false;
-  if (touring) _safe("tour-update", () => tourGuide.update(dt));
-  if (!flying && !touring) {
+  const flyActive = _safe("flyTo", () => flyTo.update(dt)) ?? false;
+  const tourActive = _safe("tour-isRunning", () => tourGuide?.isRunning()) ?? false;
+  if (tourActive) _safe("tour-update", () => tourGuide.update(dt));
+
+  // P5.T7: collapse the flyTo/tour/paused/replay flags into one validated
+  // mode. The drone is "driven" externally only by a fly-to or a tour;
+  // those are the cases that skip the physics integrator. FREE/PAUSED/REPLAY
+  // all fall through to physicsStep + update — physicsStep self-gates on
+  // drone.paused, so a paused sim still syncs its camera via drone.update.
+  const mode = _safe("sim-mode", () => simMode.resolve({
+    paused: drone.paused,
+    replaying: _applyingHistory,
+    touring: tourActive,
+    flyingTo: flyActive,
+  })) ?? SimMode.FREE;
+  const droneDriven = (mode === SimMode.FLYING_TO || mode === SimMode.TOURING);
+
+  if (!droneDriven) {
     physAccum = Math.min(physAccum + dt, PHYS_ACCUM_CAP);
     while (physAccum >= PHYS_DT) {
       _safe("drone-physics", () => drone.physicsStep(PHYS_DT));
@@ -430,7 +450,7 @@ function loop(t) {
     physAccum = 0;
   }
 
-  if (!flying && !touring && !flyTo.active && !_applyingHistory && drone.currentSpeed > 0.5) {
+  if (mode === SimMode.FREE && drone.currentSpeed > 0.5) {
     _historySampleT += dt;
     if (_historySampleT >= 12) {
       _historySampleT = 0;
@@ -498,6 +518,6 @@ document.addEventListener("visibilitychange", () => {
 });
 
 window.__sim = {
-  scene, camera, drone, layer, ground, flightHistory, tourGuide, ui,
+  scene, camera, drone, layer, ground, flightHistory, tourGuide, ui, simMode,
   physics: { RigidBody, QuadrotorModel, FixedWingModel },
 };
