@@ -83,7 +83,15 @@ export class UI {
       latlon: this.hud?.querySelector("#latlon") ?? null,
       alt: this.hud?.querySelector("#alt") ?? null,
       speed: this.hud?.querySelector("#speed") ?? null,
+      vsi: this.hud?.querySelector("#vsi") ?? null,
     };
+
+    // P3.T7: vertical speed indicator. EMA smoothing on dy/dt with
+    // alpha=0.2 (the playbook's spec) — fast enough to feel responsive
+    // during pull-ups, slow enough that physicsStep substep boundaries
+    // don't make the value flicker.
+    this._lastAltM = null;
+    this._vsiSmoothMs = 0;
 
     // Visibility flags
     this.altTapeVisible = true;
@@ -543,6 +551,24 @@ export class UI {
       return `${kt.toFixed(0)} kt · ${kmh.toFixed(0)} km/h · ${presetLabel} (${presetKt} kt)`;
     }
     return `${mps.toFixed(0)} m/s · ${kmh.toFixed(0)} km/h · ${presetLabel} (${presetKmh} km/h)`;
+  }
+
+  /**
+   * P3.T7: vertical-speed string for the HUD VS row. Aero = ft/min with
+   * a sign prefix (matches FAA VSI convention); metric = m/s. A dead
+   * band of ±0.05 m/s reads as "level" so noise around hover doesn't
+   * flip the sign every frame.
+   */
+  fmtVsi(mps) {
+    if (!isFinite(mps)) return "—";
+    if (Math.abs(mps) < 0.05) return this.unitSystem === "aero" ? "0 ft/min" : "0.0 m/s";
+    const sign = mps > 0 ? "+" : "−";
+    const a = Math.abs(mps);
+    if (this.unitSystem === "aero") {
+      const fpm = a * M_TO_FT * 60;
+      return `${sign}${fpm.toFixed(0)} ft/min`;
+    }
+    return `${sign}${a.toFixed(1)} m/s`;
   }
 
   /** Lateral distance (e.g. nearest-point in identify panel). */
@@ -1318,6 +1344,25 @@ export class UI {
     if (this._hudCache.alt !== altText) {
       this._hudCache.alt = altText;
       if (this._el.alt) this._el.alt.textContent = altText;
+    }
+
+    // P3.T7: vertical speed indicator. dy/dt smoothed with EMA alpha=0.2.
+    // First frame primes _lastAltM and reports 0 — avoids a spurious huge
+    // VS spike from a position-uninitialised previous frame.
+    if (dt > 1e-4) {
+      if (this._lastAltM == null) {
+        this._lastAltM = altM;
+      } else {
+        const inst = (altM - this._lastAltM) / dt;
+        this._lastAltM = altM;
+        const ALPHA = 0.2;
+        this._vsiSmoothMs = ALPHA * inst + (1 - ALPHA) * this._vsiSmoothMs;
+      }
+    }
+    const vsiText = this.fmtVsi(this._vsiSmoothMs);
+    if (this._hudCache.vsi !== vsiText) {
+      this._hudCache.vsi = vsiText;
+      if (this._el.vsi) this._el.vsi.textContent = vsiText;
     }
 
     this._drawAltTape(altM);
