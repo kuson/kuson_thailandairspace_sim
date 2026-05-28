@@ -55,6 +55,8 @@ export class UI {
     this.currentInside = document.getElementById("currentInside");
     this.speedControls = document.getElementById("speedControls");
     this.modeChip = document.getElementById("modeChip");
+    this.easyModeIntro = document.getElementById("easyModeIntro");
+    this.easyModeIntroClose = document.getElementById("easyModeIntroClose");
     this.undoBtn = document.getElementById("undoBtn");
     this.redoBtn = document.getElementById("redoBtn");
     this.historyLabel = document.getElementById("historyLabel");
@@ -118,6 +120,7 @@ export class UI {
     this._bindRadar();
     this._bind();
     this._scheduleHintCollapse();
+    this._initEasyModeIntro();
   }
 
   setTourRunning(on) {
@@ -1104,6 +1107,21 @@ export class UI {
 
   _scheduleHintCollapse() {
     setTimeout(() => this.controlsHint.classList.add("collapsed"), 5000);
+  }
+
+  _initEasyModeIntro() {
+    if (!this.easyModeIntro) return;
+    const key = "kuson_easy_mode_intro_v1";
+    let dismissed = false;
+    try { dismissed = localStorage.getItem(key) === "1"; } catch { /* private mode */ }
+    if (dismissed) return;
+    const dismiss = () => {
+      this.easyModeIntro.classList.remove("visible");
+      try { localStorage.setItem(key, "1"); } catch { /* private mode */ }
+    };
+    this.easyModeIntroClose?.addEventListener("click", dismiss);
+    this.easyModeIntro.classList.add("visible");
+    setTimeout(dismiss, 15000);  // auto-dismiss after 15s if user ignores
   }
 
   _buildPanel() {

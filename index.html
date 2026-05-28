@@ -162,6 +162,33 @@
     .chip.cat-Restricted { background: rgba(160,80,255,0.25); color: #e5d6ff; }
     .chip.cat-Danger { background: rgba(255,106,31,0.25); color: #ffd5b3; }
 
+    /* First-run intro toast explaining Easy Mode (P0.T8). */
+    #easyModeIntro {
+      position: fixed; top: 14px; left: 50%; transform: translateX(-50%);
+      max-width: min(520px, calc(100vw - 40px));
+      padding: 10px 36px 10px 14px;
+      background: rgba(20, 32, 48, 0.92);
+      border: 1px solid rgba(102,255,204,0.45);
+      border-radius: 8px;
+      color: #d8f8ee;
+      font-family: var(--mono); font-size: 12px; line-height: 1.5;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.45);
+      z-index: 60;
+      display: none;
+    }
+    #easyModeIntro.visible { display: block; }
+    #easyModeIntro kbd {
+      display: inline-block; padding: 1px 6px; border-radius: 4px;
+      background: rgba(255,255,255,0.10); border: 1px solid rgba(255,255,255,0.18);
+      font-family: var(--mono); font-size: 11px;
+    }
+    #easyModeIntroClose {
+      position: absolute; top: 4px; right: 6px;
+      background: transparent; border: none; color: #d8f8ee;
+      font-size: 16px; line-height: 1; cursor: pointer; padding: 2px 6px;
+    }
+    #easyModeIntroClose:hover { color: #b8ffea; }
+
     /* Flight-mode chip in HUD — cyan accent when Easy Mode is on. */
     #modeChip {
       display: inline-block; padding: 2px 8px; border-radius: 999px;
@@ -512,6 +539,11 @@
       <input type="search" id="airspaceFilter" placeholder="Filter airspaces…" autocomplete="off" />
       <ul id="airspaceList"></ul>
     </div>
+  </div>
+
+  <div id="easyModeIntro" role="status" aria-live="polite">
+    <button type="button" id="easyModeIntroClose" aria-label="Dismiss tip">×</button>
+    <strong>Easy Mode</strong> is on — fly in any direction to explore (hovercraft strafe). Press <kbd>K</kbd> for realistic flight physics.
   </div>
 
   <div id="controlsHint">
