@@ -13,6 +13,7 @@ import { TourGuide } from "./tourGuide.js";
 import { installSky } from "./sky.js";
 import { installCityBeacons } from "./cities.js";
 import { installProvinceLines } from "./provinces.js";
+import { RigidBody, QuadrotorModel, FixedWingModel } from "./physics.js";
 
 const scene = new THREE.Scene();
 // Shared sun direction — the Sky shader, the sun-disc sprite, and the
@@ -435,4 +436,7 @@ document.addEventListener("visibilitychange", () => {
   }
 });
 
-window.__sim = { scene, camera, drone, layer, ground, flightHistory, tourGuide };
+window.__sim = {
+  scene, camera, drone, layer, ground, flightHistory, tourGuide,
+  physics: { RigidBody, QuadrotorModel, FixedWingModel },
+};
