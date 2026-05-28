@@ -486,8 +486,13 @@ AIRPORT_ZONES = [
     {"id": "VTBU-TMA", "shortName": "U-Tapao TMA", "name": "U-Tapao Terminal Control Area", "category": "TMA", "class": "C", "center": [12.6797, 101.0050], "radiusNM": 30, "lowerFt": 3000, "upperFt": 11000, "approximate": True, "source": "AIP ENR 2.1", "description": "U-Tapao terminal area."},
     {"id": "KPS-CTR", "shortName": "Kamphaeng Saen CTR", "name": "Kamphaeng Saen Control Zone", "category": "CTR", "class": "C", "center": [14.08944, 99.91556], "radiusNM": 25, "lowerFt": 0, "upperFt": 6000, "approximate": False, "source": "AIP ENR 2.1", "description": "RTAF Kamphaeng Saen training CTR."},
     {"id": "VTBP-CTR", "shortName": "Hua Hin CTR", "name": "Hua Hin Control Zone (VTBP)", "category": "Class D", "class": "D", "center": [12.63444, 99.95117], "radiusNM": 10, "lowerFt": 0, "upperFt": 2000, "approximate": False, "source": "AIP ENR 2.1", "description": "Hua Hin (VTBP) Class D CTR."},
-    {"id": "VTBS-CTR", "shortName": "Suvarnabhumi CTR", "name": "Suvarnabhumi Control Zone (within Bangkok CTR)", "category": "CTR", "class": "C", "center": [13.68111, 100.74722], "radiusNM": 20, "lowerFt": 0, "upperFt": 11000, "approximate": True, "source": "AIP ENR 2.1", "description": "Suvarnabhumi (VTBS) — overlaps Bangkok CTR."},
-    {"id": "VTCI-CTR", "shortName": "Chiang Mai Intl CTR", "name": "Chiang Mai Intl Control Zone", "category": "CTR", "class": "C", "center": [18.76685, 98.96264], "radiusNM": 15, "lowerFt": 0, "upperFt": 9000, "approximate": True, "source": "AIP ENR 2.1", "description": "Alias overlay for VTCC."},
+    # VTBS-CTR removed 2026-05-21: Suvarnabhumi (VTBS) does not have its own
+    # published CTR — it sits inside Bangkok's single 35 NM CTR (VTBD-CTR).
+    # Keeping it created an overlapping 20 NM disc inside the Bangkok CTR,
+    # contributing to visual crowding around Bangkok with no information gain.
+    #
+    # VTCI-CTR removed 2026-05-21: explicit "Alias overlay for VTCC" duplicate
+    # of VTCC-CTR (same coords, same radius). Pure visual clutter; no info.
     {"id": "VTSE-CTR", "shortName": "Krabi CTR", "name": "Krabi Control Zone", "category": "CTR", "class": "C", "center": [8.09917, 98.98639], "radiusNM": 10, "lowerFt": 0, "upperFt": 6000, "approximate": True, "source": "AIP ENR 2.1", "description": "Krabi (VTSE) CTR."},
     {"id": "VTSE-TMA", "shortName": "Krabi TMA", "name": "Krabi Terminal Control Area", "category": "TMA", "class": "C", "center": [8.09917, 98.98639], "radiusNM": 30, "lowerFt": 3000, "upperFt": 11000, "approximate": True, "source": "AIP ENR 2.1", "description": "Krabi terminal area."},
     {"id": "VTCL-CTR", "shortName": "Lampang CTR", "name": "Lampang Control Zone", "category": "CTR", "class": "C", "center": [18.27417, 99.50417], "radiusNM": 10, "lowerFt": 0, "upperFt": 8000, "approximate": True, "source": "AIP ENR 2.1", "description": "Lampang (VTCL) CTR."},
@@ -505,8 +510,16 @@ AIRPORT_ZONES = [
     {"id": "VTSF-CTR", "shortName": "Pattani CTR", "name": "Pattani Control Zone", "category": "CTR", "class": "C", "center": [6.78528, 101.15389], "radiusNM": 10, "lowerFt": 0, "upperFt": 6000, "approximate": True, "source": "AIP ENR 2.1", "description": "Pattani (VTSF) CTR."},
     {"id": "VTPT-CTR", "shortName": "Tak CTR", "name": "Tak Control Zone", "category": "CTR", "class": "C", "center": [16.89583, 99.25333], "radiusNM": 10, "lowerFt": 0, "upperFt": 8000, "approximate": True, "source": "AIP ENR 2.1", "description": "Tak (VTPT) CTR."},
     {"id": "VTPP-CTR", "shortName": "Phetchabun CTR", "name": "Phetchabun Control Zone", "category": "CTR", "class": "C", "center": [16.67639, 101.19528], "radiusNM": 10, "lowerFt": 0, "upperFt": 8000, "approximate": True, "source": "AIP ENR 2.1", "description": "Phetchabun (VTPP) CTR."},
-    {"id": "VTPR-CTR", "shortName": "Hua Hin TMA CTR", "name": "Hua Hin Terminal Control Area", "category": "TMA", "class": "C", "center": [12.63444, 99.95117], "radiusNM": 25, "lowerFt": 3000, "upperFt": 11000, "approximate": True, "source": "AIP ENR 2.1", "description": "Hua Hin terminal area."},
-    {"id": "VTUR-KKZ", "shortName": "Khorat CTR", "name": "Khorat Control Zone", "category": "CTR", "class": "C", "center": [14.93556, 102.07861], "radiusNM": 15, "lowerFt": 0, "upperFt": 8000, "approximate": True, "source": "AIP ENR 2.1", "description": "RTAF Wing 1 Khorat (VTUK area) military CTR."},
+    # VTPR-CTR removed 2026-05-21: bogus ICAO (VTPR is not the Hua Hin code —
+    # VTBP is) with a category/ID mismatch (category=TMA, id-suffix=-CTR).
+    # No published AIP TMA exists for Hua Hin in the 2025-08-07 AIRAC. The
+    # entry was speculative and only contributed to crowding.
+    # ID "VTUR-KKZ" is a synthetic disambiguator — real ICAO for Korat RTAF is
+    # not separately published (Wing 1 shares the Nakhon Ratchasima airfield).
+    # ID kept stable so tour route / flight history doesn't break. Description
+    # corrected: previously misreferenced "VTUK area" — VTUK is Khon Kaen, this
+    # entry is actually around the Nakhon Ratchasima / Korat airfield.
+    {"id": "VTUR-KKZ", "shortName": "Korat CTR (RTAF Wing 1)", "name": "Korat (Nakhon Ratchasima) Control Zone", "category": "CTR", "class": "C", "center": [14.93556, 102.07861], "radiusNM": 15, "lowerFt": 0, "upperFt": 8000, "approximate": True, "source": "AIP ENR 2.1 (synthetic ID — Korat RTAF Wing 1 not separately published)", "description": "RTAF Wing 1 Korat military CTR at Nakhon Ratchasima."},
     {"id": "VTPI-CTR", "shortName": "Takhli CTR", "name": "Takhli RTAF Control Zone", "category": "CTR", "class": "C", "center": [15.27722, 100.29583], "radiusNM": 10, "lowerFt": 0, "upperFt": 8000, "approximate": True, "source": "AIP ENR 2.1", "description": "RTAF Wing 4 Takhli (VTPI) military CTR."},
     {"id": "VTBC-CTR", "shortName": "Watthana Nakhon CTR", "name": "Watthana Nakhon RTAF Control Zone", "category": "CTR", "class": "C", "center": [13.76806, 102.31389], "radiusNM": 10, "lowerFt": 0, "upperFt": 8000, "approximate": True, "source": "AIP ENR 2.1", "description": "RTAF Watthana Nakhon (VTBC) military CTR."},
     {"id": "VTUC-CTR", "shortName": "Buri Ram CTR", "name": "Buri Ram Control Zone", "category": "CTR", "class": "C", "center": [15.22917, 103.25222], "radiusNM": 10, "lowerFt": 0, "upperFt": 8000, "approximate": True, "source": "AIP ENR 2.1", "description": "Buri Ram (VTUC) CTR."},

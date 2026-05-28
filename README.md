@@ -36,6 +36,21 @@ That's it. No npm, no bundler, no Three.js install — it's all pulled from a CD
 | `Space` | Toggle hover (freezes position — mouse-look still works) |
 | Mouse | Look around (pointer-locked, or click-and-drag) |
 | `Esc` | Release pointer-lock |
+| `↓` / `←` / `→` | Down / left / right camera view (press again to return to forward) |
+| `I` | Identify mode — center-ray pick, bottom cards show each volume with distance to nearest point |
+| `U` | Toggle units (metric ↔ aeronautical kt/ft/NM) |
+| `M` | Toggle map-primary view (orthographic radar fills viewport; 3D scene becomes a bottom-right inset) |
+| `+` / `-` | Zoom map in/out (alongside mouse scroll) |
+| `V` | Toggle 1st ↔ 3rd-person view. In 3rd-person you see your aircraft from behind. **Model auto-swaps with the speed preset:** 1× = Mavic 3 drone, Cessna 172 = light GA, Learjet = bizjet, 777 = airliner (scaled down to "cute"), 100× = **UFO** (flying saucer). |
+| `P` | Pause / resume the simulation (also the **Pause** button in the HUD). |
+| **Airplane mode** (Cessna 172 / Learjet / Boeing 777) | Always moving forward — cannot stop or reverse. `A`/`D` = **bank with ailerons** (roll → coordinated turn via level-turn equation). `W`/`S` = throttle up/down between **stall+10%** and cruise×3. `Q`/`E` = pitch down/up. Stall floors: Cessna 130 km/h, Learjet 240 km/h, B777 370 km/h. |
+| **Drone / UFO mode** (1× / 100×) | Free 6-DoF strafe — `W/A/S/D` translate, `Q/E` descend/ascend, `Space` hover. |
+| Altitude tape (HUD-right, toggleable from **Altitude** button) | Auto-zooming vertical bar **glued to right edge of HUD at equal height** — red dashed line at the **90 m drone limit (CAAT)**, ticks every 100 m / 1 000 m, reference bands for drone / helicopter ops / GA / jet climb / airliner cruise. Scale top auto-rescales as the aircraft climbs (200 m near the deck → 45 km at FL400). |
+| Attitude indicator (center, toggleable from **Attitude** button) | Classic 6-pack artificial horizon — brown earth / blue sky split, rotates with bank, slides with pitch, yellow aircraft-symbol bars + bezel bank scale (0/±10/±20/±30/±45/±60°). |
+| Settings → **Ground detail** | Tile-zoom preset: Low (z10) / Med (z11) / High (z12) / Ultra (z13) / **Auto** (alt-adaptive: high <500 m, med 500–3000 m, low above). |
+| Panel → **Express tour (~5 min)** | Guided flight: Bangkok takeoff → capital-region CTR/TMA/R/P/D highlights → Welcome to Explore. Slow camera **orbit at each stop**. |
+| Panel → **Full country tour (~22 min)** | Nationwide rotorcraft-relevant volumes (major airports, royal zones, islands, training areas, rules recap). Slow camera orbit at each stop. |
+| **Skip stop** / **End tour** (overlay) | Advance or exit the tour |
 
 Cruise speed is 30 m/s (108 km/h) at 1×. Use the HUD sim-speed buttons (up to 100×) to traverse the 300 km area faster; Shift still adds a 3× boost on top.
 
@@ -47,7 +62,8 @@ Cruise speed is 30 m/s (108 km/h) at 1×. Use the HUD sim-speed buttons (up to 1
 - **Compass:** N/S/E/W marker poles at ±200 km (5× larger horizon labels than original build).
 - **HUD (top-left):** drone lat/lon, **Amphoe + Province** (Nominatim), altitude, heading, speed, sim-speed buttons, and inside-airspace chips.
 - **Minimap (bottom-left):** top-down 300 km view with optional OSM map underlay, FOV cone, range rings, airspace outlines, drone arrow. Toggles above the minimap.
-- **Educational panel (top-right):** legend, Thailand drone rules summary, and a clickable list of every airspace that teleports the drone to an external vantage point.
+- **Educational panel (top-right):** **Airspace Tour Guide** (5-minute express from Bangkok, or full country tour), legend, Thailand drone rules summary, and a clickable list of every airspace that teleports the drone to an external vantage point.
+- **Tour overlay (bottom-center):** scripted narration, progress bar, skip/end controls — takeoff climb, smooth warps between volumes, ends with **Welcome to Explore**.
 
 ## Phase-1 scope and simplifications
 

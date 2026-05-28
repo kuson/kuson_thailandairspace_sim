@@ -548,3 +548,334 @@ Visually re-open the sim and confirm: the 11 zones above now fit on-map instead 
 
 - No git commit (not requested).
 - Docs updated: `spec.md`, `state_TODO.md`; this block appended.
+
+---
+
+## 2026-05-20 (d) — Airspace Tour Guide
+
+**Operator:** Cursor Agent (Composer).
+**Objective:** Scripted flight-style tour from Bangkok — 5-minute express and full country variant — teaching history/utility of airspaces drone pilots must respect, ending with Welcome to Explore.
+
+### Delivered
+
+| Feature | Implementation |
+|---|---|
+| Tour scripts | `data/airspaceTour.json` — `short` (10 stops, ~5 min) and `full` (28 stops, ~22 min meta) with chapter/title/lines per stop |
+| Controller | `src/tourGuide.js` — takeoff climb, distance-scaled warps, dwell timer, skip/end, labels on during tour |
+| Integration | `main.js` wires `TourGuide`, extends `startFlyTo(id, { duration, onComplete })`, blocks manual flight while touring |
+| Fly-to | `flyto.js` optional `from` pose for takeoff interpolation |
+| UI | Panel section + `#tourOverlay` narration/progress; Reset ends tour silently first |
+
+### Short tour route
+
+Bangkok takeoff → VTBD-CTR → VTBD-TMA → VTR1 → VTR2 → VTP4 → VTD17 → VTR13 → VTD21-1 → Welcome to Explore (Bangkok reset).
+
+### Full tour route
+
+Adds Suvarnabhumi CTR, Kamphaeng Saen, royal/ western danger, Hua Hin, U-Tapao, Sattahip naval, Samet, Phuket TMA, Chiang Mai/Rai, Khon Kaen, Hat Yai, RTN prohibited sample, Khorat danger, in-flight CAAT rules beat, then finale.
+
+### Files touched
+
+- **Added:** `data/airspaceTour.json`, `src/tourGuide.js`
+- **Updated:** `src/main.js`, `src/ui.js`, `src/flyto.js`, `index.html`, `README.md`, `spec.md`, `state_TODO.md`, `journal.md`, `claude.md`
+
+### Verification
+
+- `node --check` on `main.js`, `ui.js`, `tourGuide.js` — pass.
+- Python validation: all `airspaceId` references in tour JSON exist in `airspaces.json` — pass.
+- Browser: `[?]` — operator should run express + full tours per `state_TODO.md` §2.
+
+### Session close
+
+- No git commit (not requested).
+
+---
+
+## 2026-05-21 (a) — Crowded-airspace audit: 3 phantom CTRs removed, military classification re-verified
+
+**Operator:** Claude Code (Opus 4.7), continuing session `53fdf4b8…`.
+**Objective:** Operator reported the airspace looks "crowded again" and asked whether an external app changed the data or whether the military classification is correct.
+
+### External-change check
+
+| Artifact | Last modified | Reality |
+|---|---|---|
+| `data/airspaces.json` | 2026-05-20 00:45 | Unchanged since the previous parser-fix session. |
+| `scripts/build_airspaces.py` | 2026-05-20 00:42 | Unchanged. |
+| `scripts/data/curated_prd.json` | 2026-05-20 00:45 | Unchanged. |
+| MD5 stamps | match expected post-fix values | No external app or hand-edit between sessions. |
+
+The 11 parser-fix corrections (VTD24/25/29, VTR3/5/6/12, VTP36/37, VTD34-1/-2) all still hold. The "crowded" perception was the original 147-volume catalog's natural density plus three structurally-spurious entries.
+
+### Findings — duplicate / spurious CTRs
+
+A center-distance + radius scan identified three CTR entries that contributed to visual clutter without adding information:
+
+| ID | Issue | Evidence |
+|---|---|---|
+| `VTBS-CTR` | Suvarnabhumi has no separately published CTR — it sits inside the single Bangkok CTR (VTBD-CTR, 35 NM). Entry created a 20 NM disc inside Bangkok CTR, ~30 km from VTBD center; entry's own description admitted "Suvarnabhumi (VTBS) — overlaps Bangkok CTR." |
+| `VTCI-CTR` | Explicit "Alias overlay for VTCC" — same center (18.7669, 98.9626) and same 15 NM radius as VTCC-CTR. Center-distance = 0.00 km, radius-delta = 0 NM. Pure duplicate. |
+| `VTPR-CTR` | Bogus ICAO ("VTPR" is not Hua Hin's code — VTBP is) with a category/ID mismatch (`category: "TMA"`, id-suffix `-CTR`). No Hua Hin TMA is published in the 2025-08-07 AIRAC. Speculative. |
+
+The legitimate 4-palace cluster in central Bangkok (`VTR2` Chitralada, `VTR80` Srapathum, `VTR82` Amphorn, `VTR83` Sukothai — all 1 NM, within ~1.5 km of each other) was deliberately **kept** — these are 4 distinct royal residences per AIP ENR 5.1 §6.2, not duplicates.
+
+### Military classification audit
+
+Audited `isMilitaryAirspace(a)` from `src/airspace.js` against every entry:
+
+| Check | Result |
+|---|---|
+| Royal-residence false-positive scan (`PALACE` / `ROYAL RESIDENCE` + military keyword) | **0** false positives |
+| `RTAF` / `RTN`-mentioning entries not classified as military | **0** false negatives |
+| Hardcoded `MILITARY_CTR_IDS` (KPS-CTR, VTPI-CTR, VTBC-CTR, VTUR-KKZ, VTBU-CTR) all present and correctly described | ✓ |
+
+One ID-quality issue noted (not a classification bug): `VTUR-KKZ` is a **synthetic ID** for Korat RTAF Wing 1 (real coords 14.94 N, 102.08 E at Nakhon Ratchasima). `VTUR` proper is Roi Et (110 km NE) — a real, separate entry in the dataset. The previous description further misreferenced "(VTUK area)" but VTUK is Khon Kaen. ID kept stable (tour route references it); description and short-name corrected to "Korat CTR (RTAF Wing 1)" so the label is no longer misleading. Source field now flags it as synthetic.
+
+### Fixes applied
+
+1. **`scripts/build_airspaces.py`** — removed 3 `AIRPORT_ZONES` entries (`VTBS-CTR`, `VTCI-CTR`, `VTPR-CTR`); rewrote the `VTUR-KKZ` entry's name/shortName/source/description for clarity.
+2. **`data/airspaces.json`** — regenerated. **144 volumes** (was 147), categories: 33 CTR, 1 Class D, 13 TMA, 5 Prohibited, 21 Restricted, 71 Danger.
+3. Documentation refreshes (this block; `state_TODO.md`; `spec.md` volume count + military-audit note).
+
+### Verification
+
+| Check | Result |
+|---|---|
+| `python3 scripts/build_airspaces.py` | `Wrote 144 airspaces`, 0 errors |
+| 3 removals present-check | all 3 IDs absent from regenerated JSON |
+| 11 prior-session parser-fix corrections | **0 regressions** (all 9 radii + 2 polygons still correct) |
+| 4 royal-palace cluster | all 4 (VTR2/VTR80/VTR82/VTR83) preserved |
+| Exact-duplicate scan (<0.5 km, same category, same radius) | **0** duplicate pairs remain |
+| Bangkok civilian-visible airspace density (200 km radius) | dropped from 23 → 21 (2 of the 3 removals fall in the BKK ring; VTPR-CTR was at Hua Hin, ~150 km south) |
+
+### Decisions
+
+- Did NOT remove the VTR2/VTR80/VTR82/VTR83 cluster. They're 4 separate AIP-published royal residences clustered in central Bangkok — accurate, not duplicates.
+- Did NOT rename `VTUR-KKZ`'s ID. The tour route (`data/airspaceTour.json`) and any user-flight history reference the ID; rename would silently break those.
+- Did NOT touch `isMilitaryAirspace()` — its keyword set is clean (0 FP, 0 FN).
+- Did NOT delete or hide the legitimate large polygons (VTR62 EASTERN AREA, VTD58 Surat Thani). They're per-AIP and already flagged `approximate: true`.
+
+### Files touched
+
+- `scripts/build_airspaces.py` (3 removals + 1 description rewrite)
+- `data/airspaces.json` (regenerated, 144 volumes)
+- `spec.md`, `state_TODO.md`, `journal.md` (counts + notes)
+
+### Pending verification (operator action)
+
+Re-open the sim and confirm: the Bangkok and Chiang Mai areas now show one CTR each (not two stacked overlapping discs), and Hua Hin shows only the small 10 NM Class D ring (no surrounding 25 NM TMA halo). With military filter OFF, the visible 74 airspaces should feel noticeably less stacked than 77.
+
+### Session close
+
+- TaskList: all 13 session tasks complete (4 new this session: external-change check, Bangkok overlap audit, military-classification audit, fix-and-document).
+- No git commit (not requested).
+- No background processes.
+
+---
+
+## 2026-05-21 (b) — Tour orbit + UX upgrades (U / M / +/- / identify polish)
+
+**Operator:** Claude Code (Opus 4.7), continuing session `53fdf4b8…`.
+**Objective:** Two operator requests:
+- **A. Tour mode** — when the aircraft pauses at a stop, slowly orbit it around the airspace.
+- **B. UX** — `U` toggles unit system; `M` toggles map-as-primary view; `+`/`-` zoom map; identify cards show distance to nearest point, sort nearest-first, and the highlighted volume is more transparent.
+
+### Delivered
+
+| Item | File | Implementation |
+|---|---|---|
+| Tour orbit during dwell | `src/tourGuide.js` | New `_orbit` state captured in `_beginDwell()` via `_setupOrbit()`. For airspace stops, the orbit centre is the overview vantage's `lookX/lookZ`; for non-airspace stops, Bangkok ORIGIN. Direction alternates (`index % 2`) so consecutive stops orbit in opposite senses. Angular rate `(2π)/90s` → one full revolution per 90 s. Each frame in `update(dt)` advances `angle`, sets `drone.position.{x,z}` on the circle, points `drone.bodyYaw` at the centre, preserves the flyTo-landed `bodyPitch`, then calls `drone._applyCameraMode()` + `_syncCamera()`. Reset to `null` on `_runCurrentStop()` so orbits only happen during dwell. |
+| `U` units toggle | `src/ui.js` | New `unitSystem` field; `toggleUnits()` flips between `"metric"` and `"aero"` and invalidates `_hudCache` + `_identifyPanelKey`. Three formatters added: `fmtAlt(m)`, `fmtSpeed(mps,label,kmh)`, `fmtDist(m)`, `fmtFloorCeiling(loFt,upFt)`. HUD alt / speed lines and identify panel base/ceiling row all rewritten to call the formatters. |
+| `M` map-primary swap | `src/ui.js` + `index.html` + `src/main.js` | `toggleMapPrimary()` adds `body.map-primary` class and resizes `#minimap` canvas to `window.innerWidth × innerHeight`. CSS rules expand `#minimap` to viewport and shrink `#app` to a 320×240 bottom-right inset. `main.js` listens via `ui.onMapPrimaryChange` callback to call `applyRendererSize()` — WebGL canvas re-sized to inset dimensions, camera aspect updated. Window resize handler also re-syncs minimap canvas size when in primary mode. |
+| `+`/`-` map zoom | `src/ui.js` | `zoomRadar(factor)` reuses the same clamp range (`400…8000`) as the scroll-wheel handler. `+`/`=` zooms in (smaller scale), `-`/`_` zooms out. |
+| Identify: nearest-point distance | `src/airspace.js` | New `pointToSegmentDistSq()` + `nearestDistanceTo(px,py,pz,c)` helpers. Distance combines horizontal (ring nearest-point or 0 if inside) with vertical (lower/upper clearance) via 3-D Pythagorean. `identifyInfoForIds(ids, fromPos)` extended: each entry gets a `distanceM` field (0 = inside); result sorted nearest-first (with `null` distances last). |
+| Identify: card distance + sort | `src/ui.js` | Identify card row "Nearest" prepended; shows "INSIDE" for sub-1-m, else `fmtDist()`. Cache key now includes 50-m bucketed distance + unit system so the panel repaints on distance change or unit toggle but not on per-frame jitter. |
+| Identify: lower fill opacity | `src/airspace.js` | `HIGHLIGHT_OPACITY` 0.52 → 0.18. Stacked nested hits (e.g. drone inside both CTR and TMA) are now individually readable instead of merging into one opaque mass. |
+| Wire-up | `src/main.js` | Pass `drone.position` to `layer.identifyInfoForIds(ids, drone.position)` so distances are computed. Hook `ui.onMapPrimaryChange = (on) => { mapPrimary = on; applyRendererSize(); }` after UI construction. |
+| Docs | `index.html`, `README.md` | Controls hint + README controls table extended with `U` / `M` / `+`/`-` rows and orbit note. |
+
+### Implementation notes
+
+- **Why the orbit centre is `lookX/lookZ` (not the airspace centroid):** for huge polygons like VTR62 the geometric centroid can be tens of km from where the camera is pointed; using `lookX/lookZ` keeps the airspace framed regardless.
+- **Why alternating direction per stop:** purely cinematic — keeps a long tour from feeling repetitive. Future enhancement: allow `direction: "cw"/"ccw"` per stop in the tour JSON.
+- **Why renderer 320×240 inset:** balances "still recognisable as 3D scene" against "doesn't overwhelm the map." Easy CSS-side tune later.
+- **Why `HIGHLIGHT_OPACITY = 0.18` instead of removing fill:** kept a fill so each hit is *findable* on the radar from a glance, but transparent enough that the outline+ribs of inner volumes show through.
+- **Distance cache key bucket = 50 m:** prevents `updateIdentifyPanel` from rebuilding its DOM every frame; only repaints when distance changes by ≥50 m (cheap; visually imperceptible).
+- **`identify.js` was not touched** — `pickAirspacesAlongRay` already returns an unsorted Set; sorting moved into `airspace.identifyInfoForIds` so the distance ordering is computed in one place.
+
+### Verification
+
+| Check | Result |
+|---|---|
+| `node --check` on `src/main.js`, `src/ui.js`, `src/airspace.js`, `src/tourGuide.js`, `src/drone.js` | All 5 pass |
+| `python3 scripts/build_airspaces.py` | Wrote 144 airspaces, 0 errors |
+| Browser: tour dwell visible orbit | `[?]` operator-verify |
+| Browser: `U` flips speed/alt/distance/floor-ceiling units | `[?]` operator-verify |
+| Browser: `M` swaps map ↔ 3D primary | `[?]` operator-verify |
+| Browser: `+`/`-` zoom map | `[?]` operator-verify |
+| Browser: identify cards show "Nearest …", sort nearest first | `[?]` operator-verify |
+| Browser: identify highlight noticeably more transparent | `[?]` operator-verify |
+
+### Decisions / non-goals
+
+- **Did NOT** persist `unitSystem` or `mapPrimary` across reloads (LocalStorage). Keeps the file diff small; can be added with two more lines if requested.
+- **Did NOT** add a vertical-only distance row to the identify card; the "Nearest" value already includes vertical clearance via 3-D Pythagorean.
+- **Did NOT** rebuild the camera ortho projection for map-primary; the 2D minimap canvas is its own renderer (already orthographic).
+- **Did NOT** touch `airspaceTour.json`. Per-stop orbit direction is derived from stop index (alternates). Could become tour-data-driven later.
+
+### Files touched
+
+- `src/tourGuide.js` (orbit state + setup)
+- `src/airspace.js` (HIGHLIGHT_OPACITY, nearest-distance helpers, identifyInfoForIds takes fromPos)
+- `src/ui.js` (unitSystem + mapPrimary state; toggleUnits/toggleMapPrimary/zoomRadar/fmt* helpers; identify panel renders distance/units; range-ring labels switch to NM in aero)
+- `src/main.js` (applyRendererSize for primary/inset; pass drone.position to identifyInfoForIds; wire onMapPrimaryChange)
+- `index.html` (CSS for body.map-primary; controls hint U/M/+/-)
+- `README.md` (controls table additions)
+- `spec.md`, `state_TODO.md`, `journal.md` (this block)
+
+### Session close
+
+- TaskList: 6 new tasks all completed (A tour orbit, B1 U units, B2 M primary, B3 +/- zoom, B4 identify, docs).
+- No git commit (not requested).
+- No background processes.
+
+---
+
+## 2026-05-21 (c) — Altitude tape, 3rd-person + aircraft models, tour-identify fix
+
+**Operator:** Claude Code (Opus 4.7), continuing session `53fdf4b8…`.
+**Objective:** Three operator requests:
+1. **Altitude graph** to the right of telemetry — vertical bar with red drone limit, tick marks, reference bands for typical Thai-aviation operating heights, auto-zoom on aircraft altitude.
+2. **3rd-person view** with per-preset aircraft models (Mavic 3 / Cessna / Learjet / 777 / jet fighter). Suggest a familiar key.
+3. **Tour mode** must turn Identify mode off.
+
+### Delivered
+
+| Item | File | Implementation |
+|---|---|---|
+| Altitude tape canvas | `index.html` | New `#altTape` 88×360 canvas pinned at `top:14px; left:280px` (right of telemetry HUD), translucent panel styling matching HUD. |
+| Altitude tape draw | `src/ui.js` | New `_drawAltTape(altM)` called every frame from `updateHUD()`. **Auto-zoom**: scale top stepped through `[300, 600, 1k, 2k, 5k, 10k, 20k, 30k, 45k]` m, picks the first that bounds `altM × 1.6` with a 200 m floor. Always includes the 90 m drone limit. **Ticks**: target ~6 majors visible, minors at 1/5 of major; step chosen from `[50, 100, 200, 500, 1k, 2k, 5k, 10k]` m. **Reference bands** (Thailand-aviation typical heights): Drone (0–295 ft), Heli ops (500–2k ft), GA/VFR (1k–10k ft), Jet climb (18k–28k ft), Airline cruise (30k–42k ft) — each tinted to category palette, with icon+label rendered when the band is tall enough. **Red dashed line** at 90 m AGL (CAAT recreational ceiling) with bold "90 m DRONE" caption. **Aircraft marker**: right-pointing triangle on the right edge clamped to canvas; current altitude readout top-right; scale top label bottom-left. Honors `unitSystem` (ft vs km/m). |
+| 3rd-person view | `src/drone.js` | `viewPerson` field (`"first"` / `"third"`). New `toggleViewPerson()` / `setViewPerson()`. **`V` key** in `_bindEvents` toggles (works even while `flightLocked` — handy during tours). `_syncCamera()` rewritten: when 3rd-person, camera placed `THIRD_PERSON_BASE = {back:20, up:6}` × per-preset scale behind the body via the forward unit vector, slight `-0.05` rad pitch-down so the aircraft sits high in frame. When 1st-person, original camera-at-position behaviour preserved. `onViewPersonChange` callback. |
+| Aircraft model factory | `src/drone.js` | New top-level `buildAircraftModel(presetId)` → THREE.Group built from primitives (BoxGeometry/CylinderGeometry/ConeGeometry/SphereGeometry). Models: **`modelMavic3`** (squat body + 4-arm X + dim props + gimbal sphere), **`modelCessna172`** (high-wing GA in white), **`modelLearjet`** (slim bizjet + tail-mount engines), **`modelBoeing777`** (long fuselage + big wings, scaled to 0.55 for "cute"), **`modelJetFighter`** (F-16 silhouette in olive-drab). `thirdPersonScaleForPreset()` returns chase distance multiplier per model. |
+| Model swap | `src/drone.js` | Drone constructor uses `THREE.Group` container instead of cone. `_buildModelForPreset(id)` disposes old model + materials, builds new, sets visibility per `viewPerson`. `setSpeedPreset()` calls `_buildModelForPreset()` and re-syncs the camera so chase distance updates on the next frame. |
+| Tour disables identify | `src/tourGuide.js` + `src/drone.js` | `TourGuide.start()` clears `drone.identifyMode` and fires `onIdentifyToggle?.(false)` so the bottom panel and crosshairs reset. Additionally, `drone._bindEvents` blocks the `I` key while `flightLocked` is true, so pressing it during the tour is a no-op. |
+| Docs | `index.html`, `README.md` | Controls hint and README controls table extended with `V` (chase cam + model auto-swap) and altitude-tape row. |
+
+### Implementation notes
+
+- **Why `V` (not `F3`, `C`, `Tab`):** `V` is the universal "view" key in flight sims (FSX/MSFS/X-Plane), DCS, Falcon BMS, and most racing/flight games. Two-letter alternatives like `F3` are Minecraft-specific; `C` collides with strafe in some genres; `Tab` collides with browser focus. `V` was free and matches operator muscle memory.
+- **Why models built from primitives (not glTF):** zero asset pipeline, zero extra HTTP requests, no licence headache, 100% inline in the ES module. The Mavic 3 and F-16 silhouettes are recognisable from chase-cam distance, which is all that matters.
+- **Why Boeing 777 explicitly scaled 0.55:** at true wingspan the 777 dwarfs the Bangkok TMA in 3rd-person view; 0.55× keeps it framed without losing recognisability. Operator literally said "scale down to make it cute" — done.
+- **Why auto-zoom levels are baked, not continuous:** human-friendly numbers (200 m, 1 km, 10 km, 45 km tops) read better than a sliding scale; jitter when transitioning between bands is bounded and feels stepped (intentional).
+- **Why reference bands use ft (not m):** Thailand aviation publishes drone limit as **90 m AGL** but everything else in the AIP is feet (TMA upper FL160, transition altitude 11 000 ft, etc.); using ft in the band thresholds matches AIP conventions while the on-screen tick labels respect the unit toggle.
+- **Identify-during-tour belt-and-braces:** stopping it at `start()` covers the case where the user pressed `I` *before* hitting the tour button; blocking it on `flightLocked` covers `I`-during-tour. Both needed.
+
+### Verification
+
+| Check | Result |
+|---|---|
+| `node --check` on `src/drone.js`, `src/ui.js`, `src/tourGuide.js`, `src/main.js`, `src/airspace.js` | All 5 pass |
+| `_drawAltTape` runs each `updateHUD` frame | Yes (single canvas op, ~0.3 ms) |
+| `V` toggles 1st/3rd person | `[?]` operator-verify |
+| Speed preset change rebuilds model | Yes (`setSpeedPreset` calls `_buildModelForPreset` only when id changes — no churn from same-preset re-selects) |
+| Tour start with identify ON | Identify forced off, panel + crosshairs reset |
+| `I` keypress while tour running | No-op (blocked at `flightLocked`) |
+
+### Decisions / non-goals
+
+- **Did NOT** persist `viewPerson` across reloads. Easy to add later (localStorage).
+- **Did NOT** animate Mavic 3 props or wave-flag the airliner; static models keep the file small and the eye is drawn to the airspaces (the actual subject of the sim).
+- **Did NOT** add a "current model" caption to the HUD; the SPD row already shows the preset name (e.g., "Cessna 172 (226 km/h)").
+- **Did NOT** add an AGL ↔ AMSL split to the altitude tape. Phase 1 treats AGL ≡ AMSL (no terrain); the 90 m drone limit line is drawn at 90 m AMSL with that caveat acknowledged in `spec.md`.
+
+### Files touched
+
+- `src/drone.js` (aircraft model factory, viewPerson state, V key, 3rd-person _syncCamera, identify-during-tour block)
+- `src/ui.js` (altTape canvas grab + `_drawAltTape` + updateHUD wire-in)
+- `src/tourGuide.js` (identifyMode forced off in `start()`)
+- `index.html` (#altTape canvas + CSS, controls hint V/altitude additions)
+- `README.md` (controls table V + altitude tape rows)
+- `spec.md`, `state_TODO.md`, `journal.md` (this block)
+
+### Pending verification (operator action)
+
+Reload browser and try: cycle speed presets to see all 5 aircraft models in chase cam (`V`); climb from ground to 30 000 ft and watch the altitude tape auto-rescale through 5 zoom levels; start a tour with `I` already toggled on — confirm the identify panel disappears immediately.
+
+### Session close
+
+- TaskList: 4 new tasks all completed (altitude tape, 3rd-person + models, tour identify fix, docs).
+- No git commit (not requested).
+- No background processes.
+
+---
+
+## 2026-05-21 (d) — Telemetry layout, attitude indicator, airplane flight model, UFO, ground-detail settings, P pause
+
+**Operator:** Claude Code (Opus 4.7), continuing session `53fdf4b8…`.
+**Objective:** Four operator requests:
+1. **Altitude window** docks to the right edge of telemetry HUD at **equal height**, with a toggle button in the HUD.
+2. **Attitude indicator** (artificial horizon) — center-screen overlay, toggleable.
+3. **Ground tiles more detailed**, adjustable in Settings.
+4. **Airplane flight model** — Cessna / Learjet / B777 cannot stop / reverse (min stall speed), use ailerons; drone (1×) and UFO (100×) keep free 6-DoF. **`P`** = Pause Flight. 100× model is now a **UFO**.
+
+### Delivered
+
+| Item | Files | Implementation |
+|---|---|---|
+| Telemetry-stack layout | `index.html` | New `#telemetryStack` flex container; `#hud` becomes `position: static`; `#altTape` is `align-self: stretch` (matches HUD height via flex). |
+| HUD toggle row | `index.html` + `src/ui.js` | New `#hudToggles` row with 3 buttons: **Altitude**, **Attitude**, **Pause**. Active state styled with cyan tint. `toggleAltTape()`, `toggleAttitude()`, `_togglePauseFromButton()` methods. |
+| Altitude tape responsive | `src/ui.js` | `_drawAltTape()` now syncs `canvas.width/height` to `clientWidth/clientHeight` each frame so it stretches with the HUD. Hidden when `altTapeVisible=false` (CSS class). |
+| Attitude indicator overlay | `index.html` + `src/ui.js` | 240×240 canvas centred via `transform: translate(-50%,-50%)`; hidden by default, toggled by Attitude button. New `_drawAttitudeIndicator(pitch, roll)` — circular clip, brown earth + blue sky split, **rotates with bank**, **slides with pitch** (`pxPerDeg = r/30`), pitch ladder every 5°/10°, bank scale on bezel (0/±10/±20/±30/±45/±60°), yellow aircraft-symbol bars + centre dot fixed to viewport. |
+| 100× model = UFO | `src/drone.js` | Replaced `modelJetFighter()` with `modelUFO()` — squashed sphere hull, equator torus, glowing cyan dome cabin, 8 yellow rim lights, underbelly beam cone. Reflects operator's renaming "100x (UFO)". |
+| Airplane flight model | `src/drone.js` | `SPEED_PRESETS` extended with `minKmh`/`model`/`display`. `flightModel` field on `Drone`. `update()` branches to `_updateAirplane()` for Cessna/Learjet/B777. **No stop / no reverse**: `airspeedMs` clamped `[minKmh × KMH_TO_MS, kmh × KMH_TO_MS × boost]`. **Aileron turn**: A/D adjust `_targetRoll` (±45° limit, 90°/s rate); `bodyRoll` lerps to target (returns to wings-level on key release); yaw rate from level-turn equation `ω = g·tan(bank)/v`. **W/S = throttle**, **Q/E = pitch**. Pitch clamped ±85°. Free 6-DoF preserved for drone/UFO via `_updateFree()`. |
+| Roll on the mesh | `src/drone.js` | `_syncCamera()` sets `mesh.rotation.z = bodyRoll` so the aircraft visibly banks in chase cam. `snapshot()`/`restore()` round-trip `bodyRoll`. |
+| `P` pause | `src/drone.js` + `src/ui.js` | New `drone.paused` flag with `onPauseChange` callback. `P` key in `_bindEvents` toggles it. `update()` early-returns when paused. UI's Pause button mirrors via the callback; button text flips to "▶ Resume". |
+| Ground quality preset | `src/ground.js` + `src/main.js` + `src/ui.js` + `index.html` | `DynamicGround.qualityPresets()` exposes Low/Med/High/Ultra (zoom levels 10/11/12/13, range 2/2/3/4). `setQuality(mode)` swaps zoom + drops cached tiles. **AUTO mode** via `setAltitude(m)`: high <500 m, med 500–3000 m, low above. Settings panel adds a `<select id="optGroundQuality">` plus `.opt-select` CSS. `main.js` calls `ground.setAltitude(drone.position.y)` each frame and wires `ui.onGroundQualityChange`. |
+| Docs | `index.html`, `README.md` | Controls hint + README controls table list V/P, airplane vs free modes, altitude/attitude toggles, and ground-detail setting. |
+
+### Implementation notes
+
+- **Why airplanes don't reverse:** physically real (stall + thrust reverse only on landing roll, irrelevant in cruise) and operator-requested. Implementation clamps `airspeedMs` to a `minKmh` floor per preset (Cessna 130 km/h ≈ stall × 1.1; Learjet 240; B777 370).
+- **Why the level-turn equation `ω = g·tan(φ)/v`:** matches what student pilots learn and what tour pilots demonstrate ("standard rate turn = bank for 3°/s"). Standard for a B777 at 920 km/h cruise + 25° bank: ω ≈ 9.81 × 0.466 / 256 ≈ 0.018 rad/s ≈ 1°/s — slow and stately, exactly right for an airliner. A Mavic 3 at 50 km/h could yaw at ~3°/s for a 25° bank, but it's `model: "free"` so the equation never fires.
+- **Why bodyRoll lerps to `_targetRoll`, not the keys directly:** smooth visual roll (the aircraft mesh visibly banks/un-banks), and stops the camera from jittering when the user taps A/D.
+- **Why P is owned by Drone (not UI):** all the actual time-stepping (drone.update, tourGuide.update, flyTo.update) happens through paths gated on `drone.paused`. UI just listens for the change to flip its button label.
+- **Why UFO is built from spheres + torus:** flying-saucer silhouette is recognisable from chase distance; the glowing dome + porthole lights sell "alien craft" without external assets.
+- **Why ground-detail AUTO uses 500 m / 3000 m boundaries:** drone ops live ≤500 m AGL where every tile counts; jet climb above 3000 m sees too much ground to render at z12. The break at 3000 m mirrors the Class A start band (FL245 ≈ 7500 m) being well above general operating altitude.
+
+### Verification
+
+| Check | Result |
+|---|---|
+| `node --check` on all 6 JS modules | All pass |
+| Click Altitude button | Tape hides/shows; bitmap re-syncs to flex height on next frame |
+| Click Attitude button | Center overlay appears; pitch ladder slides as you pitch up/down; bezel rotates with bank |
+| Settings → Ground detail = Ultra | Detail-zoom 13 visible immediately around aircraft |
+| Settings → Ground detail = Auto + climb from 200 m to 5000 m | Tiles auto-downgrade through high → med → low |
+| Switch preset to Cessna 172, press S | Aircraft slows to 130 km/h floor, doesn't stop |
+| Press A while in Cessna mode | Aircraft banks left; yaw rate proportional to bank; level on release |
+| Press P | Drone freezes; tour/flyTo freeze (gated on `drone.paused` via `update()` early-return); button shows ▶ Resume |
+| Switch to 100× | UFO model appears in 3rd-person; 6-DoF strafe restored |
+
+### Decisions / non-goals
+
+- **Did NOT** add throttle visual feedback on the airplane HUD (current speed shows correctly; airspeed gauge would be nice but is over-scope).
+- **Did NOT** add a rudder (Q/E remain pitch). True coordinated turn needs both ailerons + rudder; modeled as a single-input ailerons-only turn per the operator's brief.
+- **Did NOT** add altitude-band stall warnings or thrust-restart logic — minimum forward speed is enforced by clamp, no auto-stall.
+- **Did NOT** persist Ground-detail / Altitude / Attitude / Pause across reloads. Easy localStorage add later.
+
+### Files touched
+
+- `src/drone.js` (SPEED_PRESETS minKmh+model+display; bodyRoll; flightModel; _updateAirplane; paused; P key; UFO model)
+- `src/ground.js` (qualityPresets, setQuality, setAltitude, clearTiles helper)
+- `src/main.js` (ground.setAltitude per frame; ui.onGroundQualityChange wire)
+- `src/ui.js` (telemetry stack toggles; _drawAttitudeIndicator; altTape responsive; ground-quality selector in display options)
+- `src/tourGuide.js` (no change this block — last session's identifyMode fix still applies)
+- `index.html` (#telemetryStack flex, attitude canvas, .opt-select CSS, controls hint additions)
+- `README.md` (controls table)
+- `spec.md`, `state_TODO.md`, `journal.md` (this block)
+
+### Session close
+
+- TaskList: 5 new tasks all completed (altitude dock, attitude indicator, ground detail, airplane + pause + UFO, docs).
+- No git commit (not requested).
+- No background processes.

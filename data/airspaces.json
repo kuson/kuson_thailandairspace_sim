@@ -9,7 +9,7 @@
       "https://aip.caat.or.th/2025-08-07-AIRAC/html/eAIP/VT-ENR-5.1-en-GB.html"
     ],
     "disclaimer": "Educational visualization only. Not for flight planning. Parsed/approximate volumes — verify against current CAAT AIP.",
-    "volumeCount": 147
+    "volumeCount": 144
   },
   "airspaces": [
     {
@@ -91,26 +91,6 @@
       "approximate": true,
       "source": "AIP ENR 2.1",
       "description": "Chiang Mai International (VTCC) CTR."
-    },
-    {
-      "lowerRef": "GND",
-      "upperRef": "AMSL",
-      "shape": "circle",
-      "id": "VTCI-CTR",
-      "shortName": "Chiang Mai Intl CTR",
-      "name": "Chiang Mai Intl Control Zone",
-      "category": "CTR",
-      "class": "C",
-      "center": [
-        18.76685,
-        98.96264
-      ],
-      "radiusNM": 15,
-      "lowerFt": 0,
-      "upperFt": 9000,
-      "approximate": true,
-      "source": "AIP ENR 2.1",
-      "description": "Alias overlay for VTCC."
     },
     {
       "lowerRef": "GND",
@@ -217,8 +197,8 @@
       "upperRef": "AMSL",
       "shape": "circle",
       "id": "VTUR-KKZ",
-      "shortName": "Khorat CTR",
-      "name": "Khorat Control Zone",
+      "shortName": "Korat CTR (RTAF Wing 1)",
+      "name": "Korat (Nakhon Ratchasima) Control Zone",
       "category": "CTR",
       "class": "C",
       "center": [
@@ -229,8 +209,8 @@
       "lowerFt": 0,
       "upperFt": 8000,
       "approximate": true,
-      "source": "AIP ENR 2.1",
-      "description": "RTAF Wing 1 Khorat (VTUK area) military CTR."
+      "source": "AIP ENR 2.1 (synthetic ID — Korat RTAF Wing 1 not separately published)",
+      "description": "RTAF Wing 1 Korat military CTR at Nakhon Ratchasima."
     },
     {
       "lowerRef": "GND",
@@ -571,26 +551,6 @@
       "approximate": true,
       "source": "AIP ENR 2.1",
       "description": "Surat Thani (VTUQ) CTR."
-    },
-    {
-      "lowerRef": "GND",
-      "upperRef": "AMSL",
-      "shape": "circle",
-      "id": "VTBS-CTR",
-      "shortName": "Suvarnabhumi CTR",
-      "name": "Suvarnabhumi Control Zone (within Bangkok CTR)",
-      "category": "CTR",
-      "class": "C",
-      "center": [
-        13.68111,
-        100.74722
-      ],
-      "radiusNM": 20,
-      "lowerFt": 0,
-      "upperFt": 11000,
-      "approximate": true,
-      "source": "AIP ENR 2.1",
-      "description": "Suvarnabhumi (VTBS) — overlaps Bangkok CTR."
     },
     {
       "lowerRef": "GND",
@@ -4003,26 +3963,6 @@
       "approximate": true,
       "source": "AIP ENR 2.1",
       "description": "Hat Yai terminal area."
-    },
-    {
-      "lowerRef": "GND",
-      "upperRef": "AMSL",
-      "shape": "circle",
-      "id": "VTPR-CTR",
-      "shortName": "Hua Hin TMA CTR",
-      "name": "Hua Hin Terminal Control Area",
-      "category": "TMA",
-      "class": "C",
-      "center": [
-        12.63444,
-        99.95117
-      ],
-      "radiusNM": 25,
-      "lowerFt": 3000,
-      "upperFt": 11000,
-      "approximate": true,
-      "source": "AIP ENR 2.1",
-      "description": "Hua Hin terminal area."
     },
     {
       "lowerRef": "GND",

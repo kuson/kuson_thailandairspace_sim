@@ -87,7 +87,8 @@ Match the Golden-project methodology used elsewhere in `/Volumes/ExtremeProApple
 - **Coordinates:** local tangent plane around `ORIGIN = (13.7563°N, 100.5018°E)`. East = +x, Up = +y, South = +z. Never use latitude/longitude past `coords.js` boundaries — convert at the edges.
 - **Airspaces:** JSON-driven. Adding a new volume = one JSON entry. No code change should be needed for typical new volumes.
 - **Materials:** `MeshBasicMaterial` everywhere. Unlit by design. Sky and ground use `CanvasTexture` / `TextureLoader` with `colorSpace = SRGBColorSpace`.
-- **Globals:** `window.__sim = { scene, camera, drone, layer }` is the supported debug surface — do not remove.
+- **Globals:** `window.__sim = { scene, camera, drone, layer, ground, flightHistory, tourGuide }` is the supported debug surface — do not remove.
+- **Tour Guide:** `data/airspaceTour.json` + `src/tourGuide.js`. Edit stops/narration in JSON; keep every `airspaceId` aligned with `data/airspaces.json`.
 - **Comments:** terse. No "what the code does"; only "why it surprises". The existing comments are the bar.
 
 ---

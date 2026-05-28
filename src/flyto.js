@@ -23,8 +23,8 @@ export class FlyToController {
     this.onComplete = null;
   }
 
-  start(to, { duration = 0.45, onComplete } = {}) {
-    this.from = {
+  start(to, { duration = 0.45, onComplete, from } = {}) {
+    this.from = from ?? {
       x: this.drone.position.x,
       y: this.drone.position.y,
       z: this.drone.position.z,

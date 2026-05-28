@@ -9,6 +9,7 @@ import { FlightHistory } from "./flightHistory.js";
 import { pickAirspacesAlongRay } from "./identify.js";
 import { getStartLocation } from "./geolocation.js";
 import { geoToWorld, ORIGIN } from "./coords.js";
+import { TourGuide } from "./tourGuide.js";
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x89b4dc);
@@ -31,12 +32,47 @@ renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.sortObjects = true;
 document.getElementById("app").appendChild(renderer.domElement);
+// Explicitly drop the initial inline style.width/height so the canvas relies
+// on the parent #app's full-viewport box. Three.js's setSize() writes pixel
+// strings that can drift out of sync with the viewport on later resize.
+renderer.domElement.style.width = "100%";
+renderer.domElement.style.height = "100%";
 
-window.addEventListener("resize", () => {
-  camera.aspect = window.innerWidth / window.innerHeight;
+// Renderer / camera sizing. In map-primary mode the 3D scene shrinks to a
+// fixed inset (matched to the CSS box for #app in index.html); otherwise it
+// fills the viewport.
+let mapPrimary = false;
+function applyRendererSize() {
+  let w, h;
+  if (mapPrimary) {
+    w = 320; h = 240;             // keep in sync with body.map-primary #app
+  } else {
+    w = window.innerWidth; h = window.innerHeight;
+  }
+  camera.aspect = w / h;
   camera.updateProjectionMatrix();
-  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setSize(w, h, false);
+  // Make the canvas styled-size follow regardless of devicePixelRatio scaling.
+  renderer.domElement.style.width = "100%";
+  renderer.domElement.style.height = "100%";
+}
+window.addEventListener("resize", () => {
+  if (mapPrimary && ui) {
+    // Minimap canvas fills the viewport in primary mode — keep it in sync.
+    ui.minimap.width = window.innerWidth;
+    ui.minimap.height = window.innerHeight;
+  }
+  applyRendererSize();
 });
+
+// Lights — let aircraft models shade with volume instead of flat color. The
+// airspace + ground meshes use MeshBasicMaterial and ignore lighting, so this
+// only affects the new aircraft models (which use MeshLambert / MeshPhong).
+const hemi = new THREE.HemisphereLight(0xc6d8f0, 0x394a3a, 1.0);
+scene.add(hemi);
+const sun = new THREE.DirectionalLight(0xfff2d8, 1.1);
+sun.position.set(0.5, 1.0, 0.4).normalize();
+scene.add(sun);
 
 const ground = new DynamicGround({ baseZoom: 9, detailZoom: 11, baseRange: 3, detailRange: 2 });
 scene.add(ground.group);
@@ -124,6 +160,7 @@ const flightHistory = new FlightHistory(drone);
 const layer = new AirspaceLayer();
 
 let ui;
+let tourGuide;
 let catalogHighlightId = null;
 let _historySampleT = 0;
 let _applyingHistory = false;
@@ -147,29 +184,31 @@ function resetDrone() {
   flightHistory.push(drone.snapshot(), { label: "Bangkok reset" });
 }
 
-function startFlyTo(id) {
-  const v = layer.overviewVantage(id, camera.fov);
-  if (!v) return;
+function startFlyTo(id, { duration = 0.45, onComplete, pushHistory = true, direction = "S" } = {}) {
+  const v = layer.overviewVantage(id, camera.fov, direction);
+  if (!v) return false;
   const a = layer.airspaces.find((x) => x.id === id);
   ui.markFlyToTarget(id);
   const yaw = Math.atan2(-(v.lookX - v.x), -(v.lookZ - v.z));
   flyTo.start(
     { x: v.x, y: v.y, z: v.z, yaw, pitch: v.pitch ?? -0.15 },
     {
-      duration: 0.45,
+      duration,
       onComplete: () => {
-        drone.hover = false;
+        drone.hover = Boolean(tourGuide?.isRunning());
         catalogHighlightId = id;
         layer.setHighlighted(new Set([id]));
-        if (!_applyingHistory) {
+        if (pushHistory && !_applyingHistory) {
           flightHistory.push(drone.snapshot(), {
-            label: a?.shortName ?? id,
+            label: `${a?.shortName ?? id} (from ${direction})`,
             airspaceId: id,
           });
         }
+        onComplete?.();
       },
     },
   );
+  return true;
 }
 
 function undoFlight() {
@@ -209,15 +248,46 @@ flightHistory.onChange = (state) => ui?.updateHistoryButtons?.(state);
   scene.add(layer.labelRoot);
   scene.add(layer.identifyLabelsGroup);
 
+  tourGuide = new TourGuide({
+    drone,
+    flyTo,
+    layer,
+    camera,
+    onFlyTo: startFlyTo,
+    onStop: () => {
+      catalogHighlightId = null;
+      drone.hover = false;
+      drone.flightLocked = false;
+      ui?.setTourRunning(false);
+      ui?.clearFlyToTarget();
+      layer.clearHighlights();
+      flightHistory.push(drone.snapshot(), { label: "Tour complete · explore" });
+    },
+  });
+  await tourGuide.load();
+
   ui = new UI({
     drone,
     camera,
     airspaceLayer: layer,
+    tourGuide,
     onFlyTo: startFlyTo,
     onUndo: undoFlight,
     onRedo: redoFlight,
     onReset: resetDrone,
   });
+
+  // UI's 'M' key toggles map-primary; we own the renderer, so resize it here.
+  ui.onGroundQualityChange = (mode) => {
+    ground.setQuality(mode);
+    // Re-prime tiles at new zoom around current position.
+    ground.updateAround(drone.position.x, drone.position.z);
+  };
+
+  ui.onMapPrimaryChange = (on) => {
+    mapPrimary = on;
+    applyRendererSize();
+  };
 
   const start = await getStartLocation();
   const w = geoToWorld(start.lat, start.lon);
@@ -253,46 +323,58 @@ if (isTouchOnly) {
 }
 
 let lastT = performance.now();
+function _safe(label, fn) {
+  try { return fn(); }
+  catch (err) { console.error(`[loop:${label}]`, err); return undefined; }
+}
 function loop(t) {
   const dt = Math.min((t - lastT) / 1000, 0.1);
   lastT = t;
 
-  const flying = flyTo.update(dt);
-  if (!flying) drone.update(dt);
+  // Every per-frame call wrapped so one bad subsystem never freezes the
+  // entire render loop — the user gets a useful console error instead of a
+  // permanent black screen.
+  const flying = _safe("flyTo", () => flyTo.update(dt)) ?? false;
+  const touring = _safe("tour-isRunning", () => tourGuide?.isRunning()) ?? false;
+  if (touring) _safe("tour-update", () => tourGuide.update(dt));
+  if (!flying && !touring) _safe("drone-update", () => drone.update(dt));
 
-  if (!flying && !flyTo.active && !_applyingHistory && drone.currentSpeed > 0.5) {
+  if (!flying && !touring && !flyTo.active && !_applyingHistory && drone.currentSpeed > 0.5) {
     _historySampleT += dt;
     if (_historySampleT >= 12) {
       _historySampleT = 0;
-      flightHistory.push(drone.snapshot(), { label: "Manual flight" });
+      _safe("history-push", () => flightHistory.push(drone.snapshot(), { label: "Manual flight" }));
     }
-    flightHistory.samplePosition(drone.position);
+    _safe("history-sample", () => flightHistory.samplePosition(drone.position));
   }
 
-  ground.updateAround(drone.position.x, drone.position.z);
-  updateHorizonCompass(drone.position);
+  _safe("ground-alt", () => ground.setAltitude(drone.position.y));
+  _safe("ground-update", () => ground.updateAround(drone.position.x, drone.position.z));
+  _safe("horizon", () => updateHorizonCompass(drone.position));
 
-  if (drone.identifyMode && !flyTo.active) {
-    const ids = pickAirspacesAlongRay(camera, layer);
-    layer.setHighlighted(ids);
-    ui?.updateIdentifyPanel(layer.identifyInfoForIds(ids));
-  } else if (catalogHighlightId && !flyTo.active) {
-    layer.setHighlighted(new Set([catalogHighlightId]));
-    ui?.updateIdentifyPanel([]);
-  } else if (!flyTo.active && !drone.identifyMode) {
-    layer.clearHighlights();
-    ui?.updateIdentifyPanel([]);
-  }
+  _safe("identify", () => {
+    if (drone.identifyMode && !flyTo.active) {
+      const ids = pickAirspacesAlongRay(camera, layer);
+      layer.setHighlighted(ids);
+      ui?.updateIdentifyPanel(layer.identifyInfoForIds(ids, drone.position));
+    } else if (catalogHighlightId && !flyTo.active) {
+      layer.setHighlighted(new Set([catalogHighlightId]));
+      ui?.updateIdentifyPanel([]);
+    } else if (!flyTo.active && !drone.identifyMode) {
+      layer.clearHighlights();
+      ui?.updateIdentifyPanel([]);
+    }
+  });
 
-  layer.updateLabelScales(camera, renderer);
+  _safe("label-scales", () => layer.updateLabelScales(camera, renderer));
 
   if (ui) {
-    ui.updateHUD(dt);
-    ui.drawMinimap();
+    _safe("hud", () => ui.updateHUD(dt));
+    _safe("minimap", () => ui.drawMinimap());
   }
-  renderer.render(scene, camera);
+  _safe("render", () => renderer.render(scene, camera));
   requestAnimationFrame(loop);
 }
 requestAnimationFrame(loop);
 
-window.__sim = { scene, camera, drone, layer, ground, flightHistory };
+window.__sim = { scene, camera, drone, layer, ground, flightHistory, tourGuide };

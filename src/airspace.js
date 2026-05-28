@@ -19,7 +19,10 @@ const OPACITY_FOR = {
   default: 0.22,
 };
 
-const HIGHLIGHT_OPACITY = 0.52;
+// Identify-mode fill opacity. Kept low so multiple stacked identify hits
+// are individually readable (the previous 0.52 made nested CTR/TMA hits
+// merge into a single opaque mass).
+const HIGHLIGHT_OPACITY = 0.18;
 
 const MILITARY_CTR_IDS = new Set([
   "KPS-CTR", "VTPI-CTR", "VTBC-CTR", "VTUR-KKZ", "VTBU-CTR",
@@ -197,6 +200,45 @@ function pointInRing(px, pz, ring) {
   return inside;
 }
 
+function pointToSegmentDistSq(px, pz, ax, az, bx, bz) {
+  const dx = bx - ax, dz = bz - az;
+  const lenSq = dx * dx + dz * dz;
+  if (lenSq < 1e-6) {
+    const ex = px - ax, ez = pz - az;
+    return ex * ex + ez * ez;
+  }
+  let t = ((px - ax) * dx + (pz - az) * dz) / lenSq;
+  if (t < 0) t = 0; else if (t > 1) t = 1;
+  const cx = ax + t * dx, cz = az + t * dz;
+  const ex = px - cx, ez = pz - cz;
+  return ex * ex + ez * ez;
+}
+
+/**
+ * 3-D distance from world point (px, py, pz) to the nearest point of the
+ * given compiled airspace volume. Returns 0 if the point is inside the
+ * volume. Combines horizontal (ring) distance with vertical (lower/upper)
+ * clearance using a 3-D Pythagorean.
+ */
+function nearestDistanceTo(px, py, pz, c) {
+  const horizInside = pointInRing(px, pz, c.ring);
+  let dH = 0;
+  if (!horizInside) {
+    let dSq = Infinity;
+    const ring = c.ring;
+    for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+      const a = ring[j], b = ring[i];
+      const s = pointToSegmentDistSq(px, pz, a.x, a.z, b.x, b.z);
+      if (s < dSq) dSq = s;
+    }
+    dH = Math.sqrt(dSq);
+  }
+  let dV = 0;
+  if (py < c.lower) dV = c.lower - py;
+  else if (py > c.upper) dV = py - c.upper;
+  return Math.hypot(dH, dV);
+}
+
 export class AirspaceLayer {
   constructor() {
     this.group = new THREE.Group();
@@ -326,8 +368,14 @@ export class AirspaceLayer {
     this._highlighted = next;
   }
 
-  /** Metadata for bottom identify panel cards. */
-  identifyInfoForIds(ids) {
+  /**
+   * Metadata for the bottom identify panel cards.
+   * @param {Iterable<string>} ids        — airspace ids that the ray hit
+   * @param {?{x:number,y:number,z:number}} fromPos — drone position; when
+   *   provided, each entry gets `distanceM` (3-D distance to nearest point of
+   *   the volume; 0 if inside) and the result is sorted nearest-first.
+   */
+  identifyInfoForIds(ids, fromPos = null) {
     const out = [];
     for (const id of ids) {
       const c = this.compiled.find((x) => x.airspace.id === id);
@@ -337,6 +385,9 @@ export class AirspaceLayer {
       const radiusLabel = a.shape === "circle" && a.radiusNM != null
         ? `${a.radiusNM} NM`
         : `~${(rmaxM / NM_TO_M).toFixed(1)} NM`;
+      const distanceM = fromPos
+        ? nearestDistanceTo(fromPos.x, fromPos.y, fromPos.z, c)
+        : null;
       out.push({
         id: a.id,
         name: a.shortName,
@@ -345,9 +396,15 @@ export class AirspaceLayer {
         radiusLabel,
         lowerFt: a.lowerFt,
         upperFt: a.upperFt,
+        distanceM,
       });
     }
-    return out.sort((a, b) => a.name.localeCompare(b.name));
+    return out.sort((a, b) => {
+      if (a.distanceM == null && b.distanceM == null) return a.name.localeCompare(b.name);
+      if (a.distanceM == null) return 1;
+      if (b.distanceM == null) return -1;
+      return a.distanceM - b.distanceM;
+    });
   }
 
   _ensureIdentifyLabel(id) {
@@ -394,7 +451,16 @@ export class AirspaceLayer {
   }
 
   /** Fly-to overview at 40 000 ft AMSL, framed to fit the volume. */
-  overviewVantage(id, cameraFovDeg = 70) {
+  /**
+   * Place the aircraft `direction` from the airspace centroid, looking back
+   * toward the centroid. `direction` is one of N / NE / E / SE / S / SW / W /
+   * NW. Default "S" preserves prior behaviour (vantage south of the volume,
+   * looking north).
+   *
+   *  Coordinate system reminder: +X = east, +Z = south, so "view from north"
+   *  → drone z < centroid.z.
+   */
+  overviewVantage(id, cameraFovDeg = 70, direction = "S") {
     const c = this.compiled.find((x) => x.airspace.id === id);
     if (!c) return null;
     const cx = c.centroid.x;
@@ -403,12 +469,30 @@ export class AirspaceLayer {
     const alt = 40_000 * FT_TO_M;
     const halfFov = (cameraFovDeg * Math.PI) / 180 / 2;
     const dist = Math.max((rmax * 1.2) / Math.tan(halfFov), rmax + 5000, 8000);
-    const x = cx;
-    const z = cz + dist;
+
+    // Unit offset (east-x, south-z) from centroid → drone position.
+    const DIR_OFFSETS = {
+      N:  [  0, -1],   // drone north of volume → -Z
+      NE: [  1, -1],
+      E:  [  1,  0],
+      SE: [  1,  1],
+      S:  [  0,  1],   // drone south → +Z (default)
+      SW: [ -1,  1],
+      W:  [ -1,  0],
+      NW: [ -1, -1],
+    };
+    const d = DIR_OFFSETS[direction] ?? DIR_OFFSETS.S;
+    const len = Math.hypot(d[0], d[1]) || 1;
+    const ox = (d[0] / len) * dist;
+    const oz = (d[1] / len) * dist;
+
+    const x = cx + ox;
+    const z = cz + oz;
     const midY = (c.lower + c.upper) / 2;
+    // Yaw so the camera looks back at the centroid.
     const yaw = Math.atan2(-(cx - x), -(cz - z));
     const pitch = -Math.atan2(alt - midY, dist);
-    return { x, y: alt, z, yaw, pitch, lookX: cx, lookZ: cz };
+    return { x, y: alt, z, yaw, pitch, lookX: cx, lookZ: cz, direction };
   }
 
   vantagePoint(id) {

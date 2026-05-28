@@ -33,8 +33,15 @@
     }
 
     /* ---- HUD ---- */
-    #hud {
+    /* Telemetry stack: HUD on the left, altitude tape glued to its right
+       edge at equal height. Both fixed-positioned via this container. */
+    #telemetryStack {
       position: fixed; left: 14px; top: 14px;
+      display: flex; gap: 6px; align-items: stretch;
+      z-index: 6;
+    }
+    #hud {
+      position: static;
       background: var(--panel); border: 1px solid var(--panel-border); border-radius: 10px;
       padding: 10px 14px; font-family: var(--mono); font-size: 13px;
       box-shadow: var(--shadow); min-width: 240px;
@@ -43,6 +50,79 @@
     #hud .row { display: flex; justify-content: space-between; gap: 12px; padding: 2px 0; }
     #hud .label { color: var(--muted); }
     #hud .val { color: var(--text); }
+
+    /* Tiny toggle buttons inside the HUD for altitude tape + attitude indicator. */
+    #hudToggles { gap: 6px; }
+    #hudToggles button {
+      flex: 1; padding: 3px 6px; font-size: 11px; line-height: 1.2;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--panel-border); border-radius: 4px;
+      color: var(--text); font-family: var(--mono); cursor: pointer;
+    }
+    #hudToggles button.active {
+      background: rgba(102,255,204,0.18); border-color: rgba(102,255,204,0.4); color: #b8ffea;
+    }
+    #hudToggles button:hover { background: rgba(255,255,255,0.10); }
+
+    /* Altitude tape — vertical bar glued to the right edge of the HUD.
+       Auto-zooms around the aircraft's current altitude, with reference
+       bands for typical Thai-aviation operating heights and a red drone
+       limit line (90 m AGL, CAAT recreational ceiling). */
+    #altTape {
+      width: 88px;
+      align-self: stretch;       /* matches HUD height via flex */
+      background: var(--panel); border: 1px solid var(--panel-border);
+      border-radius: 10px; box-shadow: var(--shadow);
+      backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+      display: block;
+    }
+    #altTape.hidden { display: none; }
+
+    .opt-select {
+      margin-left: 6px; padding: 2px 6px; font-family: var(--mono);
+      font-size: 11px; background: rgba(255,255,255,0.06);
+      border: 1px solid var(--panel-border); border-radius: 4px;
+      color: var(--text);
+    }
+
+    /* Per-airspace compass-rose buttons (8-direction "view from …") — inline right */
+    .compass-rose {
+      display: grid;
+      grid-template-columns: repeat(3, 16px);
+      grid-template-rows: repeat(3, 16px);
+      gap: 1px;
+      flex-shrink: 0;
+      width: max-content;
+    }
+    .compass-rose .dir-btn {
+      width: 16px; height: 16px; padding: 0;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--panel-border); border-radius: 3px;
+      color: var(--text); font-family: var(--mono);
+      font-size: 9px; line-height: 1; cursor: pointer;
+    }
+    .compass-rose .dir-btn:hover {
+      background: rgba(102,255,204,0.18);
+      border-color: rgba(102,255,204,0.45);
+      color: #b8ffea;
+    }
+    .compass-rose .dir-empty {
+      width: 16px; height: 16px;
+      display: block;
+      background: transparent;
+    }
+    /* Artificial horizon (attitude indicator) — center-screen overlay. */
+    #attitudeIndicator {
+      position: fixed; left: 50%; top: 50%;
+      width: 240px; height: 240px;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      display: none;
+      z-index: 40;
+      filter: drop-shadow(0 6px 18px rgba(0,0,0,0.5));
+    }
+    #attitudeIndicator.visible { display: block; }
     #speedRow { flex-direction: column; align-items: stretch; gap: 6px; margin-top: 4px; }
     #speedControls { display: flex; gap: 4px; flex-wrap: wrap; }
     #speedControls .speed-btn {
@@ -91,6 +171,26 @@
       cursor: grab;
     }
     #minimap.active { cursor: grabbing; border-color: rgba(102,255,204,0.35); }
+
+    /* ---- Map-primary swap (toggled by 'M' key) ----
+       Orthographic radar fills the viewport; 3D scene shrinks to a bottom-
+       right inset (mirror of the default layout). */
+    body.map-primary #minimap {
+      position: fixed; inset: 0; left: 0; top: 0; bottom: 0; right: 0;
+      width: 100vw; height: 100vh;
+      border-radius: 0; border: 0; box-shadow: none; z-index: 1;
+      cursor: grab;
+    }
+    body.map-primary #app {
+      position: fixed; inset: auto; right: 14px; bottom: 14px;
+      width: 320px; height: 240px;
+      border: 1px solid var(--panel-border); border-radius: 10px;
+      box-shadow: var(--shadow); overflow: hidden; z-index: 60;
+    }
+    body.map-primary #app canvas { width: 100% !important; height: 100% !important; display: block; }
+    body.map-primary #minimapLabel {
+      left: 14px; bottom: auto; top: 14px;
+    }
     #minimapLabel {
       position: fixed; left: 14px; bottom: 280px;
       background: var(--panel); border: 1px solid var(--panel-border);
@@ -154,8 +254,9 @@
 
     /* Airspace list */
     #airspaceList { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 4px; }
+    #airspaceList li { display: flex; align-items: center; gap: 4px; }
     #airspaceList button.teleport {
-      width: 100%; text-align: left; display: flex; flex-direction: column; gap: 2px;
+      flex: 1; min-width: 0; text-align: left; display: flex; flex-direction: column; gap: 2px;
       padding: 8px 10px; line-height: 1.3;
     }
     #airspaceList .row1 { font-weight: 600; font-size: 12px; display: flex; gap: 6px; align-items: center; }
@@ -281,6 +382,47 @@
     .identify-card.cat-Prohibited { background: rgba(255,0,0,0.34); border-color: rgba(255,60,60,0.55); }
     .identify-card.cat-Restricted { background: rgba(160,80,255,0.30); border-color: rgba(180,120,255,0.5); }
     .identify-card.cat-Danger { background: rgba(255,106,31,0.30); border-color: rgba(255,140,60,0.5); }
+
+    /* Airspace tour guide */
+    #tourGuideSection { margin: 4px 0 12px 0; }
+    .tour-intro { font-size: 12px; line-height: 1.5; color: var(--muted); margin: 0 0 8px 0; }
+    .tour-actions { display: flex; flex-direction: column; gap: 6px; }
+    .tour-actions button { width: 100%; text-align: left; padding: 8px 10px; }
+    .tour-hint { font-size: 10px; color: var(--muted); margin: 8px 0 0 0; line-height: 1.4; }
+    #tourOverlay {
+      position: fixed; left: 50%; transform: translateX(-50%);
+      bottom: 118px; z-index: 60; width: min(640px, calc(100vw - 40px));
+      display: none; flex-direction: column; gap: 8px;
+      background: rgba(8, 14, 24, 0.92); border: 1px solid rgba(102, 255, 204, 0.35);
+      border-radius: 14px; padding: 14px 16px 12px 16px;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.55);
+      backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+      pointer-events: auto;
+    }
+    #tourOverlay.visible { display: flex; }
+    #tourChapter {
+      font-size: 10px; text-transform: uppercase; letter-spacing: 1px;
+      color: var(--accent); font-weight: 700;
+    }
+    #tourTitle { font-size: 16px; font-weight: 700; margin: 0; line-height: 1.3; }
+    #tourNarration { font-size: 13px; line-height: 1.55; color: rgba(230, 237, 243, 0.95); }
+    #tourNarration p { margin: 0 0 8px 0; }
+    #tourNarration p:last-child { margin-bottom: 0; }
+    #tourProgress {
+      height: 4px; background: rgba(255,255,255,0.08); border-radius: 2px; overflow: hidden;
+      margin-top: 4px;
+    }
+    #tourProgressBar {
+      height: 100%; width: 0%; background: linear-gradient(90deg, rgba(102,255,204,0.5), var(--accent));
+      transition: width 0.15s linear;
+    }
+    #tourControls {
+      display: flex; align-items: center; justify-content: space-between; gap: 8px;
+      margin-top: 4px;
+    }
+    #tourProgressLabel { font-size: 10px; color: var(--muted); font-family: var(--mono); }
+    #tourControls .tour-btns { display: flex; gap: 6px; }
+    #tourControls button { font-size: 11px; padding: 4px 10px; }
   </style>
 </head>
 <body>
@@ -291,31 +433,39 @@
   <div id="identifyPanel" aria-live="polite"></div>
   <div id="loading">Loading scene & airspace data…</div>
 
-  <div id="hud">
-    <div class="row"><span class="label">LAT/LON</span> <span class="val" id="latlon">—</span></div>
-    <div class="row"><span class="label">ALT</span>     <span class="val" id="alt">—</span></div>
-    <div class="row" id="hdgRow">
-      <span class="label">HDG</span>
-      <div class="hdg-display">
-        <canvas id="hdgCompass" width="176" height="44" aria-hidden="true"></canvas>
-        <span class="val" id="heading">—</span>
+  <div id="telemetryStack">
+    <div id="hud">
+      <div class="row"><span class="label">LAT/LON</span> <span class="val" id="latlon">—</span></div>
+      <div class="row"><span class="label">ALT</span>     <span class="val" id="alt">—</span></div>
+      <div class="row" id="hdgRow">
+        <span class="label">HDG</span>
+        <div class="hdg-display">
+          <canvas id="hdgCompass" width="176" height="44" aria-hidden="true"></canvas>
+          <span class="val" id="heading">—</span>
+        </div>
+      </div>
+      <div class="row"><span class="label">SPD</span>     <span class="val" id="speed">—</span></div>
+      <div class="row" id="speedRow">
+        <span class="label">SIM SPEED</span>
+        <div id="speedControls"></div>
+      </div>
+      <div class="row" id="historyRow">
+        <span class="label">FLIGHT HISTORY</span>
+        <button type="button" id="undoBtn" disabled title="Undo last position">↶</button>
+        <button type="button" id="redoBtn" disabled title="Redo position">↷</button>
+        <span id="historyLabel">—</span>
+      </div>
+      <div id="currentInside"></div>
+      <div class="row" id="hudToggles">
+        <button type="button" id="toggleAltTape" class="active" title="Show/hide altitude tape">Altitude</button>
+        <button type="button" id="toggleAttitude" title="Show/hide artificial horizon (pitch + bank indicator)">Horizon</button>
+        <button type="button" id="togglePause" title="Pause / resume the simulation (P)">Pause [P]</button>
       </div>
     </div>
-    <div class="row"><span class="label">SPD</span>     <span class="val" id="speed">—</span></div>
-    <div class="row" id="speedRow">
-      <span class="label">SIM SPEED</span>
-      <div id="speedControls"></div>
-    </div>
-    <div class="row" id="historyRow">
-      <span class="label">FLIGHT HISTORY</span>
-      <div id="historyControls">
-        <button type="button" id="undoBtn" disabled title="Undo last position">↶ Undo</button>
-        <button type="button" id="redoBtn" disabled title="Redo position">↷ Redo</button>
-      </div>
-      <div id="historyLabel">—</div>
-    </div>
-    <div id="currentInside"></div>
+    <canvas id="altTape" width="88" height="360" aria-label="Altitude reference graph"></canvas>
   </div>
+
+  <canvas id="attitudeIndicator" width="240" height="240" aria-label="Artificial horizon"></canvas>
 
   <div id="radarOptions">
     <label class="opt"><input type="checkbox" id="optRadarMapHud" checked /> Map underlay</label>
@@ -334,6 +484,8 @@
       </div>
     </div>
     <div class="panel-body">
+      <h3>Airspace tour guide</h3>
+      <div id="tourGuideSection"></div>
       <h3>Display options</h3>
       <div id="displayOptions"></div>
       <h3>Legend</h3>
@@ -358,7 +510,16 @@
       <kbd>←</kbd> left view ·
       <kbd>→</kbd> right view ·
       <kbd>I</kbd> identify mode ·
+      <kbd>U</kbd> units (metric ↔ aeronautical kt/ft/NM) ·
+      <kbd>M</kbd> map-primary view ·
+      <kbd>+</kbd>/<kbd>-</kbd> map zoom ·
+      <kbd>V</kbd> third-person chase cam (aircraft model swaps with sim-speed preset: Mavic 3 / Cessna / Learjet / 777 / UFO) ·
+      <kbd>P</kbd> pause flight ·
+      <kbd>J</kbd> toggle altitude tape · <kbd>H</kbd> toggle horizon ·
+      <kbd>1</kbd>–<kbd>5</kbd> switch aircraft (1 Mavic 3, 2 Cessna 172, 3 Learjet, 4 B777, 5 UFO) ·
+      <strong>Airplane mode</strong> (Cessna / Learjet / 777): <kbd>A</kbd>/<kbd>D</kbd> bank (ailerons), <kbd>W</kbd>/<kbd>S</kbd> throttle (no stop / no reverse below stall+10%), <kbd>Q</kbd>/<kbd>E</kbd> pitch ·
       speed presets in HUD (1× = 50 km/h … 100× = 10 000 km/h) ·
+      <strong>Airspace tour</strong> in the panel (5 min express or full country — orbits each stop) ·
       mouse to look. <kbd>Esc</kbd> releases the pointer.
       Radar: <strong>Center aircraft</strong> on by default, scroll zoom, drag pan when off.
     </div>
@@ -372,6 +533,20 @@
   </div>
 
   <div id="placeLabel" aria-live="polite">…</div>
+
+  <div id="tourOverlay" aria-live="polite">
+    <div id="tourChapter"></div>
+    <h3 id="tourTitle"></h3>
+    <div id="tourNarration"></div>
+    <div id="tourProgress"><div id="tourProgressBar"></div></div>
+    <div id="tourControls">
+      <span id="tourProgressLabel">—</span>
+      <div class="tour-btns">
+        <button type="button" id="tourSkipBtn" disabled title="Skip to next stop">Skip stop</button>
+        <button type="button" id="tourEndBtn" disabled title="End tour">End tour</button>
+      </div>
+    </div>
+  </div>
 
   <div id="footer">
     Map tiles © OpenStreetMap contributors (ODbL) · Airspace interpreted from AIP Thailand (CAAT).<br>

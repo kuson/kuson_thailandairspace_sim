@@ -30,6 +30,52 @@ export class DynamicGround {
     this._lastDetail = { tx: NaN, ty: NaN };
     this._lastBase = { tx: NaN, ty: NaN };
     this._fallbackPlane = null;
+    this.qualityMode = "med";   // matches the default args
+    this._autoApplied = null;
+  }
+
+  /** Available presets — exposed for the Settings UI. */
+  static qualityPresets() {
+    return {
+      low:   { baseZoom: 8,  detailZoom: 10, baseRange: 2, detailRange: 2 },
+      med:   { baseZoom: 9,  detailZoom: 11, baseRange: 3, detailRange: 2 },
+      high:  { baseZoom: 10, detailZoom: 12, baseRange: 3, detailRange: 3 },
+      ultra: { baseZoom: 10, detailZoom: 13, baseRange: 4, detailRange: 4 },
+    };
+  }
+
+  _clearTiles() {
+    for (const [k, entry] of this._tiles) {
+      this.group.remove(entry.mesh);
+      entry.mesh.geometry.dispose();
+      entry.mesh.material.dispose();
+      this._tiles.delete(k);
+    }
+    this._lastBase = { tx: NaN, ty: NaN };
+    this._lastDetail = { tx: NaN, ty: NaN };
+  }
+
+  /** Apply a quality preset by name (low/med/high/ultra/auto). */
+  setQuality(modeName) {
+    this.qualityMode = modeName;
+    if (modeName === "auto") return;     // auto picks per-altitude inside setAltitude
+    const presets = DynamicGround.qualityPresets();
+    const next = presets[modeName] ?? presets.med;
+    Object.assign(this, next);
+    this._clearTiles();
+  }
+
+  /** AUTO mode hook: switch detail by altitude. */
+  setAltitude(meters) {
+    if (this.qualityMode !== "auto") return;
+    const target = meters < 500 ? "high"
+                 : meters < 3000 ? "med"
+                 : "low";
+    if (this._autoApplied === target) return;
+    this._autoApplied = target;
+    const presets = DynamicGround.qualityPresets();
+    Object.assign(this, presets[target]);
+    this._clearTiles();
   }
 
   _key(z, x, y) {

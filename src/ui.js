@@ -1,6 +1,6 @@
 // ui.js — HUD, minimap, educational panel, display options.
 import {
-  worldToGeo, formatLatLon, bearingToCompass, M_TO_FT, ORIGIN,
+  worldToGeo, formatLatLon, bearingToCompass, M_TO_FT, FT_TO_M, ORIGIN,
   lonToTileX, latToTileY, tileXToLon, tileYToLat, geoToWorld,
 } from "./coords.js";
 import { isMilitaryAirspace } from "./airspace.js";
@@ -31,10 +31,11 @@ const DRONE_RULES_HTML = `
 const COMPASS_TAU = 0.14;
 
 export class UI {
-  constructor({ drone, camera, airspaceLayer, onFlyTo, onUndo, onRedo, onReset }) {
+  constructor({ drone, camera, airspaceLayer, tourGuide, onFlyTo, onUndo, onRedo, onReset }) {
     this.drone = drone;
     this.camera = camera;
     this.layer = airspaceLayer;
+    this.tourGuide = tourGuide;
     this.onFlyTo = onFlyTo;
     this.onUndo = onUndo;
     this.onRedo = onRedo;
@@ -64,6 +65,17 @@ export class UI {
     this.headingDigital = document.getElementById("heading");
     this.identifyPanel = document.getElementById("identifyPanel");
     this.placeLabel = document.getElementById("placeLabel");
+    this.altTape = document.getElementById("altTape");
+    this.altTapeCtx = this.altTape?.getContext("2d") ?? null;
+    this.attitudeCanvas = document.getElementById("attitudeIndicator");
+    this.attitudeCtx = this.attitudeCanvas?.getContext("2d") ?? null;
+    this.toggleAltBtn = document.getElementById("toggleAltTape");
+    this.toggleAttitudeBtn = document.getElementById("toggleAttitude");
+    this.togglePauseBtn = document.getElementById("togglePause");
+
+    // Visibility flags
+    this.altTapeVisible = true;
+    this.attitudeVisible = false;
 
     this._compassDisplayHeading = 0;
     this._compassHeadingReady = false;
@@ -78,6 +90,10 @@ export class UI {
     this._lastGeoKey = "";
     this._flyToTargetId = null;
     this._listFilter = "";
+    this._tourRunning = false;
+
+    this.tourSkipBtn = document.getElementById("tourSkipBtn");
+    this.tourEndBtn = document.getElementById("tourEndBtn");
 
     // Radar pan/zoom — center in world metres, metres per pixel
     this._radarCenter = { x: 0, z: 0 };
@@ -85,12 +101,68 @@ export class UI {
     this._radarDrag = null;
     this._radarActive = false;
 
+    // U-toggle: 'metric' shows m/km/h; 'aero' shows ft/kt/NM
+    this.unitSystem = "metric";
+    // M-toggle: when true, orthographic map fills viewport and the 3D scene
+    // becomes a small bottom-right inset. Default false (3D primary).
+    this.mapPrimary = false;
+    // Notification callback for main.js to resize the WebGL renderer
+    this.onMapPrimaryChange = null;
+
     this._buildPanel();
+    this._buildTourSection();
     this._buildSpeedControls();
     this._buildDisplayOptions();
     this._bindRadar();
     this._bind();
     this._scheduleHintCollapse();
+  }
+
+  setTourRunning(on) {
+    this._tourRunning = on;
+    if (this.tourShortBtn) this.tourShortBtn.disabled = on;
+    if (this.tourFullBtn) this.tourFullBtn.disabled = on;
+    if (this.tourSkipBtn) this.tourSkipBtn.disabled = !on;
+    if (this.tourEndBtn) this.tourEndBtn.disabled = !on;
+    if (this.panelTitle && on) {
+      this.panelTitle.textContent = "Airspace Tour · In flight";
+    }
+  }
+
+  _buildTourSection() {
+    const el = document.getElementById("tourGuideSection");
+    if (!el || !this.tourGuide?.data) return;
+    const meta = this.tourGuide.data.meta ?? {};
+    const short = this.tourGuide.variants.short;
+    const full = this.tourGuide.variants.full;
+    el.innerHTML = `
+      <p class="tour-intro">${meta.tagline ?? "Guided flight from Bangkok through the volumes that matter."}</p>
+      <div class="tour-actions">
+        <button type="button" id="tourShortBtn" class="primary">${short?.label ?? "Express tour"}</button>
+        <button type="button" id="tourFullBtn">${full?.label ?? "Full tour"}</button>
+      </div>
+      <p class="tour-hint">Takeoff → smooth warp to each stop → Welcome to Explore. Skip anytime.</p>`;
+    this.tourShortBtn = document.getElementById("tourShortBtn");
+    this.tourFullBtn = document.getElementById("tourFullBtn");
+    this._bindTour();
+  }
+
+  _bindTour() {
+    if (this._tourBound) return;
+    this._tourBound = true;
+    const start = (id) => {
+      if (!this.tourGuide || this._tourRunning) return;
+      const ok = this.tourGuide.start(id);
+      if (ok) {
+        this.setTourRunning(true);
+        this._flyToTargetId = null;
+        this.panel?.classList.remove("collapsed");
+      }
+    };
+    this.tourShortBtn?.addEventListener("click", () => start("short"));
+    this.tourFullBtn?.addEventListener("click", () => start("full"));
+    this.tourSkipBtn?.addEventListener("click", () => this.tourGuide?.skipToNext());
+    this.tourEndBtn?.addEventListener("click", () => this.tourGuide?.stop());
   }
 
   _buildSpeedControls() {
@@ -149,10 +221,25 @@ export class UI {
       <label class="opt"><input type="checkbox" id="optMilitary" checked /> Show military airspaces (RTAF/RTN)</label>
       <label class="opt"><input type="checkbox" id="optLabels" /> 3D airspace labels</label>
       <label class="opt"><input type="checkbox" id="optHeights" checked /> Label floor &amp; ceiling (ft)</label>
+      <label class="opt">
+        Ground detail
+        <select id="optGroundQuality" class="opt-select">
+          <option value="low">Low (z10)</option>
+          <option value="med" selected>Medium (z11)</option>
+          <option value="high">High (z12)</option>
+          <option value="ultra">Ultra (z13)</option>
+          <option value="auto">Auto (alt-adaptive)</option>
+        </select>
+      </label>
     `;
     const military = el.querySelector("#optMilitary");
     const labels = el.querySelector("#optLabels");
     const heights = el.querySelector("#optHeights");
+    const groundQ = el.querySelector("#optGroundQuality");
+
+    groundQ?.addEventListener("change", () => {
+      this.onGroundQualityChange?.(groundQ.value);
+    });
 
     military.addEventListener("change", () => {
       this.layer.setMilitaryVisible(military.checked);
@@ -196,6 +283,7 @@ export class UI {
       this.controlsHint.classList.toggle("collapsed");
     });
     this.resetBtn.addEventListener("click", () => {
+      if (this._tourRunning) this.tourGuide?.stop({ silent: true });
       this._flyToTargetId = null;
       this.onReset();
       this._refreshAirspaceList();
@@ -206,6 +294,153 @@ export class UI {
       this._listFilter = this.airspaceFilter.value.trim().toLowerCase();
       this._refreshAirspaceList();
     });
+
+    // Telemetry-pane toggles
+    this.toggleAltBtn?.addEventListener("click", () => this.toggleAltTape());
+    this.toggleAttitudeBtn?.addEventListener("click", () => this.toggleAttitude());
+    this.togglePauseBtn?.addEventListener("click", () => this._togglePauseFromButton());
+
+    // Global keyboard: U units / M map-primary / + - zoom map
+    window.addEventListener("keydown", (e) => {
+      if (e.repeat) return;
+      // Ignore when typing into the filter input (or any text-like field)
+      const tag = (e.target?.tagName || "").toUpperCase();
+      if (tag === "INPUT" || tag === "TEXTAREA") return;
+      const k = e.key.toLowerCase();
+      if (k === "u") {
+        this.toggleUnits();
+        e.preventDefault();
+      } else if (k === "m") {
+        this.toggleMapPrimary();
+        e.preventDefault();
+      } else if (k === "+" || k === "=") {
+        this.zoomRadar(1 / 1.25);   // smaller scale → tighter view (zoom in)
+        e.preventDefault();
+      } else if (k === "-" || k === "_") {
+        this.zoomRadar(1.25);
+        e.preventDefault();
+      } else if (k === "j") {
+        this.toggleAltTape();
+        e.preventDefault();
+      } else if (k === "h") {
+        this.toggleAttitude();
+        e.preventDefault();
+      }
+      // 'P' is handled inside Drone — it owns `paused`. We just listen via
+      // drone.onPauseChange to keep the button label/active state in sync.
+      // 1..5 → preset switch is also owned by Drone; we just resync speed
+      // buttons via drone.onPresetKeySwitch.
+    });
+
+    if (this.drone) {
+      const prev = this.drone.onPauseChange;
+      this.drone.onPauseChange = (on) => {
+        prev?.(on);
+        this._reflectPauseUI(on);
+      };
+      const prevPK = this.drone.onPresetKeySwitch;
+      this.drone.onPresetKeySwitch = (id) => {
+        prevPK?.(id);
+        this.syncSpeedButtons();
+        this._hudCache.speedLine = null;
+      };
+    }
+  }
+
+  _reflectPauseUI(on) {
+    if (this.togglePauseBtn) {
+      this.togglePauseBtn.textContent = on ? "▶ Resume [P]" : "Pause [P]";
+      this.togglePauseBtn.classList.toggle("active", on);
+    }
+  }
+
+  // ---------------- Telemetry toggles ----------------
+  toggleAltTape() {
+    this.altTapeVisible = !this.altTapeVisible;
+    this.altTape?.classList.toggle("hidden", !this.altTapeVisible);
+    this.toggleAltBtn?.classList.toggle("active", this.altTapeVisible);
+  }
+
+  toggleAttitude() {
+    this.attitudeVisible = !this.attitudeVisible;
+    this.attitudeCanvas?.classList.toggle("visible", this.attitudeVisible);
+    this.toggleAttitudeBtn?.classList.toggle("active", this.attitudeVisible);
+  }
+
+  _togglePauseFromButton() {
+    if (!this.drone) return;
+    this.drone.paused = !this.drone.paused;
+    this.drone.onPauseChange?.(this.drone.paused);
+  }
+
+  // ---------------- Unit system ----------------
+
+  toggleUnits() {
+    this.unitSystem = this.unitSystem === "metric" ? "aero" : "metric";
+    this._hudCache = {};            // force HUD repaint
+    this._identifyPanelKey = "";    // force identify-panel repaint
+    this._updateRadarLabel();
+  }
+
+  /** Altitude string, single line, units depend on this.unitSystem. */
+  fmtAlt(metres) {
+    const ft = metres * M_TO_FT;
+    if (this.unitSystem === "aero") return `${ft.toFixed(0)} ft AMSL`;
+    return `${metres.toFixed(0)} m  /  ${ft.toFixed(0)} ft AMSL`;
+  }
+
+  /** Speed string for the HUD speed row. */
+  fmtSpeed(mps, presetLabel, presetKmh) {
+    const kmh = mps * 3.6;
+    const kt = mps * 1.94384;
+    if (this.unitSystem === "aero") {
+      const presetKt = (presetKmh / 1.852).toFixed(0);
+      return `${kt.toFixed(0)} kt · ${kmh.toFixed(0)} km/h · ${presetLabel} (${presetKt} kt)`;
+    }
+    return `${mps.toFixed(0)} m/s · ${kmh.toFixed(0)} km/h · ${presetLabel} (${presetKmh} km/h)`;
+  }
+
+  /** Lateral distance (e.g. nearest-point in identify panel). */
+  fmtDist(metres) {
+    if (metres == null) return "—";
+    if (this.unitSystem === "aero") {
+      const nm = metres / 1852;
+      return nm < 1 ? `${(metres * 3.28084).toFixed(0)} ft` : `${nm.toFixed(1)} NM`;
+    }
+    return metres < 1000 ? `${metres.toFixed(0)} m` : `${(metres / 1000).toFixed(1)} km`;
+  }
+
+  /** Vertical extent in identify card. */
+  fmtFloorCeiling(lowerFt, upperFt) {
+    if (this.unitSystem === "metric") {
+      const lo = (lowerFt * FT_TO_M).toFixed(0);
+      const hi = (upperFt * FT_TO_M).toFixed(0);
+      return `${lo}–${hi} m  (${lowerFt.toLocaleString()}–${upperFt.toLocaleString()} ft)`;
+    }
+    return `${lowerFt.toLocaleString()}–${upperFt.toLocaleString()} ft AMSL`;
+  }
+
+  // ---------------- Map-primary swap ----------------
+
+  toggleMapPrimary() {
+    this.mapPrimary = !this.mapPrimary;
+    document.body.classList.toggle("map-primary", this.mapPrimary);
+    if (this.mapPrimary) {
+      this.minimap.width = window.innerWidth;
+      this.minimap.height = window.innerHeight;
+    } else {
+      this.minimap.width = 260;
+      this.minimap.height = 260;
+    }
+    this._updateRadarLabel();
+    this.onMapPrimaryChange?.(this.mapPrimary);
+  }
+
+  // ---------------- Map zoom keys ----------------
+
+  zoomRadar(factor) {
+    this._radarScale = Math.min(8000, Math.max(400, this._radarScale * factor));
+    this._updateRadarLabel();
   }
 
   _bindRadar() {
@@ -254,9 +489,13 @@ export class UI {
 
   _updateRadarLabel() {
     if (!this.minimapLabel) return;
-    const radiusKm = (this.minimap.width / 2) * this._radarScale / 1000;
+    const radiusM = (this.minimap.width / 2) * this._radarScale;
+    const radiusLabel = this.unitSystem === "aero"
+      ? `${(radiusM / 1852).toFixed(0)} NM radius`
+      : `${(radiusM / 1000).toFixed(0)} km radius`;
     const follow = this.radarCenterAircraft ? " · centered on aircraft" : " · drag pan";
-    this.minimapLabel.textContent = `Radar · ${radiusKm.toFixed(0)} km radius · scroll zoom${follow}`;
+    const mode = this.mapPrimary ? "Map (primary) · " : "Radar · ";
+    this.minimapLabel.textContent = `${mode}${radiusLabel} · scroll/+ - zoom${follow}`;
   }
 
   setIdentifyActive(on) {
@@ -274,16 +513,26 @@ export class UI {
       this._identifyPanelKey = "";
       return;
     }
-    const key = entries.map((e) => e.id).sort().join("|");
+    // Entries arrive pre-sorted by nearest first (see airspace.identifyInfoForIds).
+    // Include unit-system + distance bucket in the cache key so a unit toggle or
+    // a meaningful distance change repaints, but per-frame jitter doesn't.
+    const key = entries
+      .map((e) => `${e.id}:${Math.round((e.distanceM ?? -1) / 50)}`)
+      .join("|") + `|${this.unitSystem}`;
     if (key === this._identifyPanelKey) return;
     this._identifyPanelKey = key;
     panel.innerHTML = entries.map((e) => {
       const cls = `cat-${e.categoryKey.replace(/\s/g, "")}`;
+      const distLabel = e.distanceM == null ? ""
+        : e.distanceM < 1 ? "INSIDE"
+        : this.fmtDist(e.distanceM);
+      const distRow = e.distanceM == null ? "" : `
+          <div class="ic-row"><span class="ic-label">Nearest</span><span class="ic-dist">${distLabel}</span></div>`;
       return `
         <div class="identify-card ${cls}">
-          <div class="ic-title">${e.name}<span class="ic-cat">${e.categoryKey}</span></div>
+          <div class="ic-title">${e.name}<span class="ic-cat">${e.categoryKey}</span></div>${distRow}
           <div class="ic-row"><span class="ic-label">Radius</span>${e.radiusLabel}</div>
-          <div class="ic-row"><span class="ic-label">Base / Ceiling</span>${e.lowerFt.toLocaleString()}–${e.upperFt.toLocaleString()} ft AMSL</div>
+          <div class="ic-row"><span class="ic-label">Base / Ceiling</span>${this.fmtFloorCeiling(e.lowerFt, e.upperFt)}</div>
         </div>`;
     }).join("");
     panel.classList.add("visible");
@@ -426,6 +675,322 @@ export class UI {
     ctx.shadowBlur = 0;
   }
 
+  // ---------------- Altitude tape ----------------
+  /**
+   * Vertical altitude reference graph next to the telemetry HUD.
+   * Auto-zooms around the current altitude (so a 50 m drone reads 0–200 m,
+   * a 5 000 m airliner reads 0–20 000 m, etc.). Overlays:
+   *   - Red line at 90 m AGL — Thailand drone limit (CAAT recreational).
+   *   - Major ticks every 1 000 m (above 500 m) or 100 m (below 500 m).
+   *   - Minor ticks every 100 m (above) or 20 m (below).
+   *   - Translucent bands + icons for typical operating altitudes per Thai
+   *     aviation: drones, helicopters, GA, jet cruise, airliner cruise.
+   */
+  _drawAltTape(altM) {
+    const ctx = this.altTapeCtx;
+    if (!ctx) return;
+    const canvas = this.altTape;
+    if (!this.altTapeVisible) return;
+    // Sync the canvas bitmap to its current CSS box height so it stretches
+    // with the HUD. (Width is fixed in CSS to 88 px.)
+    const cssW = canvas.clientWidth || 88;
+    const cssH = canvas.clientHeight || 360;
+    if (canvas.width !== cssW)  canvas.width  = cssW;
+    if (canvas.height !== cssH) canvas.height = cssH;
+    const W = canvas.width, H = canvas.height;
+
+    // ---- Auto-zoom: pick a top-of-scale that nicely brackets `altM` ----
+    // Always include the 90 m drone limit so the red line is visible even
+    // when sitting on the deck. Step through human-friendly tops.
+    const niceTops = [
+      300, 600, 1000, 2000, 5000, 10_000, 20_000, 30_000, 45_000,
+    ]; // metres
+    const want = Math.max(150, altM * 1.6, 200);
+    let topM = niceTops.find((t) => t >= want) ?? niceTops[niceTops.length - 1];
+    const botM = 0;
+    const range = topM - botM;
+    const m2y = (m) => H - 14 - ((m - botM) / range) * (H - 34);
+    // (14 px reserved top + bottom for header/footer)
+
+    // ---- Background ----
+    ctx.clearRect(0, 0, W, H);
+    const grd = ctx.createLinearGradient(0, 0, 0, H);
+    grd.addColorStop(0, "rgba(20, 40, 70, 0.55)");      // higher = darker blue
+    grd.addColorStop(1, "rgba(34, 80, 50, 0.40)");      // ground = greenish
+    ctx.fillStyle = grd;
+    ctx.fillRect(0, 0, W, H);
+
+    // ---- Reference bands (Thailand-aviation typical operating heights) ----
+    const aero = this.unitSystem === "aero";
+    const bands = [
+      // {fromFt, toFt, color, label, icon}
+      { fromFt: 0,      toFt: 295,    color: "rgba(102,255,204,0.16)", label: "Drone",        icon: "🚁" },
+      { fromFt: 500,    toFt: 2000,   color: "rgba(255,184,74,0.14)",  label: "Heli ops",     icon: "🚁" },
+      { fromFt: 1000,   toFt: 10000,  color: "rgba(102,179,255,0.10)", label: "GA / VFR",     icon: "✈" },
+      { fromFt: 18000,  toFt: 28000,  color: "rgba(160,80,255,0.10)",  label: "Jet climb",    icon: "✈" },
+      { fromFt: 30000,  toFt: 42000,  color: "rgba(255,80,140,0.10)",  label: "Airline cr.",  icon: "🛩" },
+    ];
+    const FT_TO_M_ = 0.3048;
+    for (const b of bands) {
+      const lo = b.fromFt * FT_TO_M_;
+      const hi = b.toFt * FT_TO_M_;
+      if (hi < botM || lo > topM) continue;
+      const y1 = m2y(Math.min(hi, topM));
+      const y2 = m2y(Math.max(lo, botM));
+      ctx.fillStyle = b.color;
+      ctx.fillRect(0, y1, W, y2 - y1);
+    }
+
+    // ---- Ticks ----
+    // Major step picked so we get ~5–8 majors visible.
+    const targetMajor = range / 6;
+    const majorChoices = [50, 100, 200, 500, 1000, 2000, 5000, 10_000];
+    const majorStep = majorChoices.find((s) => s >= targetMajor) ?? majorChoices[majorChoices.length - 1];
+    const minorStep = majorStep / 5;
+    ctx.font = "9px ui-monospace, monospace";
+    ctx.textBaseline = "middle";
+    for (let m = 0; m <= topM + 0.5; m += minorStep) {
+      const y = m2y(m);
+      const isMajor = Math.abs(m % majorStep) < 1e-3;
+      ctx.strokeStyle = isMajor ? "rgba(255,255,255,0.55)" : "rgba(255,255,255,0.18)";
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(isMajor ? 14 : 6, y);
+      ctx.stroke();
+      if (isMajor) {
+        const label = aero
+          ? `${Math.round((m / FT_TO_M_) / 100) * 100}ft`
+          : (m >= 1000 ? `${(m / 1000).toFixed(m % 1000 === 0 ? 0 : 1)}km` : `${m.toFixed(0)}m`);
+        ctx.fillStyle = "rgba(255,255,255,0.78)";
+        ctx.fillText(label, 16, y);
+      }
+    }
+
+    // ---- Reference band labels (only when the band actually has room) ----
+    ctx.font = "8px ui-monospace, monospace";
+    for (const b of bands) {
+      const lo = b.fromFt * FT_TO_M_;
+      const hi = b.toFt * FT_TO_M_;
+      if (hi < botM || lo > topM) continue;
+      const yMid = m2y((Math.min(hi, topM) + Math.max(lo, botM)) / 2);
+      const y1 = m2y(Math.min(hi, topM));
+      const y2 = m2y(Math.max(lo, botM));
+      if (Math.abs(y2 - y1) < 16) continue;            // band too thin to label
+      ctx.fillStyle = "rgba(255,255,255,0.55)";
+      ctx.textAlign = "right";
+      ctx.fillText(`${b.icon} ${b.label}`, W - 4, yMid);
+      ctx.textAlign = "start";
+    }
+
+    // ---- Red drone-limit line (90 m AGL = 295 ft) ----
+    const yLimit = m2y(90);
+    if (yLimit > 16 && yLimit < H - 16) {
+      ctx.strokeStyle = "rgba(255, 64, 64, 0.95)";
+      ctx.setLineDash([6, 4]);
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(0, yLimit);
+      ctx.lineTo(W, yLimit);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.lineWidth = 1;
+      ctx.fillStyle = "rgba(255, 64, 64, 0.95)";
+      ctx.font = "bold 9px ui-monospace, monospace";
+      ctx.textAlign = "left";
+      ctx.fillText("90 m DRONE", 2, yLimit - 5);
+    }
+
+    // ---- Aircraft marker (always clamped onto the visible scale) ----
+    const yAc = Math.max(8, Math.min(H - 8, m2y(altM)));
+    ctx.fillStyle = "rgba(102,255,204,0.95)";
+    ctx.beginPath();
+    ctx.moveTo(W - 4, yAc);
+    ctx.lineTo(W - 14, yAc - 6);
+    ctx.lineTo(W - 14, yAc + 6);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = "rgba(0,0,0,0.5)";
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    // Current altitude readout, top-right corner
+    ctx.fillStyle = "rgba(255,255,255,0.92)";
+    ctx.font = "bold 10px ui-monospace, monospace";
+    ctx.textAlign = "right";
+    const cur = aero
+      ? `${(altM * 3.28084).toFixed(0)} ft`
+      : (altM >= 1000 ? `${(altM / 1000).toFixed(1)} km` : `${altM.toFixed(0)} m`);
+    ctx.fillText(cur, W - 4, 10);
+
+    // Scale-top label, bottom-left
+    ctx.fillStyle = "rgba(255,255,255,0.45)";
+    ctx.font = "8px ui-monospace, monospace";
+    ctx.textAlign = "left";
+    const topLabel = aero
+      ? `Top ${(topM / FT_TO_M_ / 1000).toFixed(topM / FT_TO_M_ >= 10000 ? 0 : 1)}k ft`
+      : (topM >= 1000 ? `Top ${(topM / 1000).toFixed(0)} km` : `Top ${topM.toFixed(0)} m`);
+    ctx.fillText(topLabel, 4, H - 4);
+  }
+
+  // ---------------- Attitude indicator (artificial horizon) ----------------
+  /**
+   * Transparent artificial horizon: pitch ladder + bank scale + aircraft
+   * symbol overlay, with **no sky / earth fills** so the 3D scene shows
+   * through. The horizon line, ticks, and aircraft bars are drawn in white /
+   * yellow with thin contrast strokes so they remain visible against any
+   * background.
+   */
+  _drawAttitudeIndicator(pitchRad, rollRad) {
+    if (!this.attitudeVisible) return;
+    const ctx = this.attitudeCtx;
+    if (!ctx) return;
+    const canvas = this.attitudeCanvas;
+    const W = canvas.width, H = canvas.height;
+    const cx = W / 2, cy = H / 2;
+    const r = Math.min(W, H) / 2 - 4;
+
+    ctx.clearRect(0, 0, W, H);
+
+    // Circular clip — instrument bezel (still used so the ladder doesn't
+    // bleed past the bezel ring, but no opaque background is drawn).
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.clip();
+
+    // Rotate by bank, slide by pitch (10° = `pxPerDeg` px).
+    const pxPerDeg = r / 30;     // ±30° of pitch visible inside the bezel
+    const pitchDeg = (pitchRad * 180) / Math.PI;
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(-rollRad);
+    ctx.translate(0, pitchDeg * pxPerDeg);
+
+    // Horizon line — bright cyan-white double stroke for contrast on any bg.
+    ctx.strokeStyle = "rgba(0, 0, 0, 0.65)";
+    ctx.lineWidth = 3.5;
+    ctx.beginPath();
+    ctx.moveTo(-r * 3, 0);
+    ctx.lineTo(r * 3, 0);
+    ctx.stroke();
+    ctx.strokeStyle = "#ffffff";
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(-r * 3, 0);
+    ctx.lineTo(r * 3, 0);
+    ctx.stroke();
+
+    // Pitch ladder (every 5° with 10° major). Each tick is drawn twice — once
+    // in dark shadow, once in white — so it stays legible against the live
+    // 3D scene underneath.
+    ctx.font = "bold 10px ui-monospace, monospace";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    for (let p = -90; p <= 90; p += 5) {
+      if (p === 0) continue;
+      const y = -p * pxPerDeg;
+      if (Math.abs(y) > r * 1.4) continue;
+      const major = (p % 10 === 0);
+      const w = major ? 36 : 18;
+      // shadow
+      ctx.strokeStyle = "rgba(0,0,0,0.55)";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(-w, y);
+      ctx.lineTo(w, y);
+      ctx.stroke();
+      // primary
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(-w, y);
+      ctx.lineTo(w, y);
+      ctx.stroke();
+      if (major) {
+        ctx.fillStyle = "rgba(0,0,0,0.55)";
+        ctx.fillText(`${Math.abs(p)}`, -w - 12 + 1, y + 1);
+        ctx.fillText(`${Math.abs(p)}`,  w + 12 + 1, y + 1);
+        ctx.fillStyle = "#ffffff";
+        ctx.fillText(`${Math.abs(p)}`, -w - 12, y);
+        ctx.fillText(`${Math.abs(p)}`,  w + 12, y);
+      }
+    }
+    ctx.restore();
+
+    // Bank-angle scale on the bezel (top arc, 0/±10/±20/±30/±45/±60)
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.strokeStyle = "rgba(255,255,255,0.9)";
+    ctx.fillStyle = "#fff";
+    ctx.lineWidth = 1.5;
+    ctx.font = "9px ui-monospace, monospace";
+    const banks = [
+      [0, 6, true], [10, 4, false], [20, 4, false],
+      [30, 7, true], [45, 5, false], [60, 7, true],
+    ];
+    for (const [deg, len, label] of banks) {
+      for (const s of [-1, 1]) {
+        const a = (s * deg * Math.PI) / 180 - Math.PI / 2;
+        const x1 = Math.cos(a) * (r - 2);
+        const y1 = Math.sin(a) * (r - 2);
+        const x2 = Math.cos(a) * (r - 2 - len);
+        const y2 = Math.sin(a) * (r - 2 - len);
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.stroke();
+        if (label && deg !== 0) {
+          const xl = Math.cos(a) * (r - 16);
+          const yl = Math.sin(a) * (r - 16);
+          ctx.fillText(`${deg}`, xl, yl);
+        }
+        if (deg === 0) break;
+      }
+    }
+
+    // Yellow bank triangle pointer (fixed to bezel — currently at 0 since we
+    // already rotated the inside).
+    ctx.fillStyle = "#ffd24a";
+    ctx.beginPath();
+    ctx.moveTo(0, -r + 2);
+    ctx.lineTo(-6, -r + 12);
+    ctx.lineTo(6, -r + 12);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+
+    ctx.restore();     // end circular clip
+
+    // Aircraft symbol (fixed yellow bars + center dot)
+    ctx.strokeStyle = "#ffd24a";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(cx - 40, cy);
+    ctx.lineTo(cx - 10, cy);
+    ctx.moveTo(cx + 10, cy);
+    ctx.lineTo(cx + 40, cy);
+    ctx.stroke();
+    // Wings tips drop
+    ctx.beginPath();
+    ctx.moveTo(cx - 40, cy);
+    ctx.lineTo(cx - 40, cy + 4);
+    ctx.moveTo(cx + 40, cy);
+    ctx.lineTo(cx + 40, cy + 4);
+    ctx.stroke();
+    // Centre dot
+    ctx.fillStyle = "#ffd24a";
+    ctx.beginPath();
+    ctx.arc(cx, cy, 3, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Bezel ring
+    ctx.strokeStyle = "rgba(255,255,255,0.55)";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+
   saveFlightBeforeFlyTo() { /* removed — flight history handles navigation */ }
 
   markFlyToTarget(id) {
@@ -447,6 +1012,29 @@ export class UI {
       return hay.includes(q);
     });
 
+    // 8-way compass-rose buttons per card: clicking N puts the aircraft north
+    // of the airspace looking south, etc. Default (clicking the card body)
+    // keeps the historical "from the south" view.
+    //
+    // 3×3 grid layout — the centre slot is intentionally empty so the
+    // bearings sit at their geographic positions:
+    //   NW | N  | NE
+    //   W  | ·  | E
+    //   SW | S  | SE
+    const ROSE_CELLS = [
+      { dir: "NW", glyph: "↖" }, { dir: "N",  glyph: "↑" }, { dir: "NE", glyph: "↗" },
+      { dir: "W",  glyph: "←" }, { dir: null,             }, { dir: "E",  glyph: "→" },
+      { dir: "SW", glyph: "↙" }, { dir: "S",  glyph: "↓" }, { dir: "SE", glyph: "↘" },
+    ];
+    const compassRose = (id) => `
+      <div class="compass-rose" role="group" aria-label="View this airspace from a compass direction">
+        ${ROSE_CELLS.map((c) =>
+          c.dir
+            ? `<button class="dir-btn" data-id="${id}" data-dir="${c.dir}" title="View from ${c.dir}">${c.glyph}</button>`
+            : `<span class="dir-empty" aria-hidden="true"></span>`
+        ).join("")}
+      </div>`;
+
     this.airspaceList.innerHTML = items.map((a) => {
       const active = a.id === this._flyToTargetId;
       const tag = a.approximate
@@ -461,6 +1049,7 @@ export class UI {
             <div class="row2"><span class="cat cat-${a.category.replace(/\s/g, "")}">${a.category}</span> ${v}</div>
             <div class="row3">${a.description}</div>
           </button>
+          ${compassRose(a.id)}
         </li>`;
     }).join("");
 
@@ -471,7 +1060,15 @@ export class UI {
     this.airspaceList.querySelectorAll("button.teleport").forEach((btn) => {
       btn.addEventListener("click", (e) => {
         e.stopPropagation();
-        this.onFlyTo?.(btn.dataset.id);
+        if (this._tourRunning) return;
+        this.onFlyTo?.(btn.dataset.id);   // default direction = S (historic)
+      });
+    });
+    this.airspaceList.querySelectorAll("button.dir-btn").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        if (this._tourRunning) return;
+        this.onFlyTo?.(btn.dataset.id, { direction: btn.dataset.dir });
       });
     });
   }
@@ -545,11 +1142,14 @@ export class UI {
       if (this.placeLabel) this.placeLabel.textContent = adminText;
     }
 
-    const altText = `${altM.toFixed(0)} m  /  ${altFt.toFixed(0)} ft AMSL`;
+    const altText = this.fmtAlt(altM);
     if (this._hudCache.alt !== altText) {
       this._hudCache.alt = altText;
       this.hud.querySelector("#alt").textContent = altText;
     }
+
+    this._drawAltTape(altM);
+    this._drawAttitudeIndicator(this.drone.bodyPitch ?? 0, this.drone.bodyRoll ?? 0);
 
     const displayHdg = this._smoothCompassHeading(headingDeg, dt);
     const hdgMoving = Math.abs(((headingDeg - displayHdg + 540) % 360) - 180) > 0.05;
@@ -569,7 +1169,7 @@ export class UI {
     if (spdEl) {
       const spd = this.drone.currentSpeed || 0;
       const preset = this.drone.activePreset();
-      const speedLine = `${spd.toFixed(0)} m/s · ${(spd * 3.6).toFixed(0)} km/h · ${preset.label} (${preset.kmh} km/h)`;
+      const speedLine = this.fmtSpeed(spd, preset.label, preset.kmh);
       if (this._hudCache.speedLine !== speedLine) {
         this._hudCache.speedLine = speedLine;
         spdEl.textContent = speedLine;
@@ -597,7 +1197,7 @@ export class UI {
           return `<span class="chip ${cls}" title="${a.description}">⚠ ${a.shortName}</span>`;
         }).join(" ");
       }
-      if (this.panelTitle) {
+      if (this.panelTitle && !this._tourRunning) {
         if (inside.length === 0) {
           this.panelTitle.textContent = "Thai Airspace · Clear";
         } else if (inside.length === 1) {
@@ -702,12 +1302,18 @@ export class UI {
     ctx.lineWidth = 1;
     ctx.fillStyle = "rgba(255,255,255,0.35)";
     ctx.font = "9px ui-monospace, monospace";
-    for (const r of [50_000, 100_000, 200_000, 300_000]) {
-      const rp = r / SCALE;
+    // Range rings: metric uses 50/100/200/300 km; aero uses 25/50/100/200 NM.
+    const rings = this.unitSystem === "aero"
+      ? [{ m: 25 * 1852, lbl: "25NM" }, { m: 50 * 1852, lbl: "50NM" },
+         { m: 100 * 1852, lbl: "100NM" }, { m: 200 * 1852, lbl: "200NM" }]
+      : [{ m: 50_000, lbl: "50km" }, { m: 100_000, lbl: "100km" },
+         { m: 200_000, lbl: "200km" }, { m: 300_000, lbl: "300km" }];
+    for (const ring of rings) {
+      const rp = ring.m / SCALE;
       ctx.beginPath();
       ctx.arc(cx, cy, rp, 0, Math.PI * 2);
       ctx.stroke();
-      ctx.fillText(`${r / 1000}km`, cx + rp - 26, cy - 2);
+      ctx.fillText(ring.lbl, cx + rp - 30, cy - 2);
     }
 
     ctx.fillStyle = "rgba(255,255,255,0.6)";

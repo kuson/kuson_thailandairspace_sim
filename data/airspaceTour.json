@@ -1,0 +1,446 @@
+{
+  "meta": {
+    "title": "Thai Airspace Tour Guide",
+    "tagline": "From Bangkok sky to every shape that matters for rotorcraft pilots.",
+    "shortMinutes": 5,
+    "fullMinutes": 22
+  },
+  "variants": {
+    "short": {
+      "label": "Express tour (~5 min)",
+      "description": "Bangkok takeoff, then the capital-region volumes every hobby pilot should recognise first.",
+      "stops": [
+        {
+          "type": "takeoff",
+          "title": "Clearance — Bangkok",
+          "chapter": "Gate departure",
+          "lines": [
+            "Good morning from the Chao Phraya basin — Thailand's busiest sky starts right here.",
+            "We climb to sightseeing altitude so you can read the coloured cages before you ever spin a prop for real."
+          ],
+          "climbToM": 1400,
+          "climbSec": 10,
+          "dwellSec": 6
+        },
+        {
+          "airspaceId": "VTBD-CTR",
+          "chapter": "Stop 1 · Controlled",
+          "title": "Bangkok Control Zone",
+          "lines": [
+            "That red drum is the Bangkok CTR — a 35 NM cylinder around Don Mueang and Suvarnabhumi.",
+            "It exists so airline jets can land in order. For drones: stay out entirely — CAAT expects ≥9 km from any airport, and this zone is much bigger than that."
+          ],
+          "dwellSec": 32,
+          "flyDurationSec": 0.55
+        },
+        {
+          "airspaceId": "VTBD-TMA",
+          "chapter": "Stop 2 · Terminal",
+          "title": "Bangkok Terminal Area",
+          "lines": [
+            "Orange is the TMA — the arrival and departure shelf stacked above the CTR.",
+            "Pilots hear \"Bangkok Approach\" here. You won't, because you shouldn't be inside. Think of it as the airport's front garden in three dimensions."
+          ],
+          "dwellSec": 30,
+          "flyDurationSec": 0.45
+        },
+        {
+          "airspaceId": "VTR1",
+          "chapter": "Stop 3 · Restricted",
+          "title": "Bangkok City Restricted",
+          "lines": [
+            "Purple means restricted — flight is allowed only with permission and conditions.",
+            "This 10 NM ring over inner Bangkok protects government and dense urban life. Your weekend vlog is not worth the paperwork."
+          ],
+          "dwellSec": 32,
+          "flyDurationSec": 0.5
+        },
+        {
+          "airspaceId": "VTR2",
+          "chapter": "Stop 4 · Royal",
+          "title": "Chitralada Palace Restricted",
+          "lines": [
+            "Small column, huge meaning — royal residences sit under their own restricted bubbles.",
+            "Even if your drone is tiny, the sensitivity isn't. Treat every purple disc near palaces as a hard no unless CAAT says otherwise."
+          ],
+          "dwellSec": 28,
+          "flyDurationSec": 0.5
+        },
+        {
+          "airspaceId": "VTP4",
+          "chapter": "Stop 5 · Prohibited",
+          "title": "Muang Kom Prohibited",
+          "lines": [
+            "Solid red is prohibited — the chart's way of saying \"never without special authority.\"",
+            "These zones guard security sites. There is no casual waiver for content creators."
+          ],
+          "dwellSec": 28,
+          "flyDurationSec": 0.65
+        },
+        {
+          "airspaceId": "VTD17",
+          "chapter": "Stop 6 · Danger",
+          "title": "Kanchanaburi Danger Area",
+          "lines": [
+            "Deep orange danger areas flag hazardous activity — often military training west of Bangkok.",
+            "A drone might not trigger a jet, but you could wander into live ordnance or high-speed traffic. Respect the colour even when the sky looks empty."
+          ],
+          "dwellSec": 32,
+          "flyDurationSec": 0.85
+        },
+        {
+          "airspaceId": "VTR13",
+          "chapter": "Stop 7 · Islands",
+          "title": "Ko Samet Restricted",
+          "lines": [
+            "Islands get their own restricted caps — Samet is a tourist favourite and an airspace headache.",
+            "Beach beauty on the ground doesn't relax rules overhead. Check the chart before you launch from the sand."
+          ],
+          "dwellSec": 30,
+          "flyDurationSec": 1.1
+        },
+        {
+          "airspaceId": "VTD21-1",
+          "chapter": "Stop 8 · Naval",
+          "title": "Sattahip Bay Danger",
+          "lines": [
+            "Naval training boxes along the Gulf coast are danger areas for a reason — ships, aircraft, and weapons share the same slice of sky.",
+            "If you're mapping the Eastern Seaboard, give Sattahip a wide berth."
+          ],
+          "dwellSec": 30,
+          "flyDurationSec": 0.9
+        },
+        {
+          "type": "finale",
+          "chapter": "Welcome",
+          "title": "Welcome to Explore",
+          "lines": [
+            "You've seen the capital's greatest hits — controlled, restricted, prohibited, and danger.",
+            "Now the sticks are yours: fly manually, click any volume in the panel, press I to identify what you're looking at, and build the instinct charts teach.",
+            "Welcome to explore — fly curious, fly legal."
+          ],
+          "dwellSec": 24,
+          "returnBangkok": true,
+          "flyDurationSec": 1.2
+        }
+      ]
+    },
+    "full": {
+      "label": "Full country tour (~22 min)",
+      "description": "Takeoff at Bangkok, then every category and region rotorcraft pilots should appreciate — major airports, royal zones, islands, training areas, north and south.",
+      "stops": [
+        {
+          "type": "takeoff",
+          "title": "Clearance — Bangkok",
+          "chapter": "National departure",
+          "lines": [
+            "This is the full airspace story — not every one of 147 catalogued volumes, but every kind of rule you'll meet as a Thai drone pilot.",
+            "We depart Bangkok, climb, and warp coast to coast so the chart colours become places you remember."
+          ],
+          "climbToM": 1600,
+          "climbSec": 12,
+          "dwellSec": 5
+        },
+        {
+          "airspaceId": "VTBD-CTR",
+          "chapter": "Central · CTR",
+          "title": "Bangkok Control Zone",
+          "lines": [
+            "CTR — Control Zone — red on the chart, serious in real life. Thirty-five nautical miles around the capital's airline airports.",
+            "Utility: separates airline traffic from everything else. For you: no entry without ATC clearance you will never hold as a drone operator."
+          ],
+          "dwellSec": 28,
+          "flyDurationSec": 0.5
+        },
+        {
+          "airspaceId": "VTBD-TMA",
+          "chapter": "Central · TMA",
+          "title": "Bangkok Terminal Area",
+          "lines": [
+            "TMAs are the sequencing lanes where jets join and leave the CTR.",
+            "History: they grew with Suvarnabhumi's traffic boom. Utility: keeps arrivals ordered. Drone lesson: if you see orange near an airport, widen your buffer."
+          ],
+          "dwellSec": 26,
+          "flyDurationSec": 0.45
+        },
+        {
+          "airspaceId": "VTBS-CTR",
+          "chapter": "Central · Suvarnabhumi",
+          "title": "Suvarnabhumi Control Zone",
+          "lines": [
+            "Suvarnabhumi sits inside the wider Bangkok CTR — a reminder that big hubs can have nested cylinders.",
+            "The eastern approach path is busy 24/7. Your 250 g quad is invisible to radar until it isn't."
+          ],
+          "dwellSec": 24,
+          "flyDurationSec": 0.45
+        },
+        {
+          "airspaceId": "KPS-CTR",
+          "chapter": "Central · RTAF",
+          "title": "Kamphaeng Saen Control Zone",
+          "lines": [
+            "RTAF training bases carry their own CTRs — Kamphaeng Saen is the classic western training bowl.",
+            "Military utility: student pilots and tactical traffic. Civilian drone utility: stay far away; military ATC does not expect you."
+          ],
+          "dwellSec": 26,
+          "flyDurationSec": 0.7
+        },
+        {
+          "airspaceId": "VTR1",
+          "chapter": "Central · Restricted",
+          "title": "Bangkok City Restricted",
+          "lines": [
+            "Restricted airspace is not a ban — it's \"ask first, fly only if allowed.\"",
+            "Bangkok City's ring exists because low-altitude flight over parliament, ministries, and dense crowds is a security and privacy matter."
+          ],
+          "dwellSec": 26,
+          "flyDurationSec": 0.75
+        },
+        {
+          "airspaceId": "VTR2",
+          "chapter": "Central · Royal",
+          "title": "Chitralada Palace Restricted",
+          "lines": [
+            "Royal restricted areas are small on the map and enormous in law.",
+            "Utility: protect the monarchy and adjacent institutions. Appreciate them as precision purple pillars, not suggestions."
+          ],
+          "dwellSec": 22,
+          "flyDurationSec": 0.45
+        },
+        {
+          "airspaceId": "VTR80",
+          "chapter": "Central · Royal",
+          "title": "Srapathum Palace Restricted",
+          "lines": [
+            "Another palace cap — Bangkok has several. Together they teach that purple clusters are cumulative: obey each disc even when they overlap."
+          ],
+          "dwellSec": 20,
+          "flyDurationSec": 0.45
+        },
+        {
+          "airspaceId": "VTP4",
+          "chapter": "Central · Prohibited",
+          "title": "Muang Kom Prohibited",
+          "lines": [
+            "Prohibited means forbidden — the strongest word on the chart.",
+            "History: Cold War-era security mapping modernised for today's sites. Utility: absolute protection. Drone pilots should read red as \"camera off, motors off.\""
+          ],
+          "dwellSec": 24,
+          "flyDurationSec": 0.55
+        },
+        {
+          "airspaceId": "VTD17",
+          "chapter": "West · Danger",
+          "title": "Kanchanaburi Danger",
+          "lines": [
+            "Danger areas warn that something hazardous to aircraft may happen — bombing, firing, high-speed military traffic.",
+            "The western corridors date to RTAF exercises over Kanchanaburi and Suphan Buri. Empty sky can still be a classroom for jets."
+          ],
+          "dwellSec": 28,
+          "flyDurationSec": 0.8
+        },
+        {
+          "airspaceId": "VTD18",
+          "chapter": "West · Danger",
+          "title": "Suphan Buri Danger",
+          "lines": [
+            "Neighbouring danger blocks often share one training story — check NOTAMs in real life; here we show the permanent AIP skeleton.",
+            "Appreciate danger as \"maybe loud, maybe lethal\" rather than \"maybe empty.\""
+          ],
+          "dwellSec": 24,
+          "flyDurationSec": 0.55
+        },
+        {
+          "airspaceId": "VTD16-1",
+          "chapter": "West · Danger",
+          "title": "Ratchaburi Danger",
+          "lines": [
+            "Coastal and river-adjacent danger areas protect firing ranges toward Myanmar and the Gulf.",
+            "If you film the floating market, check you're outside the orange before launch."
+          ],
+          "dwellSec": 24,
+          "flyDurationSec": 0.65
+        },
+        {
+          "airspaceId": "VTBP-CTR",
+          "chapter": "South · Resort",
+          "title": "Hua Hin Control Zone",
+          "lines": [
+            "Resort towns still have CTRs — Hua Hin serves royal retreats and holiday traffic.",
+            "Utility: separates GA and airline ops from the beach. Your sunset shot from the pier must clear this cylinder first."
+          ],
+          "dwellSec": 26,
+          "flyDurationSec": 1.0
+        },
+        {
+          "airspaceId": "VTBU-CTR",
+          "chapter": "East · Seaboard",
+          "title": "U-Tapao Control Zone",
+          "lines": [
+            "U-Tapao anchors the Eastern Economic Corridor — cargo, pax, and military share the coast.",
+            "Approximate boundary in this sim — always verify AD 2.VTBU in the live AIP before flying Rayong or Pattaya."
+          ],
+          "dwellSec": 26,
+          "flyDurationSec": 1.05
+        },
+        {
+          "airspaceId": "VTR11",
+          "chapter": "East · Naval",
+          "title": "Ko Hin Chalam Restricted",
+          "lines": [
+            "Naval restricted caps hug Sattahip — small on the chart, tight in reality.",
+            "Utility: keep drones away from fleet movements and amphibious training."
+          ],
+          "dwellSec": 22,
+          "flyDurationSec": 0.85
+        },
+        {
+          "airspaceId": "VTD21-1",
+          "chapter": "East · Danger",
+          "title": "Sattahip Bay Danger",
+          "lines": [
+            "Danger over the bay — live fire, aircraft, and ships.",
+            "History: decades of RTN training. Utility: national defence. Your takeaway: Gulf coast ≠ open playground."
+          ],
+          "dwellSec": 26,
+          "flyDurationSec": 0.55
+        },
+        {
+          "airspaceId": "VTP7",
+          "chapter": "East · Prohibited",
+          "title": "Sattahip Naval Base Prohibited",
+          "lines": [
+            "Naval bases earn prohibited circles — no casual overflight, no \"just quickly.\"",
+            "Red here is patriotism and safety rolled into one."
+          ],
+          "dwellSec": 24,
+          "flyDurationSec": 0.5
+        },
+        {
+          "airspaceId": "VTR13",
+          "chapter": "East · Islands",
+          "title": "Ko Samet Restricted",
+          "lines": [
+            "Island restricted areas protect parks, radar, and naval reach around tourist hotspots.",
+            "Samet teaches that holiday geography ≠ exempt airspace."
+          ],
+          "dwellSec": 24,
+          "flyDurationSec": 0.65
+        },
+        {
+          "airspaceId": "VTSP-CTR",
+          "chapter": "South · Phuket",
+          "title": "Phuket Control Zone",
+          "lines": [
+            "Phuket CTR — southern tourism's front door to the skies.",
+            "International arrivals, GA, and helicopters share tight airspace over karst and sea. Plan launches from beaches outside the red."
+          ],
+          "dwellSec": 28,
+          "flyDurationSec": 1.35
+        },
+        {
+          "airspaceId": "VTSP-TMA",
+          "chapter": "South · TMA",
+          "title": "Phuket Terminal Area",
+          "lines": [
+            "Orange TMA over the Andaman — sequencing for holiday jets.",
+            "Appreciate how TMAs extend offshore: your boat drone might still be under terminal airspace."
+          ],
+          "dwellSec": 24,
+          "flyDurationSec": 0.45
+        },
+        {
+          "airspaceId": "VTCC-CTR",
+          "chapter": "North · Lanna",
+          "title": "Chiang Mai Control Zone",
+          "lines": [
+            "Chiang Mai CTR guards the north's airline hub between mountains and valleys.",
+            "Utility: terrain-aware approaches for crewed aircraft. Drone utility: smoke, temples, and festivals still sit under this cap."
+          ],
+          "dwellSec": 28,
+          "flyDurationSec": 1.4
+        },
+        {
+          "airspaceId": "VTCT-CTR",
+          "chapter": "North · Class D",
+          "title": "Chiang Rai Control Zone",
+          "lines": [
+            "Yellow Class D CTR — controlled, but lighter than Class C airline hubs.",
+            "Two-way radio for crewed VFR; drones still stay out. Note the colour: Class D is its own habit on the chart."
+          ],
+          "dwellSec": 24,
+          "flyDurationSec": 0.95
+        },
+        {
+          "airspaceId": "VTUK-CTR",
+          "chapter": "Northeast · Isaan",
+          "title": "Khon Kaen Control Zone",
+          "lines": [
+            "Isaan's university hub has a CTR too — Thailand's airspace grid is nationwide, not just Bangkok-Phuket.",
+            "Rice fields look empty; charts say otherwise."
+          ],
+          "dwellSec": 26,
+          "flyDurationSec": 1.15
+        },
+        {
+          "airspaceId": "VTSN-CTR",
+          "chapter": "Deep south",
+          "title": "Songkhla / Hat Yai Control Zone",
+          "lines": [
+            "Deep south CTR — border trade and domestic links.",
+            "Reminder: Malay peninsula airspace is dense; cross-border shots need two countries' rules."
+          ],
+          "dwellSec": 26,
+          "flyDurationSec": 1.25
+        },
+        {
+          "airspaceId": "VTP36",
+          "chapter": "South · Naval prohibited",
+          "title": "Sattahip Naval Prohibited (RTN)",
+          "lines": [
+            "Military prohibited zones — RTN weapon ranges drawn tight after AIP corrections.",
+            "Utility: fleet defence. Appreciate that military P areas can be smaller than danger but stricter."
+          ],
+          "dwellSec": 24,
+          "flyDurationSec": 1.0
+        },
+        {
+          "airspaceId": "VTD32",
+          "chapter": "Northeast · Training",
+          "title": "Nakhon Ratchasima Danger",
+          "lines": [
+            "Large danger circles over Khorat — RTAF training heartland.",
+            "Fifty nautical miles sounds cinematic because it is. Drones do not belong in live-fire airspace even when it's dry season."
+          ],
+          "dwellSec": 28,
+          "flyDurationSec": 1.1
+        },
+        {
+          "type": "rules",
+          "chapter": "Rotorcraft rules",
+          "title": "Thailand Drone Rules — In Flight",
+          "lines": [
+            "Register drones over 250 g with CAAT and NBTC.",
+            "Recreational ceiling 90 m AGL (~295 ft), daylight VLOS, no crowds or government roofs.",
+            "Stay ≥9 km from airports — and treat every coloured volume in this sim as the real neighbour it represents."
+          ],
+          "dwellSec": 30,
+          "flyDurationSec": 1.2
+        },
+        {
+          "type": "finale",
+          "chapter": "Welcome",
+          "title": "Welcome to Explore",
+          "lines": [
+            "You've warped the kingdom — CTR, TMA, Class D, restricted, prohibited, danger, military.",
+            "The catalog holds 147 volumes; you now know why they exist, not just where they sit.",
+            "Click any airspace, press I to identify, undo your flights, and go build the instinct. Welcome to explore."
+          ],
+          "dwellSec": 22,
+          "returnBangkok": true,
+          "flyDurationSec": 1.4
+        }
+      ]
+    }
+  }
+}
