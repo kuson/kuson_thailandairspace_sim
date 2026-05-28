@@ -1229,8 +1229,6 @@ export class Drone {
     if (!s) return;
     this.bodyYaw = s.yaw;
     this.bodyPitch = s.pitch;
-    this.bodyRoll = s.bodyRoll ?? 0;
-    this._targetRoll = this.bodyRoll;
     this.cameraMode = s.cameraMode ?? null;
     this.teleport(s.x, s.y, s.z, s.yaw, s.pitch);
     if (s.speedPresetId) this.setSpeedPreset(s.speedPresetId);
@@ -1238,6 +1236,11 @@ export class Drone {
       const map = { 1: "1x", 5: "cessna172", 20: "learjet", 50: "b777", 100: "100x" };
       this.setSpeedPreset(map[s.speedMultiplier] ?? "100x");
     }
+    // bodyRoll must be applied AFTER teleport() and setSpeedPreset(): the latter
+    // resets bodyRoll/_targetRoll to 0 when switching presets, so a banked
+    // snapshot would otherwise level out.
+    this.bodyRoll = s.bodyRoll ?? 0;
+    this._targetRoll = this.bodyRoll;
     this.hover = s.hover ?? false;
     this._applyCameraMode();
   }
@@ -1246,7 +1249,7 @@ export class Drone {
     this.position.set(x, y, z);
     this.bodyYaw = yawRad;
     this.bodyPitch = pitchRad;
-    if (!this.cameraMode) {
+    if (this.cameraMode == null) {
       this.yaw = yawRad;
       this.pitch = pitchRad;
     } else {
