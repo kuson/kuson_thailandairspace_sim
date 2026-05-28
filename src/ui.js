@@ -89,6 +89,8 @@ export class UI {
       battery: this.hud?.querySelector("#batteryChip") ?? null,
       signal: this.hud?.querySelector("#signalChip") ?? null,
       signalText: this.hud?.querySelector("#signalText") ?? null,
+      nextAirspace: this.hud?.querySelector("#nextAirspaceChip") ?? null,
+      nextAirspaceRow: this.hud?.querySelector("#nextAirspaceRow") ?? null,
     };
     this._signalBars = this._el.signal
       ? Array.from(this._el.signal.querySelectorAll(".bar"))
@@ -100,6 +102,13 @@ export class UI {
     // don't make the value flicker.
     this._lastAltM = null;
     this._vsiSmoothMs = 0;
+
+    // P4.T6: world-frame velocity smoother for the predictive chip.
+    // (dx/dt, dy/dt, dz/dt) from previous position, EMA-smoothed so the
+    // 30 s projection doesn't jitter when the user nudges the sticks.
+    this._predPrevPos = null;
+    this._predVel = { x: 0, y: 0, z: 0 };
+    this._predNextKey = null;
 
     // Visibility flags
     this.altTapeVisible = true;
@@ -1472,6 +1481,44 @@ export class UI {
             ? "LOST"
             : `${radio.bars}/5`;
         }
+      }
+    }
+
+    // P4.T6: predictive next-airspace chip. EMA the velocity so the
+    // projection stays stable when sticks are wiggling, then ask the
+    // layer to project forward 30 s and surface the first volume the
+    // drone will enter (excluding ones it's already inside).
+    if (this._predPrevPos && dt > 1e-3) {
+      const ax = (p.x - this._predPrevPos.x) / dt;
+      const ay = (p.y - this._predPrevPos.y) / dt;
+      const az = (p.z - this._predPrevPos.z) / dt;
+      const a = 0.2;            // EMA gain; ~5-frame settle
+      this._predVel.x = this._predVel.x * (1 - a) + ax * a;
+      this._predVel.y = this._predVel.y * (1 - a) + ay * a;
+      this._predVel.z = this._predVel.z * (1 - a) + az * a;
+    }
+    this._predPrevPos = { x: p.x, y: p.y, z: p.z };
+
+    const nextHit = this.layer.predictNextEntry
+      ? this.layer.predictNextEntry(p, this._predVel, 30, 0.5)
+      : null;
+    if (this._el.nextAirspaceRow && this._el.nextAirspace) {
+      if (nextHit) {
+        const a = nextHit.airspace;
+        const eta = Math.max(1, Math.round(nextHit.etaS));
+        const text =
+          `→ ${a.shortName} in ${eta}s · floor ${a.lowerFt.toLocaleString()} ` +
+          `ceil ${a.upperFt.toLocaleString()}ft`;
+        const key = `${a.id}|${eta}|${a.lowerFt}|${a.upperFt}`;
+        if (this._predNextKey !== key) {
+          this._predNextKey = key;
+          this._el.nextAirspace.textContent = text;
+          this._el.nextAirspace.className = `val cat-${a.category.replace(/\s/g, "")}`;
+          this._el.nextAirspaceRow.hidden = false;
+        }
+      } else if (this._predNextKey !== null) {
+        this._predNextKey = null;
+        this._el.nextAirspaceRow.hidden = true;
       }
     }
 

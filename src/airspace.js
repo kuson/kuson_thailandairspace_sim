@@ -557,6 +557,48 @@ export class AirspaceLayer {
   }
 
   /**
+   * P4.T6: project the drone's velocity forward and return the first
+   * airspace volume it will enter within `horizonS` seconds — or null
+   * when the path stays clear. Currently-inside volumes are excluded so
+   * the chip surfaces the *next* boundary the pilot will cross.
+   *
+   * Stepping is linear: each `stepS` window we move `vel * dt` and run a
+   * 3-D point-in-volume test against each compiled airspace. At default
+   * 0.5 s × 30 s × ~100 airspaces = 6 k point-in-ring checks per call —
+   * cheap enough for the per-frame HUD update path.
+   *
+   * @param {{x:number,y:number,z:number}} pos
+   * @param {{x:number,y:number,z:number}} vel  metres/second world frame
+   * @param {number} horizonS
+   * @param {number} stepS
+   * @returns {{ airspace: object, etaS: number } | null}
+   */
+  predictNextEntry(pos, vel, horizonS = 30, stepS = 0.5) {
+    const speed = Math.hypot(vel.x, vel.y, vel.z);
+    if (speed < 5) return null;       // < 18 km/h: not "cruising toward"
+    const currentIds = new Set();
+    for (const c of this.compiled) {
+      if (!this._isActive(c)) continue;
+      if (pos.y < c.lower || pos.y > c.upper) continue;
+      if (pointInRing(pos.x, pos.z, c.ring)) currentIds.add(c.airspace.id);
+    }
+    for (let t = stepS; t <= horizonS; t += stepS) {
+      const x = pos.x + vel.x * t;
+      const y = pos.y + vel.y * t;
+      const z = pos.z + vel.z * t;
+      for (const c of this.compiled) {
+        if (!this._isActive(c)) continue;
+        if (currentIds.has(c.airspace.id)) continue;
+        if (y < c.lower || y > c.upper) continue;
+        if (pointInRing(x, z, c.ring)) {
+          return { airspace: c.airspace, etaS: t };
+        }
+      }
+    }
+    return null;
+  }
+
+  /**
    * P4.T5: pulse the outline of authorisation-tier airspaces at 1 Hz so the
    * user has an obvious 3-D cue that the ceiling clamp is active. We toggle
    * topLine/botLine.visible on a 0.5 s on / 0.5 s off cycle for the supplied
