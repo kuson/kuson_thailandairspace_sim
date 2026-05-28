@@ -3,6 +3,7 @@ import * as THREE from "three";
 import { FlightMode, EasyMode, resolveMode } from "./modes.js";
 import { QuadrotorModel, FixedWingModel } from "./physics.js";
 import { getInputSettings, pollGamepad } from "./input.js";
+import { currentWind, DEFAULT_WIND } from "./wind.js";
 
 const KMH_TO_MS = 1 / 3.6;
 const BOOST_FACTOR = 3;
@@ -880,6 +881,14 @@ export class Drone {
     this._inputSettings = getInputSettings();
     this._padState = null;
 
+    // P3.T9: wind field. Only applies in realistic modes (AIRPLANE / DRONE);
+    // Hovercraft (Easy Mode) and UFO stay drift-free. _windSettings is a
+    // mutable copy of DEFAULT_WIND so the UI can dial direction / speed
+    // or pin variability to 0 for reproducible tests.
+    this._windSettings = { ...DEFAULT_WIND };
+    this._lastWind = { vec3: { x: 0, z: 0 }, speedMs: 0, dirDeg: 0 };
+    this._simTime = 0;
+
     this._bindEvents();
   }
 
@@ -1169,12 +1178,15 @@ export class Drone {
     // unchanged when no pad is present.
     this._padState = pollGamepad(this._inputSettings);
 
+    let realistic = false;
     switch (this.flightMode) {
       case FlightMode.AIRPLANE:
         this._updateAirplane(dt);
+        realistic = true;
         break;
       case FlightMode.DRONE:
         this._updateDrone(dt);
+        realistic = true;
         break;
       case FlightMode.HOVERCRAFT:
       case FlightMode.UFO:
@@ -1182,6 +1194,20 @@ export class Drone {
         this._updateHovercraft(dt);
         break;
     }
+
+    // P3.T9: ground velocity = air velocity + wind. The flight model
+    // integrated position using air velocity (true-airspeed); here we
+    // overlay the wind bias so the aircraft crabs over the ground while
+    // its instruments still report TAS. Wind only applies in realistic
+    // modes so Easy Mode / UFO remain rock-stable.
+    if (realistic) {
+      this._lastWind = currentWind(this.position, this._simTime, this._windSettings);
+      this.position.x += this._lastWind.vec3.x * dt;
+      this.position.z += this._lastWind.vec3.z * dt;
+    } else {
+      this._lastWind = { vec3: { x: 0, z: 0 }, speedMs: 0, dirDeg: 0 };
+    }
+    this._simTime += dt;
 
     if (this.position.y < 1) this.position.y = 1;
   }
