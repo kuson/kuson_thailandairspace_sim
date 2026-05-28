@@ -1,6 +1,7 @@
 // drone.js — 6DoF drone movement with WASD + Q/E + mouse-look, plus pointer-lock.
 import * as THREE from "three";
 import { FlightMode, EasyMode, resolveMode } from "./modes.js";
+import { QuadrotorModel } from "./physics.js";
 
 const KMH_TO_MS = 1 / 3.6;
 const BOOST_FACTOR = 3;
@@ -861,6 +862,11 @@ export class Drone {
     this._rightVec = new THREE.Vector3();
     this._moveVec = new THREE.Vector3();
 
+    // P3.T3: second-order quadrotor controller. Active when flightMode ===
+    // DRONE (Mavic 3 with Easy Mode off). State persists across frames so
+    // commanded tilt has somewhere to live between physicsStep calls.
+    this._quadrotor = new QuadrotorModel();
+
     this._bindEvents();
   }
 
@@ -1101,8 +1107,13 @@ export class Drone {
       this.hover = false;  // hover meaningless for fixed-wing
     } else {
       this.bodyRoll = 0;   // hovercraft / drone / UFO stay level
+      this.bodyPitch = 0;
       this._targetRoll = 0;
     }
+    // P3.T3: quadrotor actuator state must not carry over between presets or
+    // modes (a Mavic lean leaking into a Cessna is a UX bug). Reset whenever
+    // the mode resolution changes OR the preset itself changes.
+    if (modeChanged || changed) this._quadrotor.reset();
     if (changed) {
       this._buildModelForPreset(p.id);
       if (this.viewPerson === "third") this._syncCamera();
@@ -1127,8 +1138,10 @@ export class Drone {
       case FlightMode.AIRPLANE:
         this._updateAirplane(dt);
         break;
-      case FlightMode.HOVERCRAFT:
       case FlightMode.DRONE:
+        this._updateDrone(dt);
+        break;
+      case FlightMode.HOVERCRAFT:
       case FlightMode.UFO:
       default:
         this._updateHovercraft(dt);
@@ -1206,9 +1219,57 @@ export class Drone {
   }
 
   /**
+   * P3.T3: Mavic 3 second-order controller (Realistic Mode, DRONE flightMode).
+   *
+   * W/S = pitch fore/aft (tilts the lift vector → horizontal accel).
+   * A/D = roll left/right (lift vector tips → lateral accel).
+   * Q/E = throttle down/up (commands a target climb rate).
+   *
+   * Inertia, drag, and actuator lag live in QuadrotorModel. This method just
+   * collects stick inputs, runs the controller, and publishes the resulting
+   * tilt as bodyPitch / bodyRoll so the third-person mesh and the attitude
+   * indicator can render the lean. Yaw is unchanged — still mouse-look, so
+   * the user can heading-point during a hover.
+   *
+   * Shift boosts the max tilt 1.5× (sport mode); Ctrl halves it (cine mode).
+   * Hover flag (Space) zeros all stick input so the drone holds position.
+   */
+  _updateDrone(dt) {
+    let pitchStick = 0, rollStick = 0, throttleStick = 0;
+    if (!this.hover) {
+      // W tips nose-DOWN to fly forward, so it commands NEGATIVE pitch (our
+      // convention: +pitch = nose-up). S inverts. A/D map to left/right bank.
+      if (this.keys.has("w")) pitchStick -= 1;
+      if (this.keys.has("s")) pitchStick += 1;
+      if (this.keys.has("a")) rollStick  += 1;     // +roll = left bank
+      if (this.keys.has("d")) rollStick  -= 1;
+      if (this.keys.has("e")) throttleStick += 1;
+      if (this.keys.has("q")) throttleStick -= 1;
+    }
+    // Sport / cine modifiers shape the tilt envelope, not the controller.
+    const tiltScale = this.keys.has("shift") ? 1.5
+                    : this.keys.has("control") ? 0.5
+                    : 1;
+    pitchStick *= tiltScale;
+    rollStick  *= tiltScale;
+
+    const out = this._quadrotor.step(dt, {
+      pitchStick,
+      rollStick,
+      throttleStick,
+      yaw: this.bodyYaw,
+      position: this.position,
+    });
+
+    // Publish actuator state to the host so HUD + third-person mesh see it.
+    this.bodyPitch = out.pitch;
+    this.bodyRoll  = out.roll;
+    this.currentSpeed = Math.hypot(out.horizSpeed, out.climb);
+  }
+
+  /**
    * Hovercraft (Easy Mode default): kinematic 6-DoF strafe — go in any
-   * direction, no inertia. Also the fallback for DRONE / UFO modes until
-   * Phase 3 replaces it with a real second-order controller.
+   * direction, no inertia. Used by HOVERCRAFT and UFO modes.
    */
   _updateHovercraft(dt) {
     const preset = presetById(this.speedPresetId);
