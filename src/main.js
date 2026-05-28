@@ -10,9 +10,13 @@ import { pickAirspacesAlongRay } from "./identify.js";
 import { getStartLocation } from "./geolocation.js";
 import { geoToWorld, ORIGIN } from "./coords.js";
 import { TourGuide } from "./tourGuide.js";
+import { installSky } from "./sky.js";
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x89b4dc);
+// Shared sun direction — the Sky shader, the sun-disc sprite, and the
+// DirectionalLight all read from this so lighting matches the sky.
+const SUN_DIR = new THREE.Vector3(0.5, 1.0, 0.4).normalize();
+installSky(scene, undefined, SUN_DIR);
 scene.fog = new THREE.Fog(0xa9c1da, 30_000, 250_000);
 
 const camera = new THREE.PerspectiveCamera(
@@ -71,7 +75,7 @@ window.addEventListener("resize", () => {
 const hemi = new THREE.HemisphereLight(0xc6d8f0, 0x394a3a, 1.0);
 scene.add(hemi);
 const sun = new THREE.DirectionalLight(0xfff2d8, 1.1);
-sun.position.set(0.5, 1.0, 0.4).normalize();
+sun.position.copy(SUN_DIR);   // shared with sky.js Sky shader + sun sprite
 scene.add(sun);
 
 const ground = new DynamicGround({ baseZoom: 9, detailZoom: 11, baseRange: 3, detailRange: 2 });
