@@ -77,6 +77,13 @@ export class UI {
     this.toggleAttitudeBtn = document.getElementById("toggleAttitude");
     this.togglePauseBtn = document.getElementById("togglePause");
 
+    // Cached HUD element refs (avoid per-frame querySelector in updateHUD)
+    this._el = {
+      latlon: this.hud?.querySelector("#latlon") ?? null,
+      alt: this.hud?.querySelector("#alt") ?? null,
+      speed: this.hud?.querySelector("#speed") ?? null,
+    };
+
     // Visibility flags
     this.altTapeVisible = true;
     this.attitudeVisible = false;
@@ -1180,7 +1187,7 @@ export class UI {
     const latlonText = formatLatLon(geo.lat, geo.lon);
     if (this._hudCache.latlon !== latlonText) {
       this._hudCache.latlon = latlonText;
-      this.hud.querySelector("#latlon").textContent = latlonText;
+      if (this._el.latlon) this._el.latlon.textContent = latlonText;
     }
 
     const adminText = this._adminCache?.label ?? "…";
@@ -1192,7 +1199,7 @@ export class UI {
     const altText = this.fmtAlt(altM);
     if (this._hudCache.alt !== altText) {
       this._hudCache.alt = altText;
-      this.hud.querySelector("#alt").textContent = altText;
+      if (this._el.alt) this._el.alt.textContent = altText;
     }
 
     this._drawAltTape(altM);
@@ -1212,7 +1219,7 @@ export class UI {
       this._drawHeadingCompass(displayHdg);
     }
 
-    const spdEl = this.hud.querySelector("#speed");
+    const spdEl = this._el.speed;
     if (spdEl) {
       const spd = this.drone.currentSpeed || 0;
       const preset = this.drone.activePreset();
