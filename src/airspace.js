@@ -122,6 +122,17 @@ function ringCentroid(ring) {
   return { x: cx / ring.length, z: cz / ring.length };
 }
 
+function ringAabb(ring, lower, upper) {
+  let minX = Infinity, maxX = -Infinity, minZ = Infinity, maxZ = -Infinity;
+  for (const p of ring) {
+    if (p.x < minX) minX = p.x;
+    if (p.x > maxX) maxX = p.x;
+    if (p.z < minZ) minZ = p.z;
+    if (p.z > maxZ) maxZ = p.z;
+  }
+  return { minX, maxX, minZ, maxZ, lower, upper };
+}
+
 function ringMaxRadius(ring, cx, cz) {
   let rmax = 0;
   for (const p of ring) {
@@ -335,6 +346,10 @@ export class AirspaceLayer {
         centroid: cen, midY, military: isMilitaryAirspace(a),
       };
       c.cssColor = "#" + c.color.toString(16).padStart(6, "0");
+      // P5.T1: precompute the axis-aligned bounding box once, so the hot
+      // point-in-volume paths can reject far airspaces with 4 comparisons
+      // before the O(n) ring winding test.
+      c.aabb = ringAabb(ring, lower, upper);
       this.compiled.push(c);
       this._compiledById.set(a.id, c);
       this.airspaces.push(a);
@@ -505,7 +520,9 @@ export class AirspaceLayer {
     const hits = [];
     for (const c of this.compiled) {
       if (!this._isActive(c)) continue;
-      if (y < c.lower || y > c.upper) continue;
+      const b = c.aabb;
+      if (y < b.lower || y > b.upper ||
+          x < b.minX || x > b.maxX || z < b.minZ || z > b.maxZ) continue;
       if (pointInRing(x, z, c.ring)) hits.push(c.airspace);
     }
     return hits;
@@ -518,7 +535,9 @@ export class AirspaceLayer {
   airspacesAtUnfiltered(x, y, z) {
     const hits = [];
     for (const c of this.compiled) {
-      if (y < c.lower || y > c.upper) continue;
+      const b = c.aabb;
+      if (y < b.lower || y > b.upper ||
+          x < b.minX || x > b.maxX || z < b.minZ || z > b.maxZ) continue;
       if (pointInRing(x, z, c.ring)) hits.push(c.airspace);
     }
     return hits;
@@ -589,7 +608,9 @@ export class AirspaceLayer {
       for (const c of this.compiled) {
         if (!this._isActive(c)) continue;
         if (currentIds.has(c.airspace.id)) continue;
-        if (y < c.lower || y > c.upper) continue;
+        const b = c.aabb;
+        if (y < b.lower || y > b.upper ||
+            x < b.minX || x > b.maxX || z < b.minZ || z > b.maxZ) continue;
         if (pointInRing(x, z, c.ring)) {
           return { airspace: c.airspace, etaS: t };
         }
