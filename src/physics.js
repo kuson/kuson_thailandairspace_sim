@@ -171,25 +171,186 @@ export class QuadrotorModel {
   }
 }
 
-// P3.T5 will fill this in: airspeed, pitch (γ), bank, yaw, throttle;
-// drag, thrust, stall, induced drag with bank.
+// P3.T5: second-order fixed-wing flight model with stall + energy trade.
+//
+// State held here (not in the host Drone): airspeed scalar, flight-path
+// angle γ (pitchRad — pitch and γ are conflated by the lift=weight
+// assumption — exact in coordinated level flight, close enough at the
+// shallow climbs/descents this sim supports), bank, throttle, and the
+// target bank (for the A/D ease-to-level behaviour). The host owns yaw
+// (mouse-look adds to it) and the world position; step() mutates the
+// position in place and returns the new attitude + airspeed + a yawDelta
+// so the host can advance bodyYaw.
+//
+// Energy trade: dv = (thrust - drag - m·g·sin(γ)) / m · dt.
+// Pitching up at idle bleeds airspeed via the gravity term until v drops
+// below 1.05·Vs, at which point a fixed-rate nose-down rotation forces
+// recovery (γ -= 0.5·dt rad/s) plus a small altitude sink (-5 m/s) so
+// the stall is felt as both pitch drop and altitude loss.
+//
+// Bank coupling: induced drag rises with bank because load factor
+// n = 1/cos(bank) → required cl² scales as 1/cos²(bank). Total drag
+// coefficient cd = cd0 + kInduced · (1/cos(bank))². At 45° this doubles
+// the induced term, so a sustained 45° bank bleeds airspeed unless the
+// throttle is pushed.
+//
+// Yaw rate from bank: ω = g · tan(bank) / max(v, Vs)  — the level-turn
+// equation (unchanged from the old _updateAirplane). The host adds the
+// returned yawDelta to bodyYaw each step.
+//
+// Sign conventions match Three.js mesh.rotation with order "YXZ":
+//   - pitchRad > 0 = nose UP   (E key adds, Q key subtracts)
+//   - bankRad  > 0 = left bank (A key adds, D key subtracts)
+//
+// Per-preset aero tuning lives in FW_PRESETS below; configure(presetId)
+// switches the model to a preset and rebalances throttle so the new
+// preset enters at its cruise speed without bleeding off immediately.
+export const FW_PRESETS = {
+  cessna172: {
+    Vs: 23.5, Vne: 80, clMax: 1.4, cd0: 0.027, kInduced: 0.013,
+    wingAreaM2: 16.2, mass: 1100, thrustMax: 2200, cruiseMs: 62.8,
+  },
+  learjet: {
+    Vs: 47, Vne: 195, clMax: 1.6, cd0: 0.020, kInduced: 0.013,
+    wingAreaM2: 23.5, mass: 8300, thrustMax: 35000, cruiseMs: 236,
+  },
+  b777: {
+    Vs: 71, Vne: 280, clMax: 1.8, cd0: 0.018, kInduced: 0.013,
+    wingAreaM2: 428, mass: 250000, thrustMax: 880000, cruiseMs: 256,
+  },
+};
+
 export class FixedWingModel {
-  constructor({ body, Vs = 24.7, Vne = 80, clMax = 1.4, cd0 = 0.027, thrustMax = 800, mass = 757 } = {}) {
-    this.body = body ?? new RigidBody({ mass });
-    this.Vs = Vs;
-    this.Vne = Vne;
-    this.clMax = clMax;
-    this.cd0 = cd0;
-    this.thrustMax = thrustMax;
-    this.airspeedMs = 0;
+  constructor(opts = {}) {
+    this.body = opts.body ?? new RigidBody({ mass: opts.mass ?? 1100 });
+    // Aero tuning defaults to Cessna 172; overwritten by configure().
+    Object.assign(this, FW_PRESETS.cessna172, opts);
+
+    this.airspeedMs = this.cruiseMs;
     this.pitchRad = 0;
     this.bankRad = 0;
-    this.yawRad = 0;
-    this.throttle = 0;
+    this._targetBank = 0;
+    this.throttle = this._cruiseThrottle();
+    this.stalled = false;
   }
 
-  // P3.T5 will replace this stub with stall + energy-trade logic.
-  step(_dt, _input) {
-    // intentionally empty — T2 scaffolding only
+  /** Throttle needed to balance drag at level cruise — keeps a preset
+   *  switch from immediately bleeding airspeed. */
+  _cruiseThrottle() {
+    const RHO = 1.225;
+    const v = this.cruiseMs;
+    const cd = this.cd0 + this.kInduced;     // level flight, loadFactor=1
+    const drag = 0.5 * RHO * v * v * cd * this.wingAreaM2;
+    return Math.min(1, drag / this.thrustMax);
+  }
+
+  /**
+   * Switch aero tuning to a preset and rebalance airspeed / throttle.
+   * Returns true on success, false if presetId isn't a fixed-wing.
+   */
+  configure(presetId) {
+    const cfg = FW_PRESETS[presetId];
+    if (!cfg) return false;
+    Object.assign(this, cfg);
+    this.airspeedMs = cfg.cruiseMs;
+    this.pitchRad = 0;
+    this.bankRad = 0;
+    this._targetBank = 0;
+    this.throttle = this._cruiseThrottle();
+    this.stalled = false;
+    return true;
+  }
+
+  /**
+   * Advance one fixed step.
+   * @param {number} dt seconds (host enforces 1/120).
+   * @param {{
+   *   pitchStick: number,     // [-1,+1], +1 = nose-up command (E key)
+   *   rollStick: number,      // [-1,+1], +1 = left-bank command (A key)
+   *   throttleStick: number,  // [-1,+1], +1 = throttle up (W key)
+   *   yaw: number,            // bodyYaw rad
+   *   position: THREE.Vector3 // mutated in place
+   * }} input
+   * @returns {{pitch:number, roll:number, yawDelta:number,
+   *            airspeed:number, throttle:number, stalled:boolean}}
+   */
+  step(dt, input) {
+    const G = 9.81;
+    const RHO = 1.225;
+    const clamp1 = (v) => (v < -1 ? -1 : v > 1 ? 1 : v);
+
+    // ---- Throttle (W = up, S = down) ----
+    const THROTTLE_RATE = 0.5;     // 0 → 1 in 2 s
+    this.throttle += clamp1(input.throttleStick) * THROTTLE_RATE * dt;
+    if (this.throttle < 0) this.throttle = 0;
+    if (this.throttle > 1.2) this.throttle = 1.2;
+
+    // ---- Roll command (A/D) ----
+    const ROLL_MAX = Math.PI / 4;                   // ±45°
+    const ROLL_RATE = (90 * Math.PI) / 180;         // 90°/s commanded
+    const rollCmd = clamp1(input.rollStick);
+    if (rollCmd !== 0) {
+      this._targetBank += rollCmd * ROLL_RATE * dt;
+    } else {
+      this._targetBank *= Math.max(0, 1 - dt * 1.2);   // ease to level
+    }
+    if (this._targetBank < -ROLL_MAX) this._targetBank = -ROLL_MAX;
+    if (this._targetBank >  ROLL_MAX) this._targetBank =  ROLL_MAX;
+    this.bankRad += (this._targetBank - this.bankRad) * Math.min(1, dt * 4.5);
+
+    // ---- Pitch command (Q = down, E = up) ----
+    const PITCH_RATE = (35 * Math.PI) / 180;        // 35°/s
+    this.pitchRad += clamp1(input.pitchStick) * PITCH_RATE * dt;
+
+    // ---- Stall: below 1.05·Vs, force nose-down + extra altitude sink.
+    // Applied AFTER pitch stick so the stall always pulls toward recovery
+    // even if the user is holding nose-up.
+    const stallThreshold = 1.05 * this.Vs;
+    this.stalled = this.airspeedMs < stallThreshold;
+    if (this.stalled) {
+      this.pitchRad -= 0.5 * dt;
+      input.position.y -= 5 * dt;
+    }
+    const PITCH_LIM = (60 * Math.PI) / 180;
+    if (this.pitchRad < -PITCH_LIM) this.pitchRad = -PITCH_LIM;
+    if (this.pitchRad >  PITCH_LIM) this.pitchRad =  PITCH_LIM;
+
+    // ---- Aero forces ----
+    const v = Math.max(this.airspeedMs, 0.1);
+    const loadFactor = 1 / Math.cos(this.bankRad);          // n
+    const cd = this.cd0 + this.kInduced * loadFactor * loadFactor;
+    const drag = 0.5 * RHO * v * v * cd * this.wingAreaM2;
+    const thrust = this.throttle * this.thrustMax;
+
+    // dv = (thrust - drag - m·g·sin(γ)) / m · dt
+    const dv = (thrust - drag - this.mass * G * Math.sin(this.pitchRad)) / this.mass * dt;
+    this.airspeedMs += dv;
+    if (this.airspeedMs < 0) this.airspeedMs = 0;
+    if (this.airspeedMs > this.Vne) this.airspeedMs = this.Vne;
+
+    // ---- Yaw rate from bank (level-turn equation) ----
+    const yawRate = (G * Math.tan(this.bankRad)) / Math.max(v, this.Vs);
+    const yawDelta = yawRate * dt;
+
+    // ---- Translation: velocity vector points along (yaw, pitch).
+    // Use input.yaw (pre-delta) — at 1/120 s the in-step yaw change is
+    // ~ 1e-3 rad and the per-step position step is small enough that the
+    // accumulated yaw error vanishes.
+    const cosP = Math.cos(this.pitchRad), sinP = Math.sin(this.pitchRad);
+    const fx = -Math.sin(input.yaw) * cosP;
+    const fy =  sinP;
+    const fz = -Math.cos(input.yaw) * cosP;
+    input.position.x += fx * this.airspeedMs * dt;
+    input.position.y += fy * this.airspeedMs * dt;
+    input.position.z += fz * this.airspeedMs * dt;
+
+    return {
+      pitch: this.pitchRad,
+      roll: this.bankRad,
+      yawDelta,
+      airspeed: this.airspeedMs,
+      throttle: this.throttle,
+      stalled: this.stalled,
+    };
   }
 }

@@ -1,7 +1,7 @@
 // drone.js — 6DoF drone movement with WASD + Q/E + mouse-look, plus pointer-lock.
 import * as THREE from "three";
 import { FlightMode, EasyMode, resolveMode } from "./modes.js";
-import { QuadrotorModel } from "./physics.js";
+import { QuadrotorModel, FixedWingModel } from "./physics.js";
 
 const KMH_TO_MS = 1 / 3.6;
 const BOOST_FACTOR = 3;
@@ -867,6 +867,11 @@ export class Drone {
     // commanded tilt has somewhere to live between physicsStep calls.
     this._quadrotor = new QuadrotorModel();
 
+    // P3.T5: second-order fixed-wing model. Active when flightMode ===
+    // AIRPLANE (Cessna / Learjet / 777 with Easy Mode off). Owns airspeed,
+    // throttle, bank, pitch (γ); host owns yaw + world position.
+    this._fixedwing = new FixedWingModel();
+
     this._bindEvents();
   }
 
@@ -1099,20 +1104,24 @@ export class Drone {
     const prevMode = this.flightMode;
     this.flightMode = resolveMode(p.id);
     const modeChanged = prevMode !== this.flightMode;
-    // Airplane mode: lock airspeed to cruise on preset change; level the bank.
+    // Airplane mode: rebalance fixed-wing aero to the new preset; airspeed
+    // enters at cruise, throttle at the drag-balance value, bank/pitch level.
     if (this.flightMode === FlightMode.AIRPLANE) {
-      this.airspeedMs = p.kmh * KMH_TO_MS;
+      this._fixedwing.configure(p.id);
+      this.airspeedMs = this._fixedwing.airspeedMs;
       this._targetRoll = 0;
       this.bodyRoll = 0;
+      this.bodyPitch = 0;
       this.hover = false;  // hover meaningless for fixed-wing
     } else {
       this.bodyRoll = 0;   // hovercraft / drone / UFO stay level
       this.bodyPitch = 0;
       this._targetRoll = 0;
     }
-    // P3.T3: quadrotor actuator state must not carry over between presets or
-    // modes (a Mavic lean leaking into a Cessna is a UX bug). Reset whenever
-    // the mode resolution changes OR the preset itself changes.
+    // P3.T3/P3.T5: actuator state must not carry over between presets or
+    // modes (a Mavic lean leaking into a Cessna, or a stalled Cessna
+    // resurrecting as a fresh 777, is a UX bug). Reset whenever the mode
+    // resolution changes OR the preset itself changes.
     if (modeChanged || changed) this._quadrotor.reset();
     if (changed) {
       this._buildModelForPreset(p.id);
@@ -1304,60 +1313,42 @@ export class Drone {
   }
 
   /**
-   * Fixed-wing physics: aircraft is always moving forward at or above the
-   * preset's `minKmh` floor (no stop, no reverse). A/D bank the wings (roll),
-   * which produces a coordinated yaw rate (level-turn equation, simplified).
-   * W/S adjust throttle within `[minKmh, kmh × boost]`. Q/E pitch up/down.
+   * Fixed-wing physics: delegates to FixedWingModel for stall + energy
+   * trade + bank-coupled induced drag. The model owns airspeed, throttle,
+   * bank, and pitch (γ); the host owns yaw (mouse-look adds to it too)
+   * and the world position.
+   *
+   * Sticks:
+   *   - W / S = throttle up / down (lerps toward target thrust)
+   *   - A / D = left / right bank
+   *   - E / Q = pitch up / down (positive pitch = nose-up = climb)
+   * Stall (airspeed < 1.05·Vs) forces nose-down + altitude sink; only
+   * thrust + nose-down attitude recovers it.
    */
   _updateAirplane(dt) {
-    const preset = presetById(this.speedPresetId);
-    const minMs = (preset.minKmh ?? 0) * KMH_TO_MS;
-    const maxMs = preset.kmh * KMH_TO_MS * (this.keys.has("shift") ? Math.min(BOOST_FACTOR, preset.boostCap ?? BOOST_FACTOR) : 1);
+    let pitchStick = 0, rollStick = 0, throttleStick = 0;
+    if (this.keys.has("e")) pitchStick += 1;
+    if (this.keys.has("q")) pitchStick -= 1;
+    if (this.keys.has("a")) rollStick  += 1;   // +roll = left bank
+    if (this.keys.has("d")) rollStick  -= 1;
+    if (this.keys.has("w")) throttleStick += 1;
+    if (this.keys.has("s")) throttleStick -= 1;
 
-    // ---- Throttle (W = up, S = down) ----
-    const throttleRate = (maxMs - minMs) * 0.6;       // reach min↔max in ~1.7 s
-    if (this.keys.has("w")) this.airspeedMs += throttleRate * dt;
-    if (this.keys.has("s")) this.airspeedMs -= throttleRate * dt;
-    if (this.airspeedMs < minMs) this.airspeedMs = minMs;
-    if (this.airspeedMs > maxMs) this.airspeedMs = maxMs;
+    const out = this._fixedwing.step(dt, {
+      pitchStick,
+      rollStick,
+      throttleStick,
+      yaw: this.bodyYaw,
+      position: this.position,
+    });
 
-    // ---- Roll command (A/D ailerons) ----
-    const ROLL_MAX = (45 * Math.PI) / 180;     // ±45° bank limit
-    const ROLL_RATE = (90 * Math.PI) / 180;    // 90°/s commanded roll rate
-    let rollCmd = 0;
-    if (this.keys.has("a")) rollCmd += 1;   // left aileron → left bank → turn left
-    if (this.keys.has("d")) rollCmd -= 1;   // right aileron → right bank → turn right
-    if (rollCmd !== 0) {
-      this._targetRoll += rollCmd * ROLL_RATE * dt;
-    } else {
-      // No input → roll target eases back to wings-level.
-      this._targetRoll *= Math.max(0, 1 - dt * 1.2);
-    }
-    this._targetRoll = Math.max(-ROLL_MAX, Math.min(ROLL_MAX, this._targetRoll));
-    // Roll axis smoothing: lerp current toward target.
-    this.bodyRoll += (this._targetRoll - this.bodyRoll) * Math.min(1, dt * 4.5);
-
-    // ---- Pitch (Q = down, E = up — keeps "Q/E = down/up" parity with free) ----
-    const PITCH_RATE = (35 * Math.PI) / 180;   // 35°/s
-    let pitchCmd = 0;
-    if (this.keys.has("e")) pitchCmd += 1;
-    if (this.keys.has("q")) pitchCmd -= 1;
-    this.bodyPitch += pitchCmd * PITCH_RATE * dt;
-    this.bodyPitch = Math.max(-PITCH_LIMIT, Math.min(PITCH_LIMIT, this.bodyPitch));
-
-    // ---- Yaw rate from bank (level turn equation, simplified for sim) ----
-    // ω = g · tan(bank) / v.  Clamped so very-slow flight doesn't spin.
-    const v = Math.max(this.airspeedMs, 20);
-    const yawRate = (9.81 * Math.tan(this.bodyRoll)) / v;
-    this.bodyYaw += yawRate * dt;
-
-    // ---- Translation: always forward at current airspeed ----
-    const fwd = this.forward();
-    this.position.x += fwd.x * this.airspeedMs * dt;
-    this.position.y += fwd.y * this.airspeedMs * dt;
-    this.position.z += fwd.z * this.airspeedMs * dt;
-
-    this.currentSpeed = this.airspeedMs;
+    // Publish controller state to the host so HUD + third-person mesh see it.
+    this.bodyPitch = out.pitch;
+    this.bodyRoll  = out.roll;
+    this.bodyYaw  += out.yawDelta;
+    this.airspeedMs = out.airspeed;
+    this._targetRoll = out.roll;   // keep snapshot/restore in sync
+    this.currentSpeed = out.airspeed;
   }
 
   snapshot() {
