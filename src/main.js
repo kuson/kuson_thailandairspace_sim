@@ -17,7 +17,11 @@ const scene = new THREE.Scene();
 // DirectionalLight all read from this so lighting matches the sky.
 const SUN_DIR = new THREE.Vector3(0.5, 1.0, 0.4).normalize();
 installSky(scene, undefined, SUN_DIR);
-scene.fog = new THREE.Fog(0xa9c1da, 30_000, 250_000);
+// Horizon haze hard-coded to match Sky shader output at ~10° above horizon.
+// fog.far is lerped per-frame in the render loop based on altitude (P2.T2).
+const FOG_NEAR_BASE = 30_000;
+const FOG_FAR_BASE  = 250_000;
+scene.fog = new THREE.Fog(0xc8d4dc, FOG_NEAR_BASE, FOG_FAR_BASE);
 
 const camera = new THREE.PerspectiveCamera(
   70,
@@ -34,6 +38,8 @@ const renderer = new THREE.WebGLRenderer({
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.0;
 renderer.sortObjects = true;
 document.getElementById("app").appendChild(renderer.domElement);
 // Explicitly drop the initial inline style.width/height so the canvas relies
@@ -352,6 +358,14 @@ function loop(t) {
     }
     _safe("history-sample", () => flightHistory.samplePosition(drone.position));
   }
+
+  // Altitude-driven fog falloff (P2.T2). THREE.Fog is linear so we adapt the
+  // playbook's density formula by pushing fog.far outward at altitude — at
+  // FL350 (~10 km) the horizon clears; at ground level the haze is dense.
+  _safe("fog-altitude", () => {
+    const tFog = Math.max(0, Math.min(drone.position.y / 12_000, 0.7));
+    scene.fog.far = FOG_FAR_BASE / Math.max(0.3, 1 - tFog);
+  });
 
   _safe("ground-alt", () => ground.setAltitude(drone.position.y));
   _safe("ground-update", () => ground.updateAround(drone.position.x, drone.position.z));
