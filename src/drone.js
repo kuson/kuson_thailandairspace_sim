@@ -1075,8 +1075,12 @@ export class Drone {
     document.addEventListener("mousemove", (e) => {
       if (this.cameraMode) return;
       if (this.locked || dragging) {
-        this.bodyYaw -= e.movementX * MOUSE_SENSITIVITY;
-        this.bodyPitch -= e.movementY * MOUSE_SENSITIVITY;
+        // P3.T6: mouse sensitivity is a user setting (settings panel slider).
+        // Falls back to the module-level default if input settings weren't
+        // loaded yet (e.g. in tests that bypass the constructor wiring).
+        const sens = this._inputSettings?.mouseSensitivity ?? MOUSE_SENSITIVITY;
+        this.bodyYaw -= e.movementX * sens;
+        this.bodyPitch -= e.movementY * sens;
         this.bodyPitch = Math.max(-PITCH_LIMIT, Math.min(PITCH_LIMIT, this.bodyPitch));
         this.yaw = this.bodyYaw;
         this.pitch = this.bodyPitch;

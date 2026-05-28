@@ -8,6 +8,7 @@ import { SPEED_PRESETS } from "./drone.js";
 import { FlightMode, EasyMode } from "./modes.js";
 import { lookupAdmin } from "./geocode.js";
 import { MinimapTileCache } from "./ground.js";
+import { getInputSettings, setInputSettings, DEFAULT_INPUT_SETTINGS } from "./input.js";
 
 const CAT_DESCR = {
   CTR: "Control Zone — controlled airspace surrounding an airport from the ground up. ATC clearance required.",
@@ -124,6 +125,7 @@ export class UI {
     this._buildTourSection();
     this._buildSpeedControls();
     this._buildDisplayOptions();
+    this._buildInputOptions();
     this._bindRadar();
     this._bind();
     this._scheduleHintCollapse();
@@ -285,6 +287,110 @@ export class UI {
       fovHud.addEventListener("change", () => {
         this.showFov = fovHud.checked;
       });
+    }
+  }
+
+  /**
+   * P3.T6 follow-up: settings panel exposing mouse sensitivity + gamepad
+   * shaping (deadzone, expo, stickMode, invertY). Writes through
+   * setInputSettings() (localStorage-backed) and calls
+   * drone.reloadInputSettings() so changes take effect on the next
+   * physicsStep without a page reload.
+   *
+   * Collapsible — kept tucked behind the "Controls" header so it doesn't
+   * crowd the panel for users on keyboard only.
+   */
+  _buildInputOptions() {
+    const el = document.getElementById("inputOptions");
+    if (!el) return;
+    const s = getInputSettings();
+
+    // Mouse-sensitivity slider runs in milliradians-per-pixel for
+    // readability. The underlying input.js setting is rad/px.
+    const mouseMilli = (s.mouseSensitivity * 1000).toFixed(2);
+    const mouseDefMilli = (DEFAULT_INPUT_SETTINGS.mouseSensitivity * 1000).toFixed(2);
+
+    el.innerHTML = `
+      <label class="opt">
+        Mouse sensitivity
+        <input type="range" id="inpMouseSens" min="0.5" max="6" step="0.05" value="${mouseMilli}" />
+        <output id="inpMouseSensOut">${mouseMilli} mrad/px</output>
+      </label>
+      <label class="opt">
+        Gamepad deadzone
+        <input type="range" id="inpDeadzone" min="0" max="0.40" step="0.01" value="${s.deadzone}" />
+        <output id="inpDeadzoneOut">${(s.deadzone * 100).toFixed(0)}%</output>
+      </label>
+      <label class="opt">
+        Gamepad expo
+        <input type="range" id="inpExpo" min="0" max="0.90" step="0.05" value="${s.expo}" />
+        <output id="inpExpoOut">${(s.expo * 100).toFixed(0)}%</output>
+      </label>
+      <label class="opt">
+        Gamepad stick mode
+        <select id="inpStickMode" class="opt-select">
+          <option value="2" ${s.stickMode === 2 ? "selected" : ""}>Mode 2 (throttle left)</option>
+          <option value="1" ${s.stickMode === 1 ? "selected" : ""}>Mode 1 (throttle right)</option>
+        </select>
+      </label>
+      <label class="opt"><input type="checkbox" id="inpInvertY" ${s.invertY ? "checked" : ""} /> Invert gamepad pitch (Y)</label>
+      <button type="button" id="inpResetDefaults" class="opt-reset">Reset to defaults (${mouseDefMilli} mrad/px)</button>
+    `;
+
+    const apply = (patch) => {
+      setInputSettings(patch);
+      this.drone?.reloadInputSettings?.();
+    };
+
+    const mouseSens = el.querySelector("#inpMouseSens");
+    const mouseSensOut = el.querySelector("#inpMouseSensOut");
+    mouseSens.addEventListener("input", () => {
+      const milli = parseFloat(mouseSens.value);
+      mouseSensOut.textContent = `${milli.toFixed(2)} mrad/px`;
+      apply({ mouseSensitivity: milli / 1000 });
+    });
+
+    const dz = el.querySelector("#inpDeadzone");
+    const dzOut = el.querySelector("#inpDeadzoneOut");
+    dz.addEventListener("input", () => {
+      const v = parseFloat(dz.value);
+      dzOut.textContent = `${(v * 100).toFixed(0)}%`;
+      apply({ deadzone: v });
+    });
+
+    const expo = el.querySelector("#inpExpo");
+    const expoOut = el.querySelector("#inpExpoOut");
+    expo.addEventListener("input", () => {
+      const v = parseFloat(expo.value);
+      expoOut.textContent = `${(v * 100).toFixed(0)}%`;
+      apply({ expo: v });
+    });
+
+    const stick = el.querySelector("#inpStickMode");
+    stick.addEventListener("change", () => {
+      apply({ stickMode: parseInt(stick.value, 10) === 1 ? 1 : 2 });
+    });
+
+    const invY = el.querySelector("#inpInvertY");
+    invY.addEventListener("change", () => {
+      apply({ invertY: invY.checked });
+    });
+
+    el.querySelector("#inpResetDefaults").addEventListener("click", () => {
+      setInputSettings({ ...DEFAULT_INPUT_SETTINGS });
+      this.drone?.reloadInputSettings?.();
+      // Re-render so the controls reflect the reset.
+      this._buildInputOptions();
+    });
+
+    // Collapsible header wiring (matches drone-rules pattern).
+    const toggle = document.getElementById("inputOptionsToggle");
+    if (toggle && !toggle._bound) {
+      toggle.addEventListener("click", () => {
+        const collapsed = el.classList.toggle("collapsed");
+        toggle.classList.toggle("expanded", !collapsed);
+      });
+      toggle._bound = true;
     }
   }
 

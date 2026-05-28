@@ -248,6 +248,21 @@
     #displayOptions .opt { display: flex; align-items: center; gap: 8px; font-size: 12px; cursor: pointer; }
     #displayOptions input { accent-color: var(--accent); }
 
+    /* ---- Input/Controls panel section (P3.T6) ---- */
+    #inputOptions { display: flex; flex-direction: column; gap: 6px; margin: 4px 0 10px 0; }
+    #inputOptions .opt { display: grid; grid-template-columns: 1fr auto; column-gap: 8px;
+      row-gap: 2px; align-items: center; font-size: 12px; color: var(--text); }
+    #inputOptions .opt input[type="range"] { grid-column: 1 / span 2; accent-color: var(--accent); }
+    #inputOptions .opt output { font-variant-numeric: tabular-nums; color: var(--muted); font-size: 11px; }
+    #inputOptions .opt input[type="checkbox"] { accent-color: var(--accent); justify-self: start; }
+    #inputOptions .opt-select { width: auto; }
+    #inputOptions .opt-reset {
+      align-self: flex-start; padding: 4px 8px; font-size: 11px; cursor: pointer;
+      background: rgba(255,255,255,0.06); color: var(--text);
+      border: 1px solid var(--panel-border); border-radius: 6px;
+    }
+    #inputOptions .opt-reset:hover { background: rgba(255,255,255,0.12); }
+
     /* ---- Educational panel ---- */
     #panel {
       position: fixed; right: 14px; top: 14px; width: 360px; max-height: calc(100% - 28px);
@@ -531,6 +546,8 @@
       <div id="tourGuideSection"></div>
       <h3>Display options</h3>
       <div id="displayOptions"></div>
+      <h3 class="collapsible-head" id="inputOptionsToggle">Controls</h3>
+      <div id="inputOptions" class="collapsible-body collapsed"></div>
       <h3>Legend</h3>
       <div id="legend"></div>
       <h3 class="collapsible-head" id="droneRulesToggle">Thailand drone rules</h3>
