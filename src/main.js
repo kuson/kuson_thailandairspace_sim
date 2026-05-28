@@ -345,6 +345,12 @@ if (isTouchOnly) {
 
 let lastT = performance.now();
 let rafId = null;
+// P3.T1: fixed-step physics accumulator. Variable rAF dt feeds the outer
+// loop; physics integrates at exactly 1/120 s per step so motion is
+// frame-rate-independent (matches per wall-second whether at 20 or 144 fps).
+const PHYS_DT = 1 / 120;
+const PHYS_ACCUM_CAP = 0.25;  // avoid spiral-of-death after long pauses
+let physAccum = 0;
 function _safe(label, fn) {
   try { return fn(); }
   catch (err) { console.error(`[loop:${label}]`, err); return undefined; }
@@ -359,7 +365,18 @@ function loop(t) {
   const flying = _safe("flyTo", () => flyTo.update(dt)) ?? false;
   const touring = _safe("tour-isRunning", () => tourGuide?.isRunning()) ?? false;
   if (touring) _safe("tour-update", () => tourGuide.update(dt));
-  if (!flying && !touring) _safe("drone-update", () => drone.update(dt));
+  if (!flying && !touring) {
+    physAccum = Math.min(physAccum + dt, PHYS_ACCUM_CAP);
+    while (physAccum >= PHYS_DT) {
+      _safe("drone-physics", () => drone.physicsStep(PHYS_DT));
+      physAccum -= PHYS_DT;
+    }
+    _safe("drone-update", () => drone.update(dt));
+  } else {
+    // While flyTo / tour drive the drone directly, drop any pending physics
+    // time so we don't replay it when control returns.
+    physAccum = 0;
+  }
 
   if (!flying && !touring && !flyTo.active && !_applyingHistory && drone.currentSpeed > 0.5) {
     _historySampleT += dt;

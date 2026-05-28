@@ -1117,21 +1117,12 @@ export class Drone {
     return presetById(this.speedPresetId);
   }
 
-  update(dt) {
-    if (this.flightLocked) {
-      this.currentSpeed = 0;
-      return;
-    }
-    if (this.paused) {
-      this.currentSpeed = 0;
-      this._syncCamera();
-      return;
-    }
+  // P3.T1: physics integration runs at fixed 120 Hz from main.js. Anything
+  // that advances state (mode dispatch, position clamp) lives here so frame
+  // rate cannot change motion per wall-second.
+  physicsStep(dt) {
+    if (this.flightLocked || this.paused) return;
 
-    if (this.cameraMode) this._applyCameraMode();
-
-    // Dispatch on FlightMode. DRONE falls back to hovercraft kinematics
-    // until Phase 3 wires the second-order quadrotor controller.
     switch (this.flightMode) {
       case FlightMode.AIRPLANE:
         this._updateAirplane(dt);
@@ -1145,6 +1136,22 @@ export class Drone {
     }
 
     if (this.position.y < 1) this.position.y = 1;
+  }
+
+  // P3.T1: per-frame, non-physics work — camera follow + model animation.
+  // Called once per rAF tick with variable dt; physicsStep handles integration.
+  update(dt) {
+    if (this.flightLocked) {
+      this.currentSpeed = 0;
+      return;
+    }
+    if (this.paused) {
+      this.currentSpeed = 0;
+      this._syncCamera();
+      return;
+    }
+
+    if (this.cameraMode) this._applyCameraMode();
     this._syncCamera();
     this._animateModel(dt);
   }
