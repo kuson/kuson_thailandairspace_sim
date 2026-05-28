@@ -2,6 +2,7 @@
 import * as THREE from "three";
 import { FlightMode, EasyMode, resolveMode } from "./modes.js";
 import { QuadrotorModel, FixedWingModel } from "./physics.js";
+import { getInputSettings, pollGamepad } from "./input.js";
 
 const KMH_TO_MS = 1 / 3.6;
 const BOOST_FACTOR = 3;
@@ -872,6 +873,13 @@ export class Drone {
     // throttle, bank, pitch (γ); host owns yaw + world position.
     this._fixedwing = new FixedWingModel();
 
+    // P3.T6: gamepad / input pipeline. Settings are loaded once from
+    // localStorage and re-read by reloadInputSettings() when the UI panel
+    // writes through. _padState is refreshed each physicsStep so the
+    // controllers (DRONE / AIRPLANE) can blend pad sticks with keyboard.
+    this._inputSettings = getInputSettings();
+    this._padState = null;
+
     this._bindEvents();
   }
 
@@ -1137,11 +1145,25 @@ export class Drone {
     return presetById(this.speedPresetId);
   }
 
+  /**
+   * P3.T6: pick up an updated input-settings snapshot. Called by the UI
+   * panel after writing through localStorage. Cheap; safe to call on every
+   * settings-panel change.
+   */
+  reloadInputSettings() {
+    this._inputSettings = getInputSettings();
+  }
+
   // P3.T1: physics integration runs at fixed 120 Hz from main.js. Anything
   // that advances state (mode dispatch, position clamp) lives here so frame
   // rate cannot change motion per wall-second.
   physicsStep(dt) {
     if (this.flightLocked || this.paused) return;
+
+    // P3.T6: refresh gamepad snapshot once per substep. pollGamepad returns
+    // null if no controller is connected, so keyboard-only paths are
+    // unchanged when no pad is present.
+    this._padState = pollGamepad(this._inputSettings);
 
     switch (this.flightMode) {
       case FlightMode.AIRPLANE:
@@ -1254,6 +1276,18 @@ export class Drone {
       if (this.keys.has("d")) rollStick  -= 1;
       if (this.keys.has("e")) throttleStick += 1;
       if (this.keys.has("q")) throttleStick -= 1;
+
+      // P3.T6: gamepad sticks add to keyboard sticks; combined value is
+      // clamped to ±1 by the QuadrotorModel. Pad yaw rotates bodyYaw at
+      // YAW_RATE rad/s so rudder/heading works without a mouse.
+      const pad = this._padState;
+      if (pad) {
+        pitchStick    += pad.pitch;
+        rollStick     += pad.roll;
+        throttleStick += pad.throttle;
+        const YAW_RATE = (90 * Math.PI) / 180;     // 90°/s
+        this.bodyYaw += pad.yaw * YAW_RATE * dt;
+      }
     }
     // Sport / cine modifiers shape the tilt envelope, not the controller.
     const tiltScale = this.keys.has("shift") ? 1.5
@@ -1333,6 +1367,17 @@ export class Drone {
     if (this.keys.has("d")) rollStick  -= 1;
     if (this.keys.has("w")) throttleStick += 1;
     if (this.keys.has("s")) throttleStick -= 1;
+
+    // P3.T6: gamepad sticks add to keyboard sticks (FixedWingModel clamps
+    // to ±1). Pad yaw acts as rudder — rotate bodyYaw at RUDDER_RATE.
+    const pad = this._padState;
+    if (pad) {
+      pitchStick    += pad.pitch;
+      rollStick     += pad.roll;
+      throttleStick += pad.throttle;
+      const RUDDER_RATE = (45 * Math.PI) / 180;   // 45°/s (gentler than drone)
+      this.bodyYaw += pad.yaw * RUDDER_RATE * dt;
+    }
 
     const out = this._fixedwing.step(dt, {
       pitchStick,
