@@ -12,6 +12,7 @@ import { geoToWorld, ORIGIN } from "./coords.js";
 import { TourGuide } from "./tourGuide.js";
 import { installSky } from "./sky.js";
 import { installCityBeacons } from "./cities.js";
+import { installProvinceLines } from "./provinces.js";
 
 const scene = new THREE.Scene();
 // Shared sun direction — the Sky shader, the sun-disc sprite, and the
@@ -91,6 +92,11 @@ scene.add(ground.group);
 // Thai city beacons (Phase 2 P2.T5). Top 18 by prominence × proximity so a
 // satellite-style view doesn't read as a wall of labels.
 const cityBeacons = installCityBeacons(scene, { y: 200, topN: 18 });
+
+// Thailand province boundary overlay (Phase 2 P2.T6). Async — provinces
+// just don't appear for the first few hundred ms if the fetch is slow;
+// nothing depends on them being ready synchronously.
+installProvinceLines(scene).catch(err => console.warn("[provinces]", err));
 
 {
   const planeGeo = new THREE.PlaneGeometry(800_000, 800_000);
