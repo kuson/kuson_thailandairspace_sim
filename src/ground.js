@@ -13,7 +13,13 @@ const TILE_URL = (x, y, z) => {
   return `https://${sub}.basemaps.cartocdn.com/light_all/${z}/${x}/${y}.png`;
 };
 
-const MINIMAP_TILE_CACHE_MAX = 64;
+// The minimap underlay draws an 11×11 (=121) tile grid each frame
+// (tileRadius 5 in _drawMapUnderlay). The cache MUST hold more than that
+// working set, or every tile load evicts a still-visible tile (FIFO),
+// the visible subset rotates frame-to-frame, and the radar flickers.
+// 256 covers the 121-tile window plus panning headroom (~3–8 MB of small
+// CARTO PNGs).
+const MINIMAP_TILE_CACHE_MAX = 256;
 
 export class DynamicGround {
   /**
