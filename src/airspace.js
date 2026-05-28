@@ -24,6 +24,48 @@ const OPACITY_FOR = {
 // merge into a single opaque mass).
 const HIGHLIGHT_OPACITY = 0.18;
 
+// P2.T7 — Shared wall materials. The wall geometry carries per-vertex
+// colours (darker at floor → brighter at ceiling), so the material itself
+// is white + vertexColors:true and gets shared across every airspace.
+const WALL_OPACITY_NORMAL = 0.18;
+const WALL_OPACITY_HIGHLIGHT = 0.42;
+const WALL_MAT_NORMAL = new THREE.MeshBasicMaterial({
+  color: 0xffffff,
+  vertexColors: true,
+  transparent: true,
+  opacity: WALL_OPACITY_NORMAL,
+  side: THREE.DoubleSide,
+  depthWrite: false,
+  depthTest: true,
+});
+const WALL_MAT_HIGHLIGHT = new THREE.MeshBasicMaterial({
+  color: 0xffffff,
+  vertexColors: true,
+  transparent: true,
+  opacity: WALL_OPACITY_HIGHLIGHT,
+  side: THREE.DoubleSide,
+  depthWrite: false,
+  depthTest: true,
+});
+
+// P2.T7b — Outline material pool. Keyed by (color, baseOpacity, highlight),
+// so e.g. every Class-D ring shares one normal + one highlight material.
+const OUTLINE_MAT_POOL = new Map();
+function outlineMatFor(color, baseOpacity, highlight) {
+  const key = `${color}|${baseOpacity.toFixed(3)}|${highlight ? 1 : 0}`;
+  const existing = OUTLINE_MAT_POOL.get(key);
+  if (existing) return existing;
+  const m = new THREE.LineBasicMaterial({
+    color,
+    transparent: true,
+    opacity: highlight ? 0.95 : Math.min(baseOpacity * 3.5, 0.92),
+    depthTest: true,
+    depthWrite: false,
+  });
+  OUTLINE_MAT_POOL.set(key, m);
+  return m;
+}
+
 const MILITARY_CTR_IDS = new Set([
   "KPS-CTR", "VTPI-CTR", "VTBC-CTR", "VTUR-KKZ", "VTBU-CTR",
 ]);
@@ -131,60 +173,64 @@ export function makeTextSprite(text, { fontSize = 28, maxWidth = 512 } = {}) {
 function buildVolumeMesh(ring, lower, upper, color, opacity) {
   const depth = Math.max(upper - lower, 1);
 
-  const outlineMat = new THREE.LineBasicMaterial({
-    color,
-    transparent: true,
-    opacity: Math.min(opacity * 3.5, 0.92),
-    depthTest: true,
-    depthWrite: false,
-  });
+  // P2.T7b — outline materials come from the shared pool (one per
+  // category × highlight-state). Mutating opacity is no longer safe;
+  // setHighlighted swaps material references instead.
+  const outlineMatNormal = outlineMatFor(color, opacity, false);
+  const outlineMatHi = outlineMatFor(color, opacity, true);
 
   const closed = [...ring, ring[0]];
   const topPts = closed.map((p) => new THREE.Vector3(p.x, lower + depth, p.z));
   const botPts = closed.map((p) => new THREE.Vector3(p.x, lower, p.z));
   const topLine = new THREE.Line(
     new THREE.BufferGeometry().setFromPoints(topPts),
-    outlineMat
+    outlineMatNormal
   );
   const botLine = new THREE.Line(
     new THREE.BufferGeometry().setFromPoints(botPts),
-    outlineMat
+    outlineMatNormal
   );
 
-  const ribStep = Math.max(1, Math.floor(ring.length / 16));
-  const ribs = new THREE.Group();
-  for (let i = 0; i < ring.length; i += ribStep) {
-    const p = ring[i];
-    const ribGeo = new THREE.BufferGeometry().setFromPoints([
-      new THREE.Vector3(p.x, lower, p.z),
-      new THREE.Vector3(p.x, lower + depth, p.z),
-    ]);
-    ribs.add(new THREE.Line(ribGeo, outlineMat));
-  }
-
+  // P2.T7a — Continuous translucent wall replaces the 16-rib wireframe.
+  // ExtrudeGeometry already projects each ring edge into a side quad; we
+  // bake a vertical colour gradient into the position attribute so the
+  // volume reads as a 3-D body, not a flat tint.
   const shape = new THREE.Shape(ring.map((p) => new THREE.Vector2(p.x, -p.z)));
-  const fillGeo = new THREE.ExtrudeGeometry(shape, {
+  const wallGeo = new THREE.ExtrudeGeometry(shape, {
     depth,
     bevelEnabled: false,
     curveSegments: 24,
   });
-  fillGeo.rotateX(-Math.PI / 2);
-  fillGeo.translate(0, lower, 0);
-  const fillMat = new THREE.MeshBasicMaterial({
-    color,
-    transparent: true,
-    opacity: HIGHLIGHT_OPACITY,
-    side: THREE.FrontSide,
-    depthWrite: false,
-    depthTest: true,
-  });
-  const fillMesh = new THREE.Mesh(fillGeo, fillMat);
-  fillMesh.visible = false;
+  wallGeo.rotateX(-Math.PI / 2);
+  wallGeo.translate(0, lower, 0);
+
+  const pos = wallGeo.attributes.position;
+  const base = new THREE.Color(color);
+  const FLOOR_SCALE = 0.35;
+  const CEIL_SCALE = 1.0;
+  const colors = new Float32Array(pos.count * 3);
+  for (let i = 0; i < pos.count; i++) {
+    const y = pos.getY(i);
+    const t = THREE.MathUtils.clamp((y - lower) / depth, 0, 1);
+    const k = FLOOR_SCALE + (CEIL_SCALE - FLOOR_SCALE) * t;
+    colors[i * 3 + 0] = base.r * k;
+    colors[i * 3 + 1] = base.g * k;
+    colors[i * 3 + 2] = base.b * k;
+  }
+  wallGeo.setAttribute("color", new THREE.BufferAttribute(colors, 3));
+
+  const wallMesh = new THREE.Mesh(wallGeo, WALL_MAT_NORMAL);
 
   const group = new THREE.Group();
-  group.add(topLine, botLine, ribs, fillMesh);
-  group.userData.fillMesh = fillMesh;
-  group.userData.outlineMat = outlineMat;
+  group.add(wallMesh, topLine, botLine);
+  group.userData.wallMesh = wallMesh;
+  group.userData.topLine = topLine;
+  group.userData.botLine = botLine;
+  group.userData.outlineMatNormal = outlineMatNormal;
+  group.userData.outlineMatHi = outlineMatHi;
+  // Back-compat with anything that read .fillMesh / .outlineMat directly.
+  group.userData.fillMesh = wallMesh;
+  group.userData.outlineMat = outlineMatNormal;
   return group;
 }
 
@@ -356,13 +402,16 @@ export class AirspaceLayer {
     const next = new Set(ids);
     for (const c of this.compiled) {
       const on = this._isActive(c) && next.has(c.airspace.id);
-      const fill = c.mesh.userData.fillMesh;
-      if (fill) fill.visible = on;
-      if (on) {
-        c.mesh.userData.outlineMat.opacity = 0.95;
-      } else {
-        c.mesh.userData.outlineMat.opacity = Math.min(c.opacity * 3.5, 0.92);
+      const ud = c.mesh.userData;
+      // P2.T7 — walls are always visible; highlight swaps to the brighter
+      // shared material instead of toggling visibility. Outline material
+      // swaps for the same reason (pool entries are mutation-shared).
+      if (ud.wallMesh) {
+        ud.wallMesh.material = on ? WALL_MAT_HIGHLIGHT : WALL_MAT_NORMAL;
       }
+      const lineMat = on ? ud.outlineMatHi : ud.outlineMatNormal;
+      if (ud.topLine) ud.topLine.material = lineMat;
+      if (ud.botLine) ud.botLine.material = lineMat;
     }
     for (const id of this._highlighted) {
       if (!next.has(id)) this._removeIdentifyLabel(id);
