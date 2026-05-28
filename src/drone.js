@@ -1118,7 +1118,9 @@ export class Drone {
    * Phase 3 replaces it with a real second-order controller.
    */
   _updateHovercraft(dt) {
-    const speed = this.cruiseSpeedMs * (this.keys.has("shift") ? BOOST_FACTOR : 1);
+    const boostMult = this.keys.has("shift") ? BOOST_FACTOR : 1;
+    const precisionMult = this.keys.has("control") ? 1 / 3 : 1;  // Ctrl = fine positioning
+    const speed = this.cruiseSpeedMs * boostMult * precisionMult;
     const fwd = this.forward();
     const rt = this.right();
 
