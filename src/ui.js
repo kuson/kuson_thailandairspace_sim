@@ -1373,7 +1373,7 @@ export class UI {
     const highlighted = this.layer.highlightedIds;
     for (const c of this.layer.compiled) {
       if (!this.layer.showMilitary && c.military) continue;
-      const cssColor = "#" + c.color.toString(16).padStart(6, "0");
+      const cssColor = c.cssColor;
       const on = highlighted.has(c.airspace.id);
       ctx.strokeStyle = on ? cssColor : cssColor + "cc";
       ctx.fillStyle = on ? cssColor + "77" : cssColor + "33";

@@ -279,10 +279,12 @@ export class AirspaceLayer {
       this.labelsGroup.add(label);
       this._labelSprites.push(label);
 
-      this.compiled.push({
+      const c = {
         airspace: a, ring, lower, upper, color, opacity, mesh, label,
         centroid: cen, midY, military: isMilitaryAirspace(a),
-      });
+      };
+      c.cssColor = "#" + c.color.toString(16).padStart(6, "0");
+      this.compiled.push(c);
       this.airspaces.push(a);
     }
     this._applyMilitaryVisibility();
