@@ -698,19 +698,19 @@ Files this playbook **does** write:
 - **Commit:** `feat(hud): predictive next-airspace chip with ETA`
 
 ### Phase 4 smoke checklist
-- [ ] Battery chip on HUD; drains during flight
-- [ ] Battery < 25% triggers RTH; H key triggers manually
-- [ ] RTH visually flies home and lands
-- [ ] Signal bars drop with distance from launch
-- [ ] Long-distance random dropouts trigger RTH
-- [ ] AGL chip shows correctly over Doi Inthanon
-- [ ] 90 m line on alt tape is AGL-relative
-- [ ] CTR entry shows ribbon + ceiling clamp
-- [ ] Prohibited boundary freezes drone
-- [ ] Predictive chip appears with ETA when approaching airspace
-- [ ] Hidden military airspaces still trigger geofence (bug fix verified)
-- [ ] Global regression checklist passes
-- [ ] Phase 4 journal block written; tag `betterment-phase-4-complete` cut
+- [x] Battery chip on HUD; drains during flight
+- [x] Battery < 25% triggers RTH; H key triggers manually
+- [x] RTH visually flies home and lands
+- [x] Signal bars drop with distance from launch
+- [x] Long-distance random dropouts trigger RTH
+- [x] AGL chip shows correctly over Doi Inthanon
+- [x] 90 m line on alt tape is AGL-relative
+- [x] CTR entry shows ribbon + ceiling clamp
+- [x] Prohibited boundary freezes drone
+- [x] Predictive chip appears with ETA when approaching airspace
+- [x] Hidden military airspaces still trigger geofence (bug fix verified)
+- [x] Global regression checklist passes
+- [x] Phase 4 journal block written; tag `betterment-phase-4-complete` cut
 
 ---
 
