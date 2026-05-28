@@ -1234,7 +1234,10 @@ export class Drone {
     this.cameraMode = s.cameraMode ?? null;
     this.teleport(s.x, s.y, s.z, s.yaw, s.pitch);
     if (s.speedPresetId) this.setSpeedPreset(s.speedPresetId);
-    else if (s.speedMultiplier) this.setSpeedPreset("100x");
+    else if (s.speedMultiplier) {
+      const map = { 1: "1x", 5: "cessna172", 20: "learjet", 50: "b777", 100: "100x" };
+      this.setSpeedPreset(map[s.speedMultiplier] ?? "100x");
+    }
     this.hover = s.hover ?? false;
     this._applyCameraMode();
   }
