@@ -298,6 +298,9 @@ flightHistory.onChange = (state) => ui?.updateHistoryButtons?.(state);
     onRedo: redoFlight,
     onReset: resetDrone,
   });
+  // Re-publish ui on __sim now that it exists — the top-level assignment
+  // captured it as undefined because bootstrap() is async.
+  window.__sim.ui = ui;
 
   // UI's 'M' key toggles map-primary; we own the renderer, so resize it here.
   ui.onGroundQualityChange = (mode) => {
@@ -437,6 +440,6 @@ document.addEventListener("visibilitychange", () => {
 });
 
 window.__sim = {
-  scene, camera, drone, layer, ground, flightHistory, tourGuide,
+  scene, camera, drone, layer, ground, flightHistory, tourGuide, ui,
   physics: { RigidBody, QuadrotorModel, FixedWingModel },
 };
