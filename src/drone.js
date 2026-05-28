@@ -4,7 +4,7 @@ import { FlightMode, EasyMode, resolveMode } from "./modes.js";
 import { QuadrotorModel, FixedWingModel } from "./physics.js";
 import { getInputSettings, pollGamepad } from "./input.js";
 import { currentWind, DEFAULT_WIND } from "./wind.js";
-import { BatterySystem, ReturnToHome } from "./failures.js";
+import { BatterySystem, ReturnToHome, RadioLink } from "./failures.js";
 
 const KMH_TO_MS = 1 / 3.6;
 const BOOST_FACTOR = 3;
@@ -901,6 +901,12 @@ export class Drone {
     this.rth = new ReturnToHome();
     this._homeArmed = false;
 
+    // P4.T3: radio link. Quality + dropout state driven by straight-line
+    // distance from rth.home. While inDropout, pilot input is suppressed
+    // (zero sticks → quadrotor lerps to hover) and lostS accumulates;
+    // > 3 s of contiguous loss triggers signal-RTH via the host wiring.
+    this.radio = new RadioLink();
+
     this._bindEvents();
   }
 
@@ -1345,6 +1351,15 @@ export class Drone {
       this._homeArmed = true;
     }
 
+    // P4.T3: advance the radio link with the current distance-from-home
+    // BEFORE the RTH step so RTH sees the updated lostS counter on the
+    // same frame a dropout crosses the 3-second threshold.
+    const home = this.rth.home;
+    const dx = this.position.x - home.x;
+    const dz = this.position.z - home.z;
+    const distanceKm = Math.hypot(dx, dz) / 1000;
+    this.radio.step(dt, { distanceKm });
+
     // RTH override — when active, the state machine drives the sticks
     // instead of the pilot. Pad / keyboard input is suppressed for the
     // duration (R key can still toggle disengage).
@@ -1358,7 +1373,7 @@ export class Drone {
       position: this.position,
       yaw: this.bodyYaw,
       batteryPct: this.battery.pct,
-      signalLostS: null,                    // P4.T3 wires this
+      signalLostS: this.radio.lostS,
     });
     if (rthOut) {
       this.bodyYaw = rthOut.yaw;
@@ -1376,7 +1391,14 @@ export class Drone {
     }
 
     let pitchStick = 0, rollStick = 0, throttleStick = 0;
-    if (!this.hover) {
+    // P4.T3: while the radio is in a dropout, pilot input is dropped on
+    // the floor (zero sticks → quadrotor's actuator lerps to hover and
+    // commandedClimb falls to 0; the aircraft drifts to a stable lean).
+    // RTH already returned an override above when active, so we only get
+    // here when the dropout is happening to a free-flying pilot.
+    const linkDown = this.radio.inDropout;
+
+    if (!this.hover && !linkDown) {
       // W tips nose-DOWN to fly forward, so it commands NEGATIVE pitch (our
       // convention: +pitch = nose-up). S inverts. A/D map to left/right bank.
       if (this.keys.has("w")) pitchStick -= 1;

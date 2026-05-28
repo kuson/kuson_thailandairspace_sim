@@ -225,6 +225,30 @@
       opacity: 0.55;
     }
 
+    /* P4.T3: signal-link bars (5 vertical bars, increasing height). */
+    #signalChip {
+      display: inline-flex; gap: 2px; align-items: flex-end;
+      height: 12px; vertical-align: middle;
+    }
+    #signalChip .bar {
+      width: 3px; background: rgba(255,255,255,0.18);
+      border-radius: 1px;
+    }
+    #signalChip .bar:nth-child(1) { height: 3px; }
+    #signalChip .bar:nth-child(2) { height: 5px; }
+    #signalChip .bar:nth-child(3) { height: 7px; }
+    #signalChip .bar:nth-child(4) { height: 9px; }
+    #signalChip .bar:nth-child(5) { height: 11px; }
+    #signalChip.q-high .bar.on { background: #6f6; }
+    #signalChip.q-mid  .bar.on { background: #fc6; }
+    #signalChip.q-low  .bar.on { background: #f66; }
+    #signalChip.dropout { animation: signalDropoutBlink 0.4s steps(2) infinite; }
+    @keyframes signalDropoutBlink { 0% { opacity: 1; } 100% { opacity: 0.3; } }
+    .signal-text {
+      font-family: var(--mono); font-size: 10px; color: var(--muted);
+      margin-left: 6px;
+    }
+
     /* P4.T2: RTH ribbon — top-center banner shown while RTH is engaged. */
     #rthRibbon {
       position: fixed; top: 14px; left: 50%; transform: translateX(-50%);
@@ -539,6 +563,7 @@
       <div class="row"><span class="label">VS</span>      <span class="val" id="vsi">—</span></div>
       <div class="row"><span class="label">WIND</span>    <span class="val" id="wind">—</span></div>
       <div class="row" id="batteryRow"><span class="label">BAT</span> <span id="batteryChip">—</span></div>
+      <div class="row" id="signalRow"><span class="label">LINK</span> <span id="signalChip"><span class="bar"></span><span class="bar"></span><span class="bar"></span><span class="bar"></span><span class="bar"></span></span> <span id="signalText" class="signal-text">5/5</span></div>
       <div class="row" id="modeRow">
         <span class="label">MODE</span>
         <span id="modeChip">—</span>

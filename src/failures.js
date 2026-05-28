@@ -247,3 +247,92 @@ export class ReturnToHome {
              state: this.state, reason: this.reason };
   }
 }
+
+// P4.T3: radio link quality + Poisson dropouts.
+//
+// Pure stateful sampler — no THREE / DOM. The host Drone passes the
+// straight-line distance from launch home and the radio updates:
+//   - quality   : linear ramp 1 → 0 over 0 → rangeKm (default 10 km).
+//   - bars      : 5/5 at q=1, 0/5 at q=0 (rounded).
+//   - inDropout : while a dropout is in progress, pilot input is
+//                 suppressed by the host (sticks zeroed → quadrotor
+//                 actuator lerps to hover). Dropouts last 0.5–3 s.
+//   - lostS     : accumulated seconds of contiguous dropout. The host
+//                 feeds this to ReturnToHome; > 3 s triggers signal-loss
+//                 RTH per playbook §P4.T3.
+//
+// Random dropouts are Poisson-distributed with a rate that scales
+// proportionally to (0.5 − quality), so at q ≥ 0.5 there are no
+// dropouts at all, at q = 0.25 the rate is ~half of dropoutPoissonRate,
+// and at q = 0 the rate is at its maximum.
+const RADIO_DEFAULTS = Object.freeze({
+  rangeKm: 10,                  // quality reaches zero at this distance
+  dropoutPoissonRate: 0.5,      // events / s at worst-case q=0
+  dropoutMinS: 0.5,
+  dropoutMaxS: 3,
+});
+
+export class RadioLink {
+  constructor(opts = {}) {
+    Object.assign(this, RADIO_DEFAULTS, opts);
+    this.quality = 1;
+    this.bars = 5;
+    this.inDropout = false;
+    this.dropoutRemainingS = 0;
+    /** Contiguous seconds without command. Resets to 0 when not in a
+     *  dropout; the host reads this to feed ReturnToHome's signal trigger. */
+    this.lostS = 0;
+    /** Optional injectable RNG so tests can pin dropouts deterministically. */
+    this.random = Math.random;
+  }
+
+  /**
+   * Force a dropout for a specific duration. Used by tests; in normal
+   * operation dropouts are entered probabilistically inside step().
+   */
+  triggerDropout(durationS) {
+    this.inDropout = true;
+    this.dropoutRemainingS = durationS;
+  }
+
+  /**
+   * Advance one step.
+   * @param {number} dt seconds
+   * @param {{ distanceKm: number }} telemetry
+   */
+  step(dt, telemetry) {
+    const d = Math.max(0, telemetry?.distanceKm ?? 0);
+    this.quality = Math.max(0, Math.min(1, 1 - d / this.rangeKm));
+    this.bars = Math.round(this.quality * 5);
+
+    if (this.inDropout) {
+      this.dropoutRemainingS -= dt;
+      this.lostS += dt;
+      if (this.dropoutRemainingS <= 0) {
+        this.inDropout = false;
+        this.dropoutRemainingS = 0;
+      }
+    } else {
+      // Poisson entry when link is poor. Rate scales with (0.5 − q).
+      if (this.quality < 0.5) {
+        const rate = this.dropoutPoissonRate * (0.5 - this.quality) * 2;
+        if (this.random() < rate * dt) {
+          this.inDropout = true;
+          const span = this.dropoutMaxS - this.dropoutMinS;
+          this.dropoutRemainingS = this.dropoutMinS + this.random() * span;
+        }
+      }
+      // Outside a dropout, the contiguous-loss counter must reset so
+      // ReturnToHome doesn't latch from stale signal-loss accumulation.
+      this.lostS = 0;
+    }
+  }
+
+  reset() {
+    this.quality = 1;
+    this.bars = 5;
+    this.inDropout = false;
+    this.dropoutRemainingS = 0;
+    this.lostS = 0;
+  }
+}

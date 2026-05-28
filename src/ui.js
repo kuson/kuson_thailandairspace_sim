@@ -86,7 +86,12 @@ export class UI {
       vsi: this.hud?.querySelector("#vsi") ?? null,
       wind: this.hud?.querySelector("#wind") ?? null,
       battery: this.hud?.querySelector("#batteryChip") ?? null,
+      signal: this.hud?.querySelector("#signalChip") ?? null,
+      signalText: this.hud?.querySelector("#signalText") ?? null,
     };
+    this._signalBars = this._el.signal
+      ? Array.from(this._el.signal.querySelectorAll(".bar"))
+      : [];
 
     // P3.T7: vertical speed indicator. EMA smoothing on dy/dt with
     // alpha=0.2 (the playbook's spec) — fast enough to feel responsive
@@ -1403,6 +1408,31 @@ export class UI {
         this._hudCache.battery = key;
         this._el.battery.textContent = text;
         this._el.battery.className = cls;
+      }
+    }
+
+    // P4.T3: radio link signal chip. Five bars, color by quality:
+    //   green q ≥ 0.66, yellow 0.33–0.66, red < 0.33. A dropout adds a
+    //   blink animation via the .dropout class so the user sees the freeze.
+    const radio = this.drone.radio;
+    if (radio && this._el.signal && this._signalBars.length === 5) {
+      const cls = radio.quality >= 0.66 ? "q-high"
+                : radio.quality >= 0.33 ? "q-mid" : "q-low";
+      const key = `${radio.bars}|${cls}|${radio.inDropout ? 1 : 0}`;
+      if (this._hudCache.signal !== key) {
+        this._hudCache.signal = key;
+        for (let i = 0; i < 5; i++) {
+          this._signalBars[i].classList.toggle("on", i < radio.bars);
+        }
+        const chip = this._el.signal;
+        chip.classList.remove("q-high", "q-mid", "q-low");
+        chip.classList.add(cls);
+        chip.classList.toggle("dropout", radio.inDropout);
+        if (this._el.signalText) {
+          this._el.signalText.textContent = radio.inDropout
+            ? "LOST"
+            : `${radio.bars}/5`;
+        }
       }
     }
 
