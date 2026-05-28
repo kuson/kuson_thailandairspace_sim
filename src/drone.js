@@ -823,6 +823,7 @@ export class Drone {
     this.onViewPersonChange = null;
     this.onPauseChange = null;
     this.onPresetKeySwitch = null;     // notify UI to sync speed buttons
+    this.onFlightModeChange = null;    // notify UI when flightMode resolves to a different value
 
     this._bindEvents();
   }
@@ -1042,7 +1043,9 @@ export class Drone {
     const changed = (this.speedPresetId !== p.id);
     this.speedPresetId = p.id;
     this.cruiseSpeedMs = p.kmh * KMH_TO_MS;
+    const prevMode = this.flightMode;
     this.flightMode = resolveMode(p.id);
+    const modeChanged = prevMode !== this.flightMode;
     // Airplane mode: lock airspeed to cruise on preset change; level the bank.
     if (this.flightMode === FlightMode.AIRPLANE) {
       this.airspeedMs = p.kmh * KMH_TO_MS;
@@ -1057,6 +1060,7 @@ export class Drone {
       this._buildModelForPreset(p.id);
       if (this.viewPerson === "third") this._syncCamera();
     }
+    if (modeChanged) this.onFlightModeChange?.(this.flightMode);
   }
 
   /** @deprecated use setSpeedPreset */

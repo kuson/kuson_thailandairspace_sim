@@ -162,6 +162,18 @@
     .chip.cat-Restricted { background: rgba(160,80,255,0.25); color: #e5d6ff; }
     .chip.cat-Danger { background: rgba(255,106,31,0.25); color: #ffd5b3; }
 
+    /* Flight-mode chip in HUD — cyan accent when Easy Mode is on. */
+    #modeChip {
+      display: inline-block; padding: 2px 8px; border-radius: 999px;
+      font-family: var(--mono); font-size: 10px; letter-spacing: 0.04em;
+      background: rgba(255,255,255,0.08); color: var(--text);
+      border: 1px solid rgba(255,255,255,0.10);
+    }
+    #modeChip.easy {
+      background: rgba(102,255,204,0.18); color: #b8ffea;
+      border-color: rgba(102,255,204,0.45);
+    }
+
     /* ---- Minimap ---- */
     #minimap {
       position: fixed; left: 14px; bottom: 14px;
@@ -445,6 +457,10 @@
         </div>
       </div>
       <div class="row"><span class="label">SPD</span>     <span class="val" id="speed">—</span></div>
+      <div class="row" id="modeRow">
+        <span class="label">MODE</span>
+        <span id="modeChip">—</span>
+      </div>
       <div class="row" id="speedRow">
         <span class="label">SIM SPEED</span>
         <div id="speedControls"></div>

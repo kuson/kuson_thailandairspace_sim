@@ -5,6 +5,7 @@ import {
 } from "./coords.js";
 import { isMilitaryAirspace } from "./airspace.js";
 import { SPEED_PRESETS } from "./drone.js";
+import { FlightMode, EasyMode } from "./modes.js";
 import { lookupAdmin } from "./geocode.js";
 import { MinimapTileCache } from "./ground.js";
 
@@ -53,6 +54,7 @@ export class UI {
     this.resetBtn = document.getElementById("resetBtn");
     this.currentInside = document.getElementById("currentInside");
     this.speedControls = document.getElementById("speedControls");
+    this.modeChip = document.getElementById("modeChip");
     this.undoBtn = document.getElementById("undoBtn");
     this.redoBtn = document.getElementById("redoBtn");
     this.historyLabel = document.getElementById("historyLabel");
@@ -175,6 +177,7 @@ export class UI {
         this.drone.setSpeedPreset(btn.dataset.preset);
         this.syncSpeedButtons();
         this._hudCache.speedLine = null;
+        this._updateModeChip();
       });
     });
   }
@@ -343,8 +346,34 @@ export class UI {
         prevPK?.(id);
         this.syncSpeedButtons();
         this._hudCache.speedLine = null;
+        this._updateModeChip();
       };
+      const prevFM = this.drone.onFlightModeChange;
+      this.drone.onFlightModeChange = (mode) => {
+        prevFM?.(mode);
+        this._updateModeChip();
+      };
+      this._updateModeChip();
     }
+  }
+
+  _updateModeChip() {
+    if (!this.modeChip) return;
+    const mode = this.drone?.flightMode ?? FlightMode.HOVERCRAFT;
+    const easy = EasyMode.enabled;
+    let label;
+    switch (mode) {
+      case FlightMode.HOVERCRAFT: label = easy ? "[H] HOVERCRAFT · EASY MODE" : "[H] HOVERCRAFT"; break;
+      case FlightMode.AIRPLANE:   label = "[A] AIRPLANE"; break;
+      case FlightMode.DRONE:      label = "[D] DRONE"; break;
+      case FlightMode.UFO:        label = "[U] UFO"; break;
+      default:                    label = "[?] " + String(mode).toUpperCase();
+    }
+    if (this._hudCache.modeChip !== label) {
+      this._hudCache.modeChip = label;
+      this.modeChip.textContent = label;
+    }
+    this.modeChip.classList.toggle("easy", easy);
   }
 
   _reflectPauseUI(on) {
