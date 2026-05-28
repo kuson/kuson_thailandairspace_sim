@@ -1,4 +1,7 @@
-// ground.js — dynamic OSM tile ground that follows the drone for higher detail.
+// ground.js — dynamic tile ground that follows the drone for higher detail.
+// Tiles: CARTO Positron (low-saturation labeled basemap) — chosen so the
+// airspace volume overlays stay the visual focus while Thai city/province
+// labels remain readable. Underlying data is still OpenStreetMap.
 import * as THREE from "three";
 import {
   geoToWorld, worldToGeo,
@@ -6,8 +9,8 @@ import {
 } from "./coords.js";
 
 const TILE_URL = (x, y, z) => {
-  const sub = ["a", "b", "c"][(x + y) % 3];
-  return `https://${sub}.tile.openstreetmap.org/${z}/${x}/${y}.png`;
+  const sub = ["a", "b", "c", "d"][(x + y) % 4];
+  return `https://${sub}.basemaps.cartocdn.com/light_all/${z}/${x}/${y}.png`;
 };
 
 const MINIMAP_TILE_CACHE_MAX = 64;
@@ -193,7 +196,7 @@ export class DynamicGround {
   }
 }
 
-/** Fetch OSM tiles for 2D canvas use (minimap underlay). */
+/** Fetch basemap tiles (Carto Positron) for 2D canvas use (minimap underlay). */
 export class MinimapTileCache {
   constructor(zoom = 7) {
     this.zoom = zoom;
