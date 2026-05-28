@@ -10,6 +10,8 @@ const TILE_URL = (x, y, z) => {
   return `https://${sub}.tile.openstreetmap.org/${z}/${x}/${y}.png`;
 };
 
+const MINIMAP_TILE_CACHE_MAX = 64;
+
 export class DynamicGround {
   /**
    * @param {object} opts
@@ -212,6 +214,10 @@ export class MinimapTileCache {
     img.onload = () => {
       this._pending.delete(k);
       this._cache.set(k, img);
+      while (this._cache.size > MINIMAP_TILE_CACHE_MAX) {
+        const oldest = this._cache.keys().next().value;
+        this._cache.delete(oldest);
+      }
     };
     img.onerror = () => this._pending.delete(k);
     img.src = TILE_URL(x, y, this.zoom);
