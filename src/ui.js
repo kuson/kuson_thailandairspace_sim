@@ -85,6 +85,7 @@ export class UI {
       speed: this.hud?.querySelector("#speed") ?? null,
       vsi: this.hud?.querySelector("#vsi") ?? null,
       wind: this.hud?.querySelector("#wind") ?? null,
+      battery: this.hud?.querySelector("#batteryChip") ?? null,
     };
 
     // P3.T7: vertical speed indicator. EMA smoothing on dy/dt with
@@ -1389,6 +1390,20 @@ export class UI {
     if (this._hudCache.wind !== windText) {
       this._hudCache.wind = windText;
       if (this._el.wind) this._el.wind.textContent = windText;
+    }
+
+    // P4.T1: battery chip. Color band follows BatterySystem.state, dimmed
+    // when not in DRONE mode (other modes leave the cell idle at 100%).
+    const bat = this.drone.battery;
+    if (bat && this._el.battery) {
+      const text = `${Math.round(bat.pct)}%`;
+      const cls = bat.active ? `bat-${bat.state}` : "bat-idle";
+      const key = `${text}|${cls}`;
+      if (this._hudCache.battery !== key) {
+        this._hudCache.battery = key;
+        this._el.battery.textContent = text;
+        this._el.battery.className = cls;
+      }
     }
 
     this._drawAltTape(altM);

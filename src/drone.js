@@ -4,6 +4,7 @@ import { FlightMode, EasyMode, resolveMode } from "./modes.js";
 import { QuadrotorModel, FixedWingModel } from "./physics.js";
 import { getInputSettings, pollGamepad } from "./input.js";
 import { currentWind, DEFAULT_WIND } from "./wind.js";
+import { BatterySystem } from "./failures.js";
 
 const KMH_TO_MS = 1 / 3.6;
 const BOOST_FACTOR = 3;
@@ -889,6 +890,11 @@ export class Drone {
     this._lastWind = { vec3: { x: 0, z: 0 }, speedMs: 0, dirDeg: 0 };
     this._simTime = 0;
 
+    // P4.T1: battery model. Active only when flightMode resolves to DRONE
+    // (Mavic 3 in realistic mode). Other presets / modes leave it idle at
+    // 100% so the chip stays visible but doesn't drift.
+    this.battery = new BatterySystem();
+
     this._bindEvents();
   }
 
@@ -1208,6 +1214,20 @@ export class Drone {
       this._lastWind = { vec3: { x: 0, z: 0 }, speedMs: 0, dirDeg: 0 };
     }
     this._simTime += dt;
+
+    // P4.T1: drain the Mavic's battery from the post-step telemetry. Only
+    // active in DRONE mode; HOVERCRAFT / AIRPLANE / UFO leave the cell at
+    // its current state-of-charge (UI dims the chip accordingly).
+    const isDrone = (this.flightMode === FlightMode.DRONE);
+    const qv = this._quadrotor?.velocityHoriz;
+    const horizSpeed = qv ? Math.hypot(qv.x, qv.z) : 0;
+    const climbMs = this._quadrotor?.currentClimb ?? 0;
+    this.battery.step(dt, {
+      isDroneMode: isDrone,
+      climbMs,
+      horizSpeedMs: horizSpeed,
+      y: this.position.y,
+    });
 
     if (this.position.y < 1) this.position.y = 1;
   }

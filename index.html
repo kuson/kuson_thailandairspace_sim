@@ -201,6 +201,30 @@
       border-color: rgba(102,255,204,0.45);
     }
 
+    /* P4.T1: battery chip with green/yellow/red banding. */
+    #batteryChip {
+      display: inline-block; padding: 2px 8px; border-radius: 999px;
+      font-family: var(--mono); font-size: 10px; letter-spacing: 0.04em;
+      background: rgba(255,255,255,0.08); color: var(--text);
+      border: 1px solid rgba(255,255,255,0.10);
+      font-variant-numeric: tabular-nums;
+    }
+    #batteryChip.bat-green {
+      background: rgba(102,255,140,0.16); color: #c8ffd6;
+      border-color: rgba(102,255,140,0.45);
+    }
+    #batteryChip.bat-yellow {
+      background: rgba(255,225,74,0.20); color: #fff6c2;
+      border-color: rgba(255,225,74,0.55);
+    }
+    #batteryChip.bat-red {
+      background: rgba(255,80,80,0.22); color: #ffd0d0;
+      border-color: rgba(255,80,80,0.55);
+    }
+    #batteryChip.bat-idle {
+      opacity: 0.55;
+    }
+
     /* ---- Minimap ---- */
     #minimap {
       position: fixed; left: 14px; bottom: 14px;
@@ -501,6 +525,7 @@
       <div class="row"><span class="label">SPD</span>     <span class="val" id="speed">—</span></div>
       <div class="row"><span class="label">VS</span>      <span class="val" id="vsi">—</span></div>
       <div class="row"><span class="label">WIND</span>    <span class="val" id="wind">—</span></div>
+      <div class="row" id="batteryRow"><span class="label">BAT</span> <span id="batteryChip">—</span></div>
       <div class="row" id="modeRow">
         <span class="label">MODE</span>
         <span id="modeChip">—</span>
