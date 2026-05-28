@@ -138,6 +138,13 @@ export class UI {
     this._radarDrag = null;
     this._radarActive = false;
 
+    // P5.T4: offscreen bake of the static airspace polygons — blitted per
+    // frame instead of re-stroking ~144 rings. (re)created lazily on first
+    // drawMinimap and re-baked only when appearance/position/zoom changes.
+    this._minimapBake = null;
+    this._bakeCenter = { x: 0, z: 0 };
+    this._bakeSig = null;
+
     // U-toggle: 'metric' shows m/km/h; 'aero' shows ft/kt/NM
     this.unitSystem = "metric";
     // M-toggle: when true, orthographic map fills viewport and the 3D scene
@@ -1712,6 +1719,75 @@ export class UI {
     ctx.setLineDash([]);
   }
 
+  // P5.T4: re-bake only when the polygons' appearance, position, or zoom
+  // drifts — military filter flip, highlight-set change, pan > 50 km from
+  // the bake center, or radar-scale change. Including scale keeps stroke
+  // widths pixel-exact (they're pre-divided by the bake-time blit scale).
+  _ensureMinimapBake(wx, wz) {
+    const compiled = this.layer.compiled;
+    if (!compiled || compiled.length === 0) return;
+    const ids = [...this.layer.highlightedIds].sort();
+    const sig = (this.layer.showMilitary ? "1" : "0") + "|" +
+      this._radarScale.toFixed(2) + "|" + ids.join(",");
+    const drifted = !this._minimapBake ||
+      Math.hypot(wx - this._bakeCenter.x, wz - this._bakeCenter.z) > 50_000;
+    if (this._minimapBake && sig === this._bakeSig && !drifted) return;
+    this._bakeSig = sig;
+    this._bakeCenter.x = wx;
+    this._bakeCenter.z = wz;
+    this._bakeMinimapPolygons(wx, wz);
+  }
+
+  _bakeMinimapPolygons(bx, bz) {
+    const SIZE = 2048;
+    const BAKE_WORLD_M = 700_000;       // 700 km span → ~342 m/px
+    const mPerPx = BAKE_WORLD_M / SIZE;
+    let b = this._minimapBake;
+    if (!b) {
+      const canvas = document.createElement("canvas");
+      canvas.width = SIZE;
+      canvas.height = SIZE;
+      b = this._minimapBake = { canvas, ctx: canvas.getContext("2d"), size: SIZE, mPerPx };
+    }
+    b.bx = bx;
+    b.bz = bz;
+    // Strokes are authored in minimap px but the blit scales the offscreen by
+    // a = mPerPx/SCALE, so pre-divide widths by a to land at the intended
+    // on-screen width. Since _ensureMinimapBake re-bakes on scale change, a
+    // here always matches the blit-time a → stroke widths are pixel-exact.
+    const a = mPerPx / this._radarScale;
+    const sw = (px) => px / a;
+    const ctx = b.ctx;
+    ctx.clearRect(0, 0, SIZE, SIZE);
+    const half = SIZE / 2;
+    const highlighted = this.layer.highlightedIds;
+    for (const c of this.layer.compiled) {
+      if (!this.layer.showMilitary && c.military) continue;
+      const cssColor = c.cssColor;
+      const on = highlighted.has(c.airspace.id);
+      ctx.strokeStyle = on ? cssColor : cssColor + "cc";
+      ctx.fillStyle = on ? cssColor + "77" : cssColor + "33";
+      ctx.lineWidth = sw(on ? 2.5 : 1);
+      ctx.beginPath();
+      for (let i = 0; i < c.ring.length; i++) {
+        const p = c.ring[i];
+        const px = half + (p.x - bx) / mPerPx;
+        const py = half + (p.z - bz) / mPerPx;
+        if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+      }
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      if (on) {
+        ctx.strokeStyle = "rgba(102, 255, 204, 0.85)";
+        ctx.lineWidth = sw(1.5);
+        ctx.setLineDash([sw(4), sw(3)]);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+    }
+  }
+
   drawMinimap() {
     if (this.radarCenterAircraft) {
       this._radarCenter.x = this.drone.position.x;
@@ -1759,31 +1835,20 @@ export class UI {
     ctx.fillText("E", w - 10, cy + 4);
     ctx.fillText("W", 2, cy + 4);
 
-    const highlighted = this.layer.highlightedIds;
-    for (const c of this.layer.compiled) {
-      if (!this.layer.showMilitary && c.military) continue;
-      const cssColor = c.cssColor;
-      const on = highlighted.has(c.airspace.id);
-      ctx.strokeStyle = on ? cssColor : cssColor + "cc";
-      ctx.fillStyle = on ? cssColor + "77" : cssColor + "33";
-      ctx.lineWidth = on ? 2.5 : 1;
-      ctx.beginPath();
-      for (let i = 0; i < c.ring.length; i++) {
-        const p = c.ring[i];
-        const px = cx + (p.x - wx) / SCALE;
-        const py = cy + (p.z - wz) / SCALE;
-        if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
-      }
-      ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
-      if (on) {
-        ctx.strokeStyle = "rgba(102, 255, 204, 0.85)";
-        ctx.lineWidth = 1.5;
-        ctx.setLineDash([4, 3]);
-        ctx.stroke();
-        ctx.setLineDash([]);
-      }
+    // P5.T4: blit the pre-baked polygon layer instead of re-stroking ~144
+    // rings each frame. The transform maps a world point to the same pixel
+    // the old loop produced: screen = a·offscreenPx + e, a = mPerPx/SCALE.
+    this._ensureMinimapBake(wx, wz);
+    if (this._minimapBake) {
+      const b = this._minimapBake;
+      const a = b.mPerPx / SCALE;
+      const ex = cx + (b.bx - wx) / SCALE - (b.size / 2) * a;
+      const ey = cy + (b.bz - wz) / SCALE - (b.size / 2) * a;
+      ctx.save();
+      ctx.translate(ex, ey);
+      ctx.scale(a, a);
+      ctx.drawImage(b.canvas, 0, 0);
+      ctx.restore();
     }
 
     const p = this.drone.position;
