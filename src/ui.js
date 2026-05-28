@@ -629,10 +629,25 @@ export class UI {
     const hdg = ((headingDeg % 360) + 360) % 360;
     const cardinals = { 0: "N", 90: "E", 180: "S", 270: "W" };
 
-    const housingGrad = ctx.createLinearGradient(0, 0, 0, h);
-    housingGrad.addColorStop(0, "rgba(12, 18, 28, 0.95)");
-    housingGrad.addColorStop(1, "rgba(6, 10, 18, 0.98)");
-    ctx.fillStyle = housingGrad;
+    const headingKey = `${w}x${h}`;
+    if (!this._gradHeadingHousing || this._gradHeadingKey !== headingKey) {
+      this._gradHeadingHousing = ctx.createLinearGradient(0, 0, 0, h);
+      this._gradHeadingHousing.addColorStop(0, "rgba(12, 18, 28, 0.95)");
+      this._gradHeadingHousing.addColorStop(1, "rgba(6, 10, 18, 0.98)");
+
+      this._gradHeadingTape = ctx.createLinearGradient(0, tapeTop, 0, baseline);
+      this._gradHeadingTape.addColorStop(0, "rgba(20, 32, 48, 0.9)");
+      this._gradHeadingTape.addColorStop(1, "rgba(8, 14, 24, 0.95)");
+
+      this._gradHeadingVignette = ctx.createLinearGradient(0, 0, w, 0);
+      this._gradHeadingVignette.addColorStop(0, "rgba(0,0,0,0.55)");
+      this._gradHeadingVignette.addColorStop(0.12, "rgba(0,0,0,0)");
+      this._gradHeadingVignette.addColorStop(0.88, "rgba(0,0,0,0)");
+      this._gradHeadingVignette.addColorStop(1, "rgba(0,0,0,0.55)");
+
+      this._gradHeadingKey = headingKey;
+    }
+    ctx.fillStyle = this._gradHeadingHousing;
     ctx.fillRect(0, 0, w, h);
     ctx.strokeStyle = "rgba(102, 255, 204, 0.22)";
     ctx.lineWidth = 1;
@@ -643,18 +658,10 @@ export class UI {
     ctx.rect(4, tapeTop, w - 8, baseline - tapeTop);
     ctx.clip();
 
-    const tapeGrad = ctx.createLinearGradient(0, tapeTop, 0, baseline);
-    tapeGrad.addColorStop(0, "rgba(20, 32, 48, 0.9)");
-    tapeGrad.addColorStop(1, "rgba(8, 14, 24, 0.95)");
-    ctx.fillStyle = tapeGrad;
+    ctx.fillStyle = this._gradHeadingTape;
     ctx.fillRect(4, tapeTop, w - 8, baseline - tapeTop);
 
-    const vignette = ctx.createLinearGradient(0, 0, w, 0);
-    vignette.addColorStop(0, "rgba(0,0,0,0.55)");
-    vignette.addColorStop(0.12, "rgba(0,0,0,0)");
-    vignette.addColorStop(0.88, "rgba(0,0,0,0)");
-    vignette.addColorStop(1, "rgba(0,0,0,0.55)");
-    ctx.fillStyle = vignette;
+    ctx.fillStyle = this._gradHeadingVignette;
     ctx.fillRect(4, tapeTop, w - 8, baseline - tapeTop);
 
     ctx.strokeStyle = "rgba(255,255,255,0.18)";
@@ -753,10 +760,14 @@ export class UI {
 
     // ---- Background ----
     ctx.clearRect(0, 0, W, H);
-    const grd = ctx.createLinearGradient(0, 0, 0, H);
-    grd.addColorStop(0, "rgba(20, 40, 70, 0.55)");      // higher = darker blue
-    grd.addColorStop(1, "rgba(34, 80, 50, 0.40)");      // ground = greenish
-    ctx.fillStyle = grd;
+    const altTapeKey = `${W}x${H}`;
+    if (!this._gradAltTape || this._gradAltTapeKey !== altTapeKey) {
+      this._gradAltTape = ctx.createLinearGradient(0, 0, 0, H);
+      this._gradAltTape.addColorStop(0, "rgba(20, 40, 70, 0.55)");      // higher = darker blue
+      this._gradAltTape.addColorStop(1, "rgba(34, 80, 50, 0.40)");      // ground = greenish
+      this._gradAltTapeKey = altTapeKey;
+    }
+    ctx.fillStyle = this._gradAltTape;
     ctx.fillRect(0, 0, W, H);
 
     // ---- Reference bands (Thailand-aviation typical operating heights) ----
