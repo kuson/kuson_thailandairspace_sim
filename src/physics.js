@@ -209,14 +209,17 @@ export const FW_PRESETS = {
   cessna172: {
     Vs: 23.5, Vne: 80, clMax: 1.4, cd0: 0.027, kInduced: 0.013,
     wingAreaM2: 16.2, mass: 1100, thrustMax: 2200, cruiseMs: 62.8,
+    spoolTimeS: 3,         // P3.T8: small piston, fast power response
   },
   learjet: {
     Vs: 47, Vne: 195, clMax: 1.6, cd0: 0.020, kInduced: 0.013,
     wingAreaM2: 23.5, mass: 8300, thrustMax: 35000, cruiseMs: 236,
+    spoolTimeS: 5,         // P3.T8: small jet, moderate spool
   },
   b777: {
     Vs: 71, Vne: 280, clMax: 1.8, cd0: 0.018, kInduced: 0.013,
     wingAreaM2: 428, mass: 250000, thrustMax: 880000, cruiseMs: 256,
+    spoolTimeS: 8,         // P3.T8: heavy turbofan, slow spool
   },
 };
 
@@ -230,7 +233,10 @@ export class FixedWingModel {
     this.pitchRad = 0;
     this.bankRad = 0;
     this._targetBank = 0;
-    this.throttle = this._cruiseThrottle();
+    this.targetThrottle = this._cruiseThrottle();
+    this.throttleRateScale = 1 / (this.spoolTimeS || 2);
+    this.throttle = this.targetThrottle;
+    this._spoolActive = false;       // default-constructed: no preset switch yet
     this.stalled = false;
   }
 
@@ -247,6 +253,14 @@ export class FixedWingModel {
   /**
    * Switch aero tuning to a preset and rebalance airspeed / throttle.
    * Returns true on success, false if presetId isn't a fixed-wing.
+   *
+   * P3.T8: throttle enters at 0 (idle) with the cruise-throttle stored
+   * as targetThrottle. step() lerps toward the target at the per-preset
+   * spool rate (1 / spoolTimeS) so a 777 takes ~8 s of auto-spool to
+   * reach cruise power, a Cessna ~3 s. Any user stick input cancels
+   * the auto-spool (the human takes over) but still moves throttle at
+   * the per-preset rate, so heavy aircraft also feel sluggish under
+   * direct commands.
    */
   configure(presetId) {
     const cfg = FW_PRESETS[presetId];
@@ -256,7 +270,10 @@ export class FixedWingModel {
     this.pitchRad = 0;
     this.bankRad = 0;
     this._targetBank = 0;
-    this.throttle = this._cruiseThrottle();
+    this.targetThrottle = this._cruiseThrottle();
+    this.throttleRateScale = 1 / (cfg.spoolTimeS || 2);
+    this.throttle = 0;            // idle on preset switch - spool-up felt
+    this._spoolActive = true;     // auto-ramp toward targetThrottle
     this.stalled = false;
     return true;
   }
@@ -280,8 +297,23 @@ export class FixedWingModel {
     const clamp1 = (v) => (v < -1 ? -1 : v > 1 ? 1 : v);
 
     // ---- Throttle (W = up, S = down) ----
-    const THROTTLE_RATE = 0.5;     // 0 → 1 in 2 s
-    this.throttle += clamp1(input.throttleStick) * THROTTLE_RATE * dt;
+    // P3.T8: rate is per-preset (1 / spoolTimeS). Auto-spool toward
+    // targetThrottle runs only after a fresh preset switch and is
+    // cancelled by any direct stick input.
+    const tStick = clamp1(input.throttleStick);
+    if (tStick !== 0) {
+      this._spoolActive = false;
+      this.throttle += tStick * this.throttleRateScale * dt;
+    } else if (this._spoolActive) {
+      const delta = this.targetThrottle - this.throttle;
+      const slew = this.throttleRateScale * dt;
+      if (Math.abs(delta) <= slew) {
+        this.throttle = this.targetThrottle;
+        this._spoolActive = false;
+      } else {
+        this.throttle += (delta > 0 ? slew : -slew);
+      }
+    }
     if (this.throttle < 0) this.throttle = 0;
     if (this.throttle > 1.2) this.throttle = 1.2;
 
