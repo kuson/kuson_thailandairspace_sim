@@ -1,6 +1,6 @@
-# Thai Airspace Sim — Bangkok (Phase 1)
+# Thai Airspace Sim — Bangkok
 
-A single-page web app that teaches Thai airspace around Bangkok by letting you fly a virtual drone through 3D extruded airspace volumes. No build step — open `index.html` in a browser and go.
+A single-page web app that teaches Thai airspace around Bangkok by letting you fly a virtual aircraft through 3D airspace volumes. Pick **Easy Mode** to float anywhere like a hovercraft, or **Realistic Mode** for a second-order Mavic 3 quadrotor / fixed-wing flight model with battery, return-to-home, signal loss, AGL terrain, and tiered CAAT geofence enforcement. No build step — serve `index.html` over HTTP and go.
 
 > **Educational visualization only. Not for flight planning. Data may be approximate or out of date. Consult CAAT and current AIP Thailand.**
 
@@ -24,54 +24,92 @@ npx serve .
 
 That's it. No npm, no bundler, no Three.js install — it's all pulled from a CDN via an `<script type="importmap">` block.
 
+## Flight modes
+
+Press **`K`** to toggle between the two control philosophies. The HUD mode chip shows which is active.
+
+| Mode | Feel | Applies to |
+|---|---|---|
+| **Easy Mode** (Hovercraft) | Free 6-DoF — fly in any direction, stop and hover anywhere, no stall, no inertia to fight. The default; best for exploring the volumes. | All presets |
+| **Realistic Mode** | Second-order physics. **Drone** (Mavic 3) = tilt-to-translate quadrotor with actuator lag, inertia, and a full systems stack (battery, RTH, signal loss, geofence). **Airplane** (Cessna / Learjet / 777) = lift/drag/thrust with stall + energy trade, bank-to-turn. | Mavic 3 + fixed-wing |
+
+The **UFO** (100× preset) always hovercrafts — it's the "warp around the country" view and ignores realism.
+
+Aircraft also drift in a **wind field** (Realistic mode only); the minimap draws both your nose vector and your ground-track so you can see the crab angle.
+
 ## Controls
 
 | Input | Action |
 |---|---|
 | Click on the scene | Capture mouse (pointer-lock) |
-| `W` / `A` / `S` / `D` | Move forward / strafe |
-| `Q` / `E` | Descend / ascend |
-| `Shift` | Boost 3× on top of the selected sim-speed multiplier |
-| HUD 1× / 5× / 25× / 50× / 100× | Set sim-speed multiplier (default 1×) |
-| `Space` | Toggle hover (freezes position — mouse-look still works) |
-| Mouse | Look around (pointer-locked, or click-and-drag) |
-| `Esc` | Release pointer-lock |
+| Mouse | Look around (pointer-locked, or click-and-drag) · `Esc` releases lock |
+| `1` … `5` | Select aircraft — **1** Mavic 3 · **2** Cessna 172 · **3** Learjet · **4** Boeing 777 · **5** UFO |
+| `K` | Toggle **Easy Mode (Hovercraft) ↔ Realistic** |
+| `W` / `A` / `S` / `D` | Easy/Drone: forward / strafe. Airplane: `W`/`S` throttle, `A`/`D` bank (ailerons) |
+| `Q` / `E` | Descend / ascend (throttle in Drone mode). Airplane: `Q`/`E` pitch down/up |
+| `Space` | Toggle hover (Drone / Easy — freezes position, mouse-look still works) |
+| `Shift` / `Ctrl` | Boost (×, capped per preset) / precision (÷3 fine positioning) |
+| `R` | **Return-to-Home** toggle (Drone mode only) — climb to 60 m AGL, fly to launch, land |
+| `P` | Pause / resume (also the **Pause** button in the HUD) |
+| `V` | Toggle 1st ↔ 3rd-person chase cam. The model is the selected aircraft (`1`–`5`) |
 | `↓` / `←` / `→` | Down / left / right camera view (press again to return to forward) |
-| `I` | Identify mode — center-ray pick, bottom cards show each volume with distance to nearest point |
+| `I` | Identify mode — center-ray pick; bottom cards list each volume with distance, and floating 3D labels appear. (Disabled during a tour.) |
+| `J` | Toggle the altitude tape |
+| `H` | Toggle the attitude indicator (artificial horizon) |
 | `U` | Toggle units (metric ↔ aeronautical kt/ft/NM) |
-| `M` | Toggle map-primary view (orthographic radar fills viewport; 3D scene becomes a bottom-right inset) |
-| `+` / `-` | Zoom map in/out (alongside mouse scroll) |
-| `V` | Toggle 1st ↔ 3rd-person view. In 3rd-person you see your aircraft from behind. **Model auto-swaps with the speed preset:** 1× = Mavic 3 drone, Cessna 172 = light GA, Learjet = bizjet, 777 = airliner (scaled down to "cute"), 100× = **UFO** (flying saucer). |
-| `P` | Pause / resume the simulation (also the **Pause** button in the HUD). |
-| **Airplane mode** (Cessna 172 / Learjet / Boeing 777) | Always moving forward — cannot stop or reverse. `A`/`D` = **bank with ailerons** (roll → coordinated turn via level-turn equation). `W`/`S` = throttle up/down between **stall+10%** and cruise×3. `Q`/`E` = pitch down/up. Stall floors: Cessna 130 km/h, Learjet 240 km/h, B777 370 km/h. |
-| **Drone / UFO mode** (1× / 100×) | Free 6-DoF strafe — `W/A/S/D` translate, `Q/E` descend/ascend, `Space` hover. |
-| Altitude tape (HUD-right, toggleable from **Altitude** button) | Auto-zooming vertical bar **glued to right edge of HUD at equal height** — red dashed line at the **90 m drone limit (CAAT)**, ticks every 100 m / 1 000 m, reference bands for drone / helicopter ops / GA / jet climb / airliner cruise. Scale top auto-rescales as the aircraft climbs (200 m near the deck → 45 km at FL400). |
-| Attitude indicator (center, toggleable from **Attitude** button) | Classic 6-pack artificial horizon — brown earth / blue sky split, rotates with bank, slides with pitch, yellow aircraft-symbol bars + bezel bank scale (0/±10/±20/±30/±45/±60°). |
-| Settings → **Ground detail** | Tile-zoom preset: Low (z10) / Med (z11) / High (z12) / Ultra (z13) / **Auto** (alt-adaptive: high <500 m, med 500–3000 m, low above). |
-| Panel → **Express tour (~5 min)** | Guided flight: Bangkok takeoff → capital-region CTR/TMA/R/P/D highlights → Welcome to Explore. Slow camera **orbit at each stop**. |
-| Panel → **Full country tour (~22 min)** | Nationwide rotorcraft-relevant volumes (major airports, royal zones, islands, training areas, rules recap). Slow camera orbit at each stop. |
+| `M` | Toggle map-primary view (orthographic radar fills viewport; 3D scene becomes a small inset) |
+| `+` / `-` | Zoom the radar in/out (alongside mouse scroll) |
+| HUD 1× / … / 100× | Sim-speed multiplier — and the aircraft-preset row doubles as the `1`–`5` selector |
+
+> **Note on key choices:** the standard drone convention `R` = Return-to-Home is used (the playbook's draft `H` was already the horizon toggle), and `K` toggles Easy↔Realistic (`M` was already map-primary). Both are shown in the in-app help.
+
+**Gamepad** (Realistic mode): plug in an Xbox-style controller and the sticks fly the aircraft (Mode 2 default — left stick throttle/yaw, right stick pitch/roll; Mode 1 selectable in Settings). A configurable **deadzone** hides stick drift and **expo** softens the center. Mouse sensitivity, deadzone, expo, and stick mode all live in the Settings panel and persist to `localStorage`.
+
+**Airplane specifics:** always moving forward — can't stop or reverse. `W`/`S` throttle between the per-preset minimum and cruise; below ~1.05× stall speed the nose drops and you lose altitude. Minimum speeds: Cessna 130 km/h, Learjet 240 km/h, B777 370 km/h.
+
+### HUD, instruments & tours
+
+| Element | What it does |
+|---|---|
+| Altitude tape (`J`, or **Altitude** button) | Auto-zooming vertical bar glued to the HUD's right edge — red dashed **90 m AGL** drone limit (CAAT, terrain-relative), a brown ground line, ticks every 100 m / 1 000 m, and reference bands for drone / heli ops / GA / jet climb / airliner cruise. Rescales as you climb (200 m near the deck → 45 km at FL400). |
+| Attitude indicator (`H`, or **Horizon** button) | Artificial horizon — transparent face with a faint contrast wash, rotates with bank, slides with pitch, yellow aircraft-symbol bars + bezel bank scale. |
+| Battery / LINK / NEXT chips | Realistic Drone HUD — battery %, radio-link bars, and a predictive "→ AIRSPACE in Ns · floor/ceil" chip when you're heading toward a volume. |
+| Settings → **Ground detail** | Tile-zoom preset: Low (z10) / Med (z11) / High (z12) / Ultra (z13) / **Auto** (alt-adaptive). |
+| Panel → **Express tour (~5 min)** | Guided Bangkok takeoff → capital-region CTR/TMA/R/P/D highlights → Welcome to Explore, with a slow camera orbit at each stop. |
+| Panel → **Full country tour (~22 min)** | Nationwide rotorcraft-relevant volumes (major airports, royal zones, islands, training areas, rules recap). |
 | **Skip stop** / **End tour** (overlay) | Advance or exit the tour |
 
-Cruise speed is 30 m/s (108 km/h) at 1×. Use the HUD sim-speed buttons (up to 100×) to traverse the 300 km area faster; Shift still adds a 3× boost on top.
+At 1× the Mavic cruises ~50 km/h; use the sim-speed buttons (up to 100×, the UFO) to cross the 300 km area faster, with `Shift` boost on top (capped per preset).
+
+## Drone systems (Realistic Mode)
+
+When you fly the Mavic 3 in Realistic Mode, a full CAAT-flavoured systems stack comes alive (`src/failures.js`, `src/terrain.js`):
+
+- **Battery** — drains by activity (hover ~22 min, cruise ~28 min, max-throttle ~15 min to empty); HUD chip goes green → yellow → red; resets on a 2 s ground contact ("battery swap").
+- **Return-to-Home** — auto-engages below 25 % battery or after 3 s of signal loss, or manually with `R`. State machine: ascend to 60 m AGL → fly to launch → descend → land.
+- **Signal loss** — link quality falls with distance from launch (zero at ~10 km); random dropouts below 50 % freeze pilot input, and >3 s of contiguous loss triggers RTH.
+- **AGL terrain** — ground elevation comes from a 30 arc-sec SRTM-baked grid (`data/terrain.bin`), so the altitude tape's 90 m limit and the geofence ceiling are height-above-ground, not above sea level. Fly over Doi Inthanon (2 565 m) at 2 600 m AMSL and the AGL chip reads ~40 m.
+- **Tiered geofence** — three CAAT-style tiers: *advisory* (within 5 NM of a CTR/TMA — yellow ribbon), *authorisation* (inside Class D/TMA — altitude clamped to 120 m AGL, red ribbon, the volume's outline pulses), and *no-fly* (Prohibited or military CTR — the aircraft freezes at the boundary with an explainer). Hidden military zones still enforce.
 
 ## What you see
 
-- **Ground:** zoom-8 base grid plus zoom-11 detail tiles that follow the drone (`DynamicGround` in `src/ground.js`). Bangkok (13.7563°N, 100.5018°E) is at the origin.
-- **Sky:** a vertical gradient on a back-side sphere, plus distance fog for depth.
-- **Airspaces:** wireframe cages (top/bottom rings, vertical ribs, top-cap disc) between each volume's lower and upper altitude — optional 3D sprite labels (toggle in panel). Colored by category — red CTR, orange TMA, yellow Class D, solid-red Prohibited, purple Restricted, deep-orange Danger.
-- **Compass:** N/S/E/W marker poles at ±200 km (5× larger horizon labels than original build).
-- **HUD (top-left):** drone lat/lon, **Amphoe + Province** (Nominatim), altitude, heading, speed, sim-speed buttons, and inside-airspace chips.
-- **Minimap (bottom-left):** top-down 300 km view with optional OSM map underlay, FOV cone, range rings, airspace outlines, drone arrow. Toggles above the minimap.
-- **Educational panel (top-right):** **Airspace Tour Guide** (5-minute express from Bangkok, or full country tour), legend, Thailand drone rules summary, and a clickable list of every airspace that teleports the drone to an external vantage point.
-- **Tour overlay (bottom-center):** scripted narration, progress bar, skip/end controls — takeoff climb, smooth warps between volumes, ends with **Welcome to Explore**.
+- **Ground:** zoom-9 base grid plus zoom-11 detail tiles that follow the aircraft (`DynamicGround` in `src/ground.js`), over CARTO Positron basemap tiles. Bangkok (13.7563°N, 100.5018°E) is at the origin.
+- **Sky:** the three.js `Sky` shader (Rayleigh/Mie atmospheric scattering) with a sun disc and altitude-adaptive fog for depth.
+- **Airspaces:** continuous **translucent extruded walls** with a floor→ceiling colour gradient and outline rings — not wireframe cages. Optional 3D sprite labels. Colored by category — red CTR, orange TMA, yellow Class D, solid-red Prohibited, purple Restricted, deep-orange Danger. Prohibited/Restricted also get a colorblind-safe pattern on the radar (hatch / dots).
+- **Cities & provinces:** Thai city beacons and a muted province-boundary overlay for spatial orientation.
+- **Compass:** N/S/E/W marker poles at ±200 km.
+- **HUD (top-left):** lat/lon, **Amphoe + Province** (Nominatim), AMSL + AGL altitude, heading compass, speed, vertical speed, wind, battery/link/next chips, mode chip, and inside-airspace chips.
+- **Minimap (bottom-left):** top-down radar with optional basemap underlay, FOV cone, range rings, baked airspace polygons, nose + ground-track vectors. Toggles above the minimap.
+- **Educational panel (top-right):** **Airspace Tour Guide**, legend, Thailand drone rules summary, settings (mouse/gamepad/ground detail), and a clickable list of every airspace with an 8-direction compass-rose to view it from any cardinal vantage.
+- **Tour overlay (bottom-center):** scripted narration, progress bar, skip/end controls.
 
-## Phase-1 scope and simplifications
+## Projection & simplifications
 
-This is a flat-earth, equirectangular projection scaled by `cos(13.7563°)` for longitude — accurate to a fraction of a percent within the 300 km area we care about, *not* suitable for anything bigger.
+This is a flat-earth, equirectangular projection scaled by `cos(13.7563°)` for longitude — accurate to a fraction of a percent within the ~300 km area we care about, *not* suitable for anything bigger.
 
-- Ground is a flat plane. No elevation data (Thailand is flat-ish near Bangkok, but the western danger areas overlap real hills the sim doesn't show).
-- AGL and AMSL are treated identically (no terrain), so Hua Hin CTR's "2000 ft AGL" upper is rendered as 2000 ft AMSL.
+- **Terrain** is now a 30 arc-sec SRTM-baked elevation grid (`data/terrain.bin`, built by `scripts/bake_terrain.py` from AWS Terrain Tiles) covering 5.6–20.5°N × 97.3–105.7°E. AGL is computed against it. (Earlier phases treated AGL = AMSL on a flat plane.)
 - Polygons that the AIP defines with *arc segments* (e.g. Kanchanaburi/Suphan Buri/Hua Hin training areas) are approximated as straight-line polygons — flagged with `"approximate": true` in `data/airspaces.json` and marked **approx** in the UI.
+- Airspace volumes use vertical prisms (the lower/upper altitudes); circular zones are tessellated to 64-gons.
 
 ## Airspace data — sourced vs. approximate
 
@@ -140,22 +178,41 @@ Set `approximate: true` whenever you've interpolated arcs into polygons, dropped
 
 ```
 kuson_thailandairspace_sim/
-├── index.html         # entry — UI shell, importmap, styles
+├── index.html          # entry — UI shell, importmap, styles
 ├── src/
-│   ├── main.js        # Three.js scene, ground tiles, compass, bootstrap loop
-│   ├── drone.js       # 6DoF flight controls, pointer-lock, hover/boost
-│   ├── airspace.js    # JSON loader, extruded mesh builder, point-in-volume tests
-│   ├── coords.js      # lat/lon ↔ world XZ (equirectangular + cos(lat) scale)
-│   └── ui.js          # HUD, minimap, educational panel, teleport buttons
+│   ├── main.js         # Three.js scene, render loop, bootstrap, DPR adapt, touch gate
+│   ├── drone.js        # flight controls, aircraft models, mode dispatch, systems wiring
+│   ├── physics.js      # QuadrotorModel + FixedWingModel (second-order flight models)
+│   ├── modes.js        # FlightMode enum + Easy/Realistic resolution
+│   ├── simMode.js      # SimMode state machine (free/flyingTo/touring/paused/replay)
+│   ├── failures.js     # battery, return-to-home, radio link, tiered geofence
+│   ├── terrain.js      # SRTM-baked AGL lookup (loads data/terrain.bin)
+│   ├── wind.js         # wind field for ground-track crab
+│   ├── input.js        # deadzone / expo / gamepad polling
+│   ├── airspace.js     # JSON loader, translucent wall meshes, AABB point-in-volume, predict
+│   ├── identify.js     # analytical ray-vs-prism center pick
+│   ├── ground.js       # dynamic ground tiles + minimap tile cache
+│   ├── sky.js          # three.js Sky shader + sun
+│   ├── cities.js / provinces.js  # Thai city beacons + province overlay
+│   ├── coords.js       # lat/lon ↔ world XZ (equirectangular + cos(lat) scale)
+│   ├── flyto.js / tourGuide.js / flightHistory.js  # camera fly-to, guided tours, undo
+│   ├── geolocation.js / geocode.js               # start location, Amphoe/Province lookup
+│   └── ui.js           # HUD, minimap (offscreen-baked), panel, settings, instruments
 ├── data/
-│   └── airspaces.json # the airspace catalog (sourced + approximate)
-├── README.md
-└── LICENSE            # MIT
+│   ├── airspaces.json  # the airspace catalog (sourced + approximate)
+│   ├── terrain.bin     # 30 arc-sec SRTM elevation grid (Uint16) + terrain.json metadata
+│   ├── airspaceTour.json
+│   └── provinces.geojson
+├── scripts/
+│   ├── build_airspaces.py  # AIP → airspaces.json
+│   └── bake_terrain.py     # AWS Terrain Tiles → terrain.bin
+├── README.md · spec.md
+└── LICENSE             # MIT
 ```
 
 ## Audience
 
-Built for a Bangkok-based hobbyist or teenager learning what those colored shapes on aeronautical charts actually mean. English UI. Phase 1 focuses on Bangkok and the immediate ~300 km around it.
+Built for a Bangkok-based hobbyist or teenager learning what those colored shapes on aeronautical charts actually mean, and what CAAT drone rules feel like in practice. English UI. Focused on Bangkok and the ~300 km around it; terrain coverage extends nationwide.
 
 ## Disclaimer
 

@@ -305,3 +305,97 @@ A reviewer should be able to verify Phase 1 by:
 - Both at <https://aip.caat.or.th/>.
 - `scripts/build_airspaces.py` merges AIP extracts with `scripts/data/curated_prd.json` for nationwide airport CTR/TMA approximations.
 - Approximate volumes' polygons are interpreted from DDMMSS notation and explicitly marked `approximate: true` with a source note.
+
+---
+
+## 9. Implementation notes (Betterment, 2026-05-28 → 05-29)
+
+Sections 1–8 are the Phase-1 design record. The "Betterment" effort (phase
+tags `betterment-phase-0-complete` … `-6-complete`, then `betterment-complete`)
+extended the sim well past that scope. This section documents *what was built*,
+verified against the code.
+
+### 9.1 Flight modes (`src/modes.js`, `src/drone.js`)
+
+- **Easy Mode (Hovercraft)** — free 6-DoF, no inertia/stall. Default. Toggle `K`.
+- **Realistic Mode** — second-order flight models per preset. The UFO (100×)
+  always hovercrafts regardless of mode.
+- `resolveMode(presetId, EasyMode.enabled)` maps preset → `FlightMode`
+  (`HOVERCRAFT` / `DRONE` / `AIRPLANE` / `UFO`).
+
+### 9.2 Physics models (`src/physics.js`)
+
+**QuadrotorModel** (Mavic 3, DRONE): tilt-to-translate with actuator lag,
+horizontal drag, and a commanded-climb integrator. Tilt scale ×1.5 on Shift,
+÷2 on Ctrl.
+
+**FixedWingModel** (AIRPLANE) — lift/drag/thrust with stall + energy trade.
+Per-preset aero constants:
+
+| Preset | `kmh` cruise | `minKmh` | `Vs` (m/s) | `Vne` (m/s) | `clMax` | `cd0` |
+|---|---|---|---|---|---|---|
+| Cessna 172 | 226 | 130 | 23.5 | 80 | 1.4 | 0.027 |
+| Learjet 35 | 850 | 240 | 47 | 195 | 1.6 | 0.020 |
+| Boeing 777 | 920 | 370 | 71 | 280 | 1.8 | 0.018 |
+
+(`kInduced = 0.013`.) Below `1.05·Vs` the nose drops at a fixed rate and the
+aircraft loses altitude. Yaw rate from bank uses the level-turn equation
+`ω = g·tan(bank)/max(v, Vs)`. Speed presets: Mavic 50 km/h, UFO 10 000 km/h.
+
+**Wind** (`src/wind.js`) — a time-varying field applied as a ground-velocity
+bias in Realistic modes only; the minimap draws nose vs ground-track.
+
+**Input** (`src/input.js`) — deadzone + expo shaping; gamepad polled per
+substep (Mode 1/2 mapping, persisted to `localStorage`). Fixed 120 Hz physics
+substep with an accumulator.
+
+### 9.3 Drone systems (`src/failures.js`) — pure, unit-testable
+
+- **BatterySystem** — drain by activity: hover 22 min, cruise 28 min,
+  max-throttle 15 min to empty. State bands green ≥30 % / yellow 20–30 % /
+  red <20 %. Resets after 2 s ground contact.
+- **ReturnToHome** — state machine INACTIVE→ASCEND(60 m AGL)→FLY_HOME→DESCEND→
+  LANDED. Triggers: battery <25 %, signal-loss >3 s, or manual (`R`).
+- **RadioLink** — `quality = clamp(1 − distKm/10)`, bars 5→0; Poisson dropouts
+  (0.5–3 s) below 50 % quality; contiguous loss feeds RTH.
+- **Geofence** — tiers *advisory* (≤5 NM lateral of CTR/TMA), *authorisation*
+  (inside Class D/TMA → clamp to ground+120 m AGL), *no-fly* (Prohibited or
+  `isMilitaryAirspace` → revert to last-safe position). Evaluated against
+  `airspacesAtUnfiltered` so hidden military zones still enforce.
+
+### 9.4 Terrain (`src/terrain.js`, `scripts/bake_terrain.py`)
+
+`elevationAt(lat,lon)` / `AGL(pos)` read a 30 arc-sec grid baked from **AWS
+Terrain Tiles (Mapzen Terrarium PNG)** at zoom 10, covering 5.6–20.5°N ×
+97.3–105.7°E → `data/terrain.bin` (1788×1008 little-endian Uint16 metres,
+row-major south→north / west→east, ~3.6 MB) + `data/terrain.json` metadata.
+Bilinear sample; falls back to AMSL until the binary loads. Doi Inthanon's
+2 565 m summit bakes to ~2 561 m.
+
+### 9.5 Atmosphere (`src/sky.js`)
+
+The flat-gradient sky was replaced by the three.js `Sky` shader (Rayleigh/Mie
+scattering) with a shared sun direction driving a sun-disc sprite + a
+`DirectionalLight`; fog far-plane is lerped by altitude.
+
+### 9.6 Architecture & performance (Phase 5)
+
+- **SimMode** (`src/simMode.js`) — single state machine
+  (`free/flyingTo/touring/paused/replay`) with validated transitions; the loop
+  reads one mode instead of four booleans.
+- **Per-airspace AABB** reject before point-in-ring in `airspacesAt` /
+  `airspacesAtUnfiltered` / `predictNextEntry`.
+- **Identify ray** throttled to 10 Hz; the march replaced by an exact
+  **analytical ray-vs-prism** test (catches thin layers).
+- **Minimap** static polygons **baked to a 2048² offscreen canvas** and
+  blitted per frame (re-bake only on filter/highlight/pan/zoom change). Tile
+  cache holds 256 tiles (> the 121-tile working set — fixes a flicker bug).
+- **Shared airspace materials** (wall singletons + outline pool; highlight =
+  reference swap) and **dynamic DPR** reduction under frame pressure.
+
+### 9.7 Pedagogy / HUD additions
+
+AGL chip + terrain-relative 90 m line; battery / link / predictive
+"next airspace in Ns" chips; tiered-geofence ribbons + no-fly toast;
+colorblind hatch/dots on Prohibited/Restricted radar fills; identify-mode
+floating 3D labels; 8-direction vantage compass-rose per airspace card.
