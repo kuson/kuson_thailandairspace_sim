@@ -1,6 +1,6 @@
 // drone.js — 6DoF drone movement with WASD + Q/E + mouse-look, plus pointer-lock.
 import * as THREE from "three";
-import { FlightMode, resolveMode } from "./modes.js";
+import { FlightMode, EasyMode, resolveMode } from "./modes.js";
 
 const KMH_TO_MS = 1 / 3.6;
 const BOOST_FACTOR = 3;
@@ -966,6 +966,17 @@ export class Drone {
       if (k === "p") {
         this.paused = !this.paused;
         this.onPauseChange?.(this.paused);
+        e.preventDefault();
+        return;
+      }
+      // 'K' = toggle Easy Mode (Hovercraft) ↔ Realistic. Re-resolve the
+      // current preset through resolveMode() so flightMode reflects the new
+      // EasyMode flag and the UI mode chip refreshes via onFlightModeChange.
+      // Note: the playbook P0.T6 spec said "M", but M was already bound to
+      // ui.toggleMapPrimary; K was the next unused mnemonic ("Kinematic").
+      if (k === "k") {
+        EasyMode.enabled = !EasyMode.enabled;
+        this.setSpeedPreset(this.speedPresetId);
         e.preventDefault();
         return;
       }
