@@ -6,6 +6,7 @@ import { getInputSettings, pollGamepad } from "./input.js";
 import { currentWind, DEFAULT_WIND } from "./wind.js";
 import { BatterySystem, ReturnToHome, RadioLink, Geofence } from "./failures.js";
 import { isMilitaryAirspace } from "./airspace.js";
+import { AGL as terrainAGL } from "./terrain.js";
 
 const KMH_TO_MS = 1 / 3.6;
 const BOOST_FACTOR = 3;
@@ -1304,11 +1305,11 @@ export class Drone {
     }
     const advisory = layer.nearestLateralRingDistance(p.x, p.z, ["CTR", "TMA"]);
 
-    // Until P4.T4 (terrain.bin) lands, AGL == AMSL — ground sits at y=0
-    // in the world frame, which is exactly correct around Bangkok and a
-    // mild under-estimate up north. The host can swap this expression for
-    // a terrain lookup later without touching Geofence itself.
-    const agl = p.y;
+    // P4.T4: AGL pulled from the SRTM-baked terrain grid. terrainAGL()
+    // falls back to p.y until loadTerrain() resolves at startup, so the
+    // first few frames are AMSL-as-AGL — graceful degradation rather
+    // than a transient throw.
+    const agl = terrainAGL(p);
 
     const out = this.geofence.evaluate({
       y: p.y,

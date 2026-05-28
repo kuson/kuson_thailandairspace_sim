@@ -4,6 +4,7 @@ import {
   lonToTileX, latToTileY, tileXToLon, tileYToLat, geoToWorld,
 } from "./coords.js";
 import { isMilitaryAirspace } from "./airspace.js";
+import { elevationAt, isLoaded as terrainLoaded } from "./terrain.js";
 import { SPEED_PRESETS } from "./drone.js";
 import { FlightMode, EasyMode } from "./modes.js";
 import { lookupAdmin } from "./geocode.js";
@@ -887,7 +888,7 @@ export class UI {
    *   - Translucent bands + icons for typical operating altitudes per Thai
    *     aviation: drones, helicopters, GA, jet cruise, airliner cruise.
    */
-  _drawAltTape(altM) {
+  _drawAltTape(altM, groundM = 0) {
     const ctx = this.altTapeCtx;
     if (!ctx) return;
     const canvas = this.altTape;
@@ -988,7 +989,12 @@ export class UI {
     }
 
     // ---- Red drone-limit line (90 m AGL = 295 ft) ----
-    const yLimit = m2y(90);
+    // P4.T4: the line is AGL — anchored to the SRTM-baked terrain under
+    // the drone. Over flat ground (groundM ≈ 0, e.g. Bangkok delta) this
+    // collapses to 90 m AMSL, matching the pre-T4 behaviour. Over Doi
+    // Inthanon (groundM ≈ 2540 m) the line lifts to ~2630 m AMSL — the
+    // pedagogically correct "stay within 90 m of the surface" cue.
+    const yLimit = m2y(groundM + 90);
     if (yLimit > 16 && yLimit < H - 16) {
       ctx.strokeStyle = "rgba(255, 64, 64, 0.95)";
       ctx.setLineDash([6, 4]);
@@ -1002,7 +1008,26 @@ export class UI {
       ctx.fillStyle = "rgba(255, 64, 64, 0.95)";
       ctx.font = "bold 9px ui-monospace, monospace";
       ctx.textAlign = "left";
-      ctx.fillText("90 m DRONE", 2, yLimit - 5);
+      ctx.fillText("90 m AGL", 2, yLimit - 5);
+    }
+
+    // P4.T4: faint brown ground reference line, only when the terrain
+    // grid puts ground above sea level. Anchors the AGL band visually so
+    // users can read both the absolute altitude and the AGL margin.
+    if (groundM > 5) {
+      const yGround = m2y(groundM);
+      if (yGround > 16 && yGround < H - 6) {
+        ctx.strokeStyle = "rgba(160, 110, 60, 0.85)";
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(0, yGround);
+        ctx.lineTo(W, yGround);
+        ctx.stroke();
+        ctx.fillStyle = "rgba(200, 150, 90, 0.95)";
+        ctx.font = "8px ui-monospace, monospace";
+        ctx.textAlign = "left";
+        ctx.fillText(`GND ${groundM.toFixed(0)}m`, 2, yGround + 9);
+      }
     }
 
     // ---- Aircraft marker (always clamped onto the visible scale) ----
@@ -1363,10 +1388,24 @@ export class UI {
       if (this.placeLabel) this.placeLabel.textContent = adminText;
     }
 
+    // P4.T4: ground elevation from the SRTM-baked grid. Returns 0 until
+    // loadTerrain resolves at startup, so the alt chip just shows AMSL
+    // for the first few frames — graceful, no flicker.
+    const groundM = terrainLoaded() ? elevationAt(geo.lat, geo.lon) : 0;
+    const aglM = Math.max(0, altM - groundM);
     const altText = this.fmtAlt(altM);
-    if (this._hudCache.alt !== altText) {
-      this._hudCache.alt = altText;
-      if (this._el.alt) this._el.alt.textContent = altText;
+    // Append AGL only when we have real ground above MSL — over the gulf
+    // / Bangkok delta (groundM ≈ 0) AMSL and AGL coincide and the extra
+    // chip would just be noise.
+    const aglChip = groundM > 5
+      ? ` · AGL ${this.unitSystem === "aero"
+          ? `${(aglM * 3.28084).toFixed(0)} ft`
+          : `${aglM.toFixed(0)} m`}`
+      : "";
+    const altLine = altText + aglChip;
+    if (this._hudCache.alt !== altLine) {
+      this._hudCache.alt = altLine;
+      if (this._el.alt) this._el.alt.textContent = altLine;
     }
 
     // P3.T7: vertical speed indicator. dy/dt smoothed with EMA alpha=0.2.
@@ -1498,7 +1537,7 @@ export class UI {
       }
     }
 
-    this._drawAltTape(altM);
+    this._drawAltTape(altM, groundM);
     this._drawAttitudeIndicator(this.drone.bodyPitch ?? 0, this.drone.bodyRoll ?? 0);
 
     const displayHdg = this._smoothCompassHeading(headingDeg, dt);

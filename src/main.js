@@ -3,6 +3,7 @@ import * as THREE from "three";
 import { Drone } from "./drone.js";
 import { AirspaceLayer } from "./airspace.js";
 import { UI } from "./ui.js";
+import { loadTerrain } from "./terrain.js";
 import { DynamicGround } from "./ground.js";
 import { FlyToController } from "./flyto.js";
 import { FlightHistory } from "./flightHistory.js";
@@ -273,6 +274,13 @@ flightHistory.onChange = (state) => ui?.updateHistoryButtons?.(state);
   // P4.T5: hand the airspace layer to the drone so its tiered geofence
   // can run unfiltered membership queries each substep.
   drone.setAirspaceLayer(layer);
+
+  // P4.T4: kick off the SRTM-baked terrain grid load in parallel with the
+  // rest of bootstrap. Until it resolves, AGL() falls back to AMSL and the
+  // geofence ceiling reads as if ground were at MSL — same behaviour the
+  // sim had before T4 landed, just with one degraded frame at startup.
+  loadTerrain("./data/terrain.bin", "./data/terrain.json")
+    .catch((err) => console.warn("[terrain] load failed:", err));
 
   tourGuide = new TourGuide({
     drone,

@@ -1,0 +1,19 @@
+{
+  "rows": 1788,
+  "cols": 1008,
+  "lat0": 5.6,
+  "lon0": 97.3,
+  "dLat": 0.008333333333333333,
+  "dLon": 0.008333333333333333,
+  "sourceZoom": 10,
+  "encoding": "uint16-le-metres",
+  "rowOrder": "south-to-north",
+  "colOrder": "west-to-east",
+  "coverage": {
+    "latMin": 5.6,
+    "latMax": 20.5,
+    "lonMin": 97.3,
+    "lonMax": 105.7
+  },
+  "attribution": "AWS Terrain Tiles (Mapzen Terrarium)"
+}
