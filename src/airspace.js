@@ -131,7 +131,7 @@ function ringMaxRadius(ring, cx, cz) {
   return rmax;
 }
 
-export function makeTextSprite(text, { fontSize = 28, maxWidth = 512 } = {}) {
+export function makeTextSprite(text, { fontSize = 28, maxWidth = 512, depthTest = false } = {}) {
   const c = document.createElement("canvas");
   const ctx = c.getContext("2d");
   const lines = text.split("\n");
@@ -157,7 +157,7 @@ export function makeTextSprite(text, { fontSize = 28, maxWidth = 512 } = {}) {
   const mat = new THREE.SpriteMaterial({
     map: tex,
     transparent: true,
-    depthTest: false,
+    depthTest,
     depthWrite: false,
   });
   const sprite = new THREE.Sprite(mat);
@@ -298,6 +298,8 @@ export class AirspaceLayer {
     this._labelSprites = [];
     this._highlighted = new Set();
     this._identifySprites = new Map();
+    // P2.T8 — id → compiled, for O(1) owner lookup during label declutter.
+    this._compiledById = new Map();
   }
 
   async load(url) {
@@ -316,7 +318,10 @@ export class AirspaceLayer {
 
       const cen = ringCentroid(ring);
       const midY = (lower + upper) / 2;
-      const label = makeTextSprite(a.shortName, { fontSize: 26 });
+      // P2.T8 — regular labels are depth-tested so foreground terrain /
+      // closer volumes properly occlude them. Identify-mode sprites
+      // intentionally stay depthTest:false (see _ensureIdentifyLabel).
+      const label = makeTextSprite(a.shortName, { fontSize: 26, depthTest: true });
       label.position.set(cen.x, midY, cen.z);
       label.userData.airspaceId = a.id;
       label.userData.baseLabel = a.shortName;
@@ -331,6 +336,7 @@ export class AirspaceLayer {
       };
       c.cssColor = "#" + c.color.toString(16).padStart(6, "0");
       this.compiled.push(c);
+      this._compiledById.set(a.id, c);
       this.airspaces.push(a);
     }
     this._applyMilitaryVisibility();
@@ -378,7 +384,7 @@ export class AirspaceLayer {
 
   _refreshLabelText() {
     for (const sp of [...this._labelSprites]) {
-      const a = this.compiled.find((c) => c.airspace.id === sp.userData.airspaceId)?.airspace;
+      const a = this._compiledById.get(sp.userData.airspaceId)?.airspace;
       if (!a) continue;
       const text = this.showHeights ? this.labelTextFor(a) : a.shortName;
       const parent = sp.parent;
@@ -387,13 +393,17 @@ export class AirspaceLayer {
       parent.remove(sp);
       sp.material.map?.dispose();
       sp.material.dispose();
-      const next = makeTextSprite(text, { fontSize: this.showHeights ? 24 : 26 });
+      // Regular labels keep depthTest:true — see load() comment.
+      const next = makeTextSprite(text, {
+        fontSize: this.showHeights ? 24 : 26,
+        depthTest: true,
+      });
       next.position.copy(pos);
       next.userData = ud;
       parent.add(next);
       const idx = this._labelSprites.indexOf(sp);
       if (idx >= 0) this._labelSprites[idx] = next;
-      const c = this.compiled.find((x) => x.airspace.id === ud.airspaceId);
+      const c = this._compiledById.get(ud.airspaceId);
       if (c) c.label = next;
     }
   }
@@ -550,17 +560,28 @@ export class AirspaceLayer {
     return this.overviewVantage(id);
   }
 
-  /** Scale labels by camera distance with a minimum on-screen size. */
+  /**
+   * Scale labels by camera distance with a minimum on-screen size.
+   *
+   * P2.T8 — for regular (non-identify) labels: sort nearest-first, fade
+   * with distance past FADE_START × MAX_RANGE, run a screen-space AABB
+   * declutter and cap at MAX_VISIBLE so the country view stops being a
+   * smear of overlapping sprites over Bangkok.
+   */
   updateLabelScales(camera, renderer) {
     const camPos = camera.position;
     const hPx = renderer.domElement.clientHeight || 720;
+    const wPx = renderer.domElement.clientWidth || 1280;
     const vFov = (camera.fov * Math.PI) / 180;
-    const scaleSprite = (sp) => {
+    const tanHalf = Math.tan(vFov / 2);
+    const aspect = wPx / hPx;
+
+    const scaleSprite = (sp, distRaw) => {
       const cw = sp.userData.canvasW || 512;
       const ch = sp.userData.canvasH || 64;
       const base = sp.userData.baseScale || 10;
-      const dist = Math.max(sp.position.distanceTo(camPos), 800);
-      const worldPerPx = (2 * Math.tan(vFov / 2) * dist) / hPx;
+      const dist = Math.max(distRaw, 800);
+      const worldPerPx = (2 * tanHalf * dist) / hPx;
       const minPx = 14;
       const maxPx = 28;
       let s = base * THREE.MathUtils.clamp(dist / 18_000, 0.4, 1.4);
@@ -568,10 +589,87 @@ export class AirspaceLayer {
       const maxS = (maxPx * worldPerPx) / ch;
       s = THREE.MathUtils.clamp(s, minS, maxS);
       sp.scale.set(cw * s, ch * s, 1);
+      return s;
     };
-    if (this.labelsGroup.visible) {
-      for (const sp of this._labelSprites) scaleSprite(sp);
+
+    // Identify sprites — unchanged: always visible, no declutter, no fade.
+    for (const sp of this._identifySprites.values()) {
+      const dist = sp.position.distanceTo(camPos);
+      scaleSprite(sp, dist);
+      sp.material.opacity = 1;
     }
-    for (const sp of this._identifySprites.values()) scaleSprite(sp);
+
+    if (!this.labelsGroup.visible) return;
+
+    const MAX_RANGE = 600_000;     // beyond this: hide
+    const FADE_START = 0.55;        // fade kicks in past 55% of range
+    const MAX_VISIBLE = 18;         // top-N closest survive declutter
+
+    const ndc = new THREE.Vector3();
+    const entries = [];
+    for (const sp of this._labelSprites) {
+      const owner = this._compiledById.get(sp.userData.airspaceId);
+      // Hidden military airspace → label stays off.
+      if (owner && !this._isActive(owner)) {
+        sp.visible = false;
+        continue;
+      }
+      const dist = sp.position.distanceTo(camPos);
+      if (dist > MAX_RANGE) {
+        sp.visible = false;
+        continue;
+      }
+      ndc.copy(sp.position).project(camera);
+      // Reject behind camera or far off-screen (allow small margin).
+      if (ndc.z >= 1 || ndc.z <= -1 ||
+          Math.abs(ndc.x) > 1.3 || Math.abs(ndc.y) > 1.3) {
+        sp.visible = false;
+        continue;
+      }
+      entries.push({ sp, dist, ndcX: ndc.x, ndcY: ndc.y });
+    }
+    entries.sort((a, b) => a.dist - b.dist);
+
+    const placedBoxes = [];
+    let placed = 0;
+    for (const e of entries) {
+      if (placed >= MAX_VISIBLE) {
+        e.sp.visible = false;
+        continue;
+      }
+      const s = scaleSprite(e.sp, e.dist);
+      const ch = e.sp.userData.canvasH || 64;
+      const cw = e.sp.userData.canvasW || 512;
+      // Convert world-space sprite extents → NDC half-extents.
+      const worldH = ch * s;
+      const worldW = cw * s;
+      const halfNdcY = worldH / (2 * tanHalf * Math.max(e.dist, 800));
+      const halfNdcX = worldW / (2 * tanHalf * Math.max(e.dist, 800) * aspect);
+      const box = {
+        minX: e.ndcX - halfNdcX, maxX: e.ndcX + halfNdcX,
+        minY: e.ndcY - halfNdcY, maxY: e.ndcY + halfNdcY,
+      };
+      let overlap = false;
+      for (const b of placedBoxes) {
+        if (box.minX > b.maxX || box.maxX < b.minX) continue;
+        if (box.minY > b.maxY || box.maxY < b.minY) continue;
+        overlap = true;
+        break;
+      }
+      if (overlap) {
+        e.sp.visible = false;
+        continue;
+      }
+      // Distance fade: full opacity until FADE_START, linear to 0 at MAX_RANGE.
+      const fadeT = THREE.MathUtils.clamp(
+        (e.dist / MAX_RANGE - FADE_START) / (1 - FADE_START),
+        0,
+        1,
+      );
+      e.sp.material.opacity = 1 - fadeT;
+      e.sp.visible = true;
+      placedBoxes.push(box);
+      placed++;
+    }
   }
 }
