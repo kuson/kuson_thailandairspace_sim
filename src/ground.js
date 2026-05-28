@@ -50,6 +50,7 @@ export class DynamicGround {
     for (const [k, entry] of this._tiles) {
       this.group.remove(entry.mesh);
       entry.mesh.geometry.dispose();
+      if (entry.mesh.material.map) entry.mesh.material.map.dispose();
       entry.mesh.material.dispose();
       this._tiles.delete(k);
     }
@@ -152,6 +153,7 @@ export class DynamicGround {
       if (keep.has(k)) continue;
       this.group.remove(entry.mesh);
       entry.mesh.geometry.dispose();
+      if (entry.mesh.material.map) entry.mesh.material.map.dispose();
       entry.mesh.material.dispose();
       this._tiles.delete(k);
     }
