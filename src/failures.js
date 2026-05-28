@@ -113,3 +113,137 @@ export class BatterySystem {
     this._groundT = 0;
   }
 }
+
+// P4.T2: Return-to-Home state machine.
+//
+// Pure state machine — no THREE, no DOM. The host Drone passes telemetry
+// in and applies the override stick state to its quadrotor controller
+// in place of the human pilot's input. Three trigger paths:
+//   1. Battery telemetry.batteryPct drops below LOW_BAT_PCT (25%).
+//   2. Signal-loss telemetry.signalLostS exceeds SIGNAL_TIMEOUT_S (3 s).
+//      [Wired in P4.T3 — for now the host passes null.]
+//   3. Manual engage() via the H key.
+//
+// States:
+//   INACTIVE
+//   → ASCEND        climb to home.y + rthAltitudeAGL  (60 m default)
+//   → FLY_HOME      face launch, glide forward to within 5 m laterally
+//   → DESCEND       throttle down to land
+//   → LANDED        terminal state; .active drops to false
+//
+// Mavic-only by contract: the host only calls step() from _updateDrone
+// (FlightMode.DRONE), so the override sticks ride the QuadrotorModel
+// pipeline.
+const RTH_DEFAULTS = Object.freeze({
+  rthAltitudeAGL: 60,    // metres above launch elevation
+  lowBatteryPct: 25,
+  signalTimeoutS: 3,
+  arriveRadiusM: 5,      // FLY_HOME → DESCEND when within this lateral m
+  landY: 2,              // DESCEND → LANDED when y drops below this
+});
+
+export class ReturnToHome {
+  constructor(opts = {}) {
+    Object.assign(this, RTH_DEFAULTS, opts);
+    this.home = { x: 0, y: 0, z: 0 };
+    this.active = false;
+    /** 'manual' | 'battery' | 'signal' | null */
+    this.reason = null;
+    /** 'INACTIVE' | 'ASCEND' | 'FLY_HOME' | 'DESCEND' | 'LANDED' */
+    this.state = "INACTIVE";
+  }
+
+  /** Snap the launch position. Host calls this on first DRONE-mode
+   *  takeoff (y >= 1.5 m heuristic) or on explicit user "set home". */
+  setHome(pos) {
+    this.home = { x: pos.x, y: pos.y, z: pos.z };
+  }
+
+  engage(reason) {
+    if (this.active) return;
+    this.active = true;
+    this.reason = reason ?? "manual";
+    this.state = "ASCEND";
+  }
+
+  disengage() {
+    this.active = false;
+    this.reason = null;
+    this.state = "INACTIVE";
+  }
+
+  /**
+   * Advance the state machine.
+   * @param {number} dt seconds
+   * @param {{
+   *   position: { x:number, y:number, z:number },
+   *   yaw: number,
+   *   batteryPct?: number|null,    // null = no battery telemetry
+   *   signalLostS?: number|null,   // null = no signal telemetry (T3)
+   * }} telemetry
+   * @returns {{
+   *   pitchStick:number, rollStick:number, throttleStick:number,
+   *   yaw:number, state:string, reason:string|null
+   * } | null}
+   *   override stick state when active, null otherwise so the host
+   *   keeps pilot input.
+   */
+  step(dt, telemetry) {
+    // Auto-trigger conditions (only when currently inactive).
+    if (!this.active) {
+      if (telemetry.batteryPct != null && telemetry.batteryPct < this.lowBatteryPct) {
+        this.engage("battery");
+      } else if (telemetry.signalLostS != null && telemetry.signalLostS > this.signalTimeoutS) {
+        this.engage("signal");
+      }
+    }
+    if (!this.active) return null;
+
+    const pos = telemetry.position;
+    const dx = this.home.x - pos.x;
+    const dz = this.home.z - pos.z;
+    const lateralDist = Math.hypot(dx, dz);
+    const targetY = this.home.y + this.rthAltitudeAGL;
+
+    let pitchStick = 0, rollStick = 0, throttleStick = 0;
+    let yaw = telemetry.yaw;
+
+    switch (this.state) {
+      case "ASCEND":
+        throttleStick = +1;
+        if (pos.y >= targetY - 2) {
+          this.state = "FLY_HOME";
+        }
+        break;
+
+      case "FLY_HOME":
+        if (lateralDist > this.arriveRadiusM) {
+          // Face launch (yaw convention matches Drone.forward(): forward
+          // unit vec = (-sin yaw, _, -cos yaw)). To point at (dx, dz)
+          // solve -sin yaw = dx/|d|, -cos yaw = dz/|d|.
+          yaw = Math.atan2(-dx, -dz);
+          // Mavic: pitchStick = -1 commands nose-down = forward flight.
+          pitchStick = -1;
+          throttleStick = 0;     // hold altitude
+        } else {
+          this.state = "DESCEND";
+        }
+        break;
+
+      case "DESCEND":
+        throttleStick = -1;
+        if (pos.y < this.landY) {
+          this.state = "LANDED";
+        }
+        break;
+
+      case "LANDED":
+        // Stay parked; host battery reset handles recharge after 2 s.
+        this.active = false;
+        break;
+    }
+
+    return { pitchStick, rollStick, throttleStick, yaw,
+             state: this.state, reason: this.reason };
+  }
+}

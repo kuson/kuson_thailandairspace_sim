@@ -1406,6 +1406,30 @@ export class UI {
       }
     }
 
+    // P4.T2: RTH ribbon. Visible whenever the state machine is active.
+    // Text varies by reason so the user can read why it engaged.
+    const rth = this.drone.rth;
+    if (rth) {
+      const ribbon = document.getElementById("rthRibbon");
+      if (ribbon) {
+        const want = !!rth.active;
+        const reasonText = rth.reason === "battery" ? "low battery"
+          : rth.reason === "signal" ? "signal lost"
+          : "manual";
+        const text = `⚠ RTH ENGAGED — Returning to launch (${reasonText} · ${rth.state})`;
+        const key = `${want ? 1 : 0}|${text}`;
+        if (this._hudCache.rthKey !== key) {
+          this._hudCache.rthKey = key;
+          if (want) {
+            ribbon.textContent = text;
+            ribbon.hidden = false;
+          } else {
+            ribbon.hidden = true;
+          }
+        }
+      }
+    }
+
     this._drawAltTape(altM);
     this._drawAttitudeIndicator(this.drone.bodyPitch ?? 0, this.drone.bodyRoll ?? 0);
 

@@ -4,7 +4,7 @@ import { FlightMode, EasyMode, resolveMode } from "./modes.js";
 import { QuadrotorModel, FixedWingModel } from "./physics.js";
 import { getInputSettings, pollGamepad } from "./input.js";
 import { currentWind, DEFAULT_WIND } from "./wind.js";
-import { BatterySystem } from "./failures.js";
+import { BatterySystem, ReturnToHome } from "./failures.js";
 
 const KMH_TO_MS = 1 / 3.6;
 const BOOST_FACTOR = 3;
@@ -895,6 +895,12 @@ export class Drone {
     // 100% so the chip stays visible but doesn't drift.
     this.battery = new BatterySystem();
 
+    // P4.T2: Return-to-Home state machine. Mavic-only; the override sticks
+    // ride the QuadrotorModel pipeline via _updateDrone. Home defaults to
+    // (0, 0, 0) — set on first DRONE-mode takeoff (y >= 1.5 m heuristic).
+    this.rth = new ReturnToHome();
+    this._homeArmed = false;
+
     this._bindEvents();
   }
 
@@ -1036,6 +1042,21 @@ export class Drone {
       if (k === "p") {
         this.paused = !this.paused;
         this.onPauseChange?.(this.paused);
+        e.preventDefault();
+        return;
+      }
+      // 'R' = toggle Return-to-Home. Only meaningful in DRONE mode; in
+      // other modes we no-op (other presets don't have a Mavic battery
+      // budget or quadrotor stick pipeline to override). Note: the
+      // playbook P4.T2 said "H" but H was already bound to ui.toggleAttitude
+      // (the horizon indicator, from P1.T-era). R = "Return" matches the
+      // standard drone-sim convention and avoids the binding collision —
+      // same deviation pattern as P0.T6 (M → K).
+      if (k === "r") {
+        if (this.flightMode === FlightMode.DRONE) {
+          if (this.rth.active) this.rth.disengage();
+          else this.rth.engage("manual");
+        }
         e.preventDefault();
         return;
       }
@@ -1316,6 +1337,44 @@ export class Drone {
    * Hover flag (Space) zeros all stick input so the drone holds position.
    */
   _updateDrone(dt) {
+    // P4.T2: snap launch home the first time we leave the ground in
+    // DRONE mode (y >= 1.5 m). Without this, RTH would always return to
+    // the world origin even if the user spawned somewhere else.
+    if (!this._homeArmed && this.position.y >= 1.5) {
+      this.rth.setHome(this.position);
+      this._homeArmed = true;
+    }
+
+    // RTH override — when active, the state machine drives the sticks
+    // instead of the pilot. Pad / keyboard input is suppressed for the
+    // duration (R key can still toggle disengage).
+    //
+    // batteryPct is passed unconditionally: we're already inside
+    // _updateDrone (i.e. flightMode === DRONE), and the battery's .active
+    // flag won't have flipped to true until *after* the host runs
+    // battery.step() later in physicsStep. Gating on .active would race
+    // the first auto-engage frame.
+    const rthOut = this.rth.step(dt, {
+      position: this.position,
+      yaw: this.bodyYaw,
+      batteryPct: this.battery.pct,
+      signalLostS: null,                    // P4.T3 wires this
+    });
+    if (rthOut) {
+      this.bodyYaw = rthOut.yaw;
+      const out = this._quadrotor.step(dt, {
+        pitchStick: rthOut.pitchStick,
+        rollStick:  rthOut.rollStick,
+        throttleStick: rthOut.throttleStick,
+        yaw: this.bodyYaw,
+        position: this.position,
+      });
+      this.bodyPitch = out.pitch;
+      this.bodyRoll  = out.roll;
+      this.currentSpeed = Math.hypot(out.horizSpeed, out.climb);
+      return;
+    }
+
     let pitchStick = 0, rollStick = 0, throttleStick = 0;
     if (!this.hover) {
       // W tips nose-DOWN to fly forward, so it commands NEGATIVE pitch (our

@@ -225,6 +225,18 @@
       opacity: 0.55;
     }
 
+    /* P4.T2: RTH ribbon — top-center banner shown while RTH is engaged. */
+    #rthRibbon {
+      position: fixed; top: 14px; left: 50%; transform: translateX(-50%);
+      padding: 6px 14px; border-radius: 8px;
+      font-family: var(--mono); font-size: 12px; letter-spacing: 0.04em;
+      color: #fff3cf; background: rgba(255,160,40,0.22);
+      border: 1px solid rgba(255,160,40,0.55);
+      box-shadow: var(--shadow); z-index: 50;
+      pointer-events: none;
+    }
+    #rthRibbon[hidden] { display: none; }
+
     /* ---- Minimap ---- */
     #minimap {
       position: fixed; left: 14px; bottom: 14px;
@@ -510,6 +522,7 @@
   <div id="viewModeBadge"></div>
   <div id="identifyPanel" aria-live="polite"></div>
   <div id="loading">Loading scene & airspace data…</div>
+  <div id="rthRibbon" role="status" aria-live="polite" hidden>⚠ RTH ENGAGED — Returning to launch</div>
 
   <div id="telemetryStack">
     <div id="hud">
