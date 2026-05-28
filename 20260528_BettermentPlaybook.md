@@ -843,13 +843,14 @@ Files this playbook **does** write:
 - **Commit:** `fix(tour): preserve paused state across tour lifecycle`
 
 ### Phase 6 smoke checklist
-- [ ] Identify-mode 3D sprites now appear
-- [ ] Colorblind hatching renders on Prohibited / Restricted
-- [ ] Touch-only devices show blocking warning
-- [ ] Dead code removed; no console warnings
-- [ ] Heading compass smooth across 0°/360° wrap
-- [ ] Final global regression passes
-- [ ] Tag `betterment-phase-6-complete` cut
+- [x] Identify-mode 3D sprites now appear — setHighlighted populates identifyLabelsGroup; verified 3 sprites on a 3-hit pick, 0 after deselect
+- [x] Colorblind hatching renders on Prohibited / Restricted — hatch/dots via createPattern in the minimap bake; 42 distinct alphas sampled inside a Restricted zone (solid fill ≈ 2). NOTE: applied to the radar, not the 3-D walls (ExtrudeGeometry world-scale UVs → tiled map renders as noise)
+- [x] Touch-only devices show blocking warning — notice + "Try anyway" gate; desktop start unaffected (simStarted guards visibility restart)
+- [x] Dead code removed; no console warnings — vantagePoint, setSpeedMultiplier, layoutIdentifyLabels gone; live page clean
+- [x] Heading compass smooth across 0°/360° wrap — numeric shortest-angle delta replaces toFixed(2) string compare
+- [x] Final global regression passes — sim starts, identify/minimap/HUD/tour all functional in preview
+- [x] Tag `betterment-phase-6-complete` cut
+- [x] P6.T7 bezel wash + P6.T8 tour-end paused state (already-correct, verified)
 
 ---
 
