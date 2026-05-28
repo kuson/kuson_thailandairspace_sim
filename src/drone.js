@@ -1193,9 +1193,6 @@ export class Drone {
     if (modeChanged) this.onFlightModeChange?.(this.flightMode);
   }
 
-  /** @deprecated use setSpeedPreset */
-  setSpeedMultiplier() {}
-
   activePreset() {
     return presetById(this.speedPresetId);
   }

@@ -437,6 +437,11 @@ export class AirspaceLayer {
       const lineMat = on ? ud.outlineMatHi : ud.outlineMatNormal;
       if (ud.topLine) ud.topLine.material = lineMat;
       if (ud.botLine) ud.botLine.material = lineMat;
+      // P6.T1: spawn the floating identify sprite for each highlighted
+      // volume. Previously setHighlighted only ever *removed* sprites, so
+      // identifyLabelsGroup stayed empty and the labels never appeared.
+      // _ensureIdentifyLabel self-guards against duplicates.
+      if (on) this._ensureIdentifyLabel(c.airspace.id);
     }
     for (const id of this._highlighted) {
       if (!next.has(id)) this._removeIdentifyLabel(id);
@@ -709,10 +714,6 @@ export class AirspaceLayer {
     const yaw = Math.atan2(-(cx - x), -(cz - z));
     const pitch = -Math.atan2(alt - midY, dist);
     return { x, y: alt, z, yaw, pitch, lookX: cx, lookZ: cz, direction };
-  }
-
-  vantagePoint(id) {
-    return this.overviewVantage(id);
   }
 
   /**
