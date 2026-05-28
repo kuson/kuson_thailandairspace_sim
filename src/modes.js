@@ -3,8 +3,8 @@
  *
  * HOVERCRAFT is the Easy-Mode default: kinematic 6-DoF strafe, go in any
  * direction, no inertia. Best for airspace exploration. The existing
- * `_updateFree` integrator in drone.js implements this — Phase 0 just
- * formalises it as a named mode.
+ * `_updateHovercraft` integrator in drone.js (originally `_updateFree`)
+ * implements this — Phase 0 formalises it as a named mode.
  *
  * DRONE is the realistic Mavic 3 mode (second-order quadrotor controller).
  * Phase 0 falls back to HOVERCRAFT for DRONE until Phase 3 wires the real

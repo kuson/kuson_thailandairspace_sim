@@ -1,5 +1,6 @@
 // drone.js — 6DoF drone movement with WASD + Q/E + mouse-look, plus pointer-lock.
 import * as THREE from "three";
+import { FlightMode, resolveMode } from "./modes.js";
 
 const KMH_TO_MS = 1 / 3.6;
 const BOOST_FACTOR = 3;
@@ -801,11 +802,11 @@ export class Drone {
     this.flightLocked = false;
 
     /**
-     * Flight model derived from preset:
-     *   "free"     — current 6-DoF strafing (Mavic 3, UFO)
-     *   "airplane" — always moving forward, A/D bank → yaw rate, no reverse
+     * Effective flight mode (FlightMode enum from ./modes.js). Honours Easy
+     * Mode, so this is HOVERCRAFT by default until the user presses M.
+     * Dispatch lives in update() below.
      */
-    this.flightModel = presetById("100x").model;
+    this.flightMode = resolveMode("100x");
     /** Smoothed forward airspeed (m/s) for airplane mode. */
     this.airspeedMs = presetById("100x").kmh * KMH_TO_MS;
     /** Target roll (rad) commanded by A/D in airplane mode. */
@@ -1041,15 +1042,15 @@ export class Drone {
     const changed = (this.speedPresetId !== p.id);
     this.speedPresetId = p.id;
     this.cruiseSpeedMs = p.kmh * KMH_TO_MS;
-    this.flightModel = p.model;
+    this.flightMode = resolveMode(p.id);
     // Airplane mode: lock airspeed to cruise on preset change; level the bank.
-    if (this.flightModel === "airplane") {
+    if (this.flightMode === FlightMode.AIRPLANE) {
       this.airspeedMs = p.kmh * KMH_TO_MS;
       this._targetRoll = 0;
       this.bodyRoll = 0;
       this.hover = false;  // hover meaningless for fixed-wing
     } else {
-      this.bodyRoll = 0;   // drones/UFO stay level
+      this.bodyRoll = 0;   // hovercraft / drone / UFO stay level
       this._targetRoll = 0;
     }
     if (changed) {
@@ -1078,18 +1079,30 @@ export class Drone {
 
     if (this.cameraMode) this._applyCameraMode();
 
-    if (this.flightModel === "airplane") {
-      this._updateAirplane(dt);
-    } else {
-      this._updateFree(dt);
+    // Dispatch on FlightMode. DRONE falls back to hovercraft kinematics
+    // until Phase 3 wires the second-order quadrotor controller.
+    switch (this.flightMode) {
+      case FlightMode.AIRPLANE:
+        this._updateAirplane(dt);
+        break;
+      case FlightMode.HOVERCRAFT:
+      case FlightMode.DRONE:
+      case FlightMode.UFO:
+      default:
+        this._updateHovercraft(dt);
+        break;
     }
 
     if (this.position.y < 1) this.position.y = 1;
     this._syncCamera();
   }
 
-  /** Original drone/UFO 6-DoF strafe physics. */
-  _updateFree(dt) {
+  /**
+   * Hovercraft (Easy Mode default): kinematic 6-DoF strafe — go in any
+   * direction, no inertia. Also the fallback for DRONE / UFO modes until
+   * Phase 3 replaces it with a real second-order controller.
+   */
+  _updateHovercraft(dt) {
     const speed = this.cruiseSpeedMs * (this.keys.has("shift") ? BOOST_FACTOR : 1);
     const fwd = this.forward();
     const rt = this.right();
