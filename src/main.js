@@ -323,6 +323,7 @@ if (isTouchOnly) {
 }
 
 let lastT = performance.now();
+let rafId = null;
 function _safe(label, fn) {
   try { return fn(); }
   catch (err) { console.error(`[loop:${label}]`, err); return undefined; }
@@ -373,8 +374,18 @@ function loop(t) {
     _safe("minimap", () => ui.drawMinimap());
   }
   _safe("render", () => renderer.render(scene, camera));
-  requestAnimationFrame(loop);
+  rafId = requestAnimationFrame(loop);
 }
-requestAnimationFrame(loop);
+rafId = requestAnimationFrame(loop);
+
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) {
+    if (rafId !== null) cancelAnimationFrame(rafId);
+    rafId = null;
+  } else if (rafId === null) {
+    lastT = performance.now();
+    rafId = requestAnimationFrame(loop);
+  }
+});
 
 window.__sim = { scene, camera, drone, layer, ground, flightHistory, tourGuide };
