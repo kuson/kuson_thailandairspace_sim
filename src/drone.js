@@ -93,8 +93,35 @@ function _wingHalf(side, { rootChord, tipChord, span, sweepBack, thickness, dihe
 
 function _wing(opts) {
   const g = new THREE.Group();
-  g.add(_wingHalf( 1, opts));   // right
-  g.add(_wingHalf(-1, opts));   // left
+  const right = _wingHalf( 1, opts);
+  const left  = _wingHalf(-1, opts);
+  // P2.T3: tag wing halves so _animateModel can deflect them as ailerons.
+  // The wing-half geometry has its root at x=0 and tip at side*halfSpan, so
+  // mesh.rotation.z pivots about the root for a visible wingtip tilt.
+  right.userData.surface = "aileron-R";
+  left.userData.surface  = "aileron-L";
+  g.add(right); g.add(left);
+
+  // P2.T3 nav lights at wingtips: red port (left), green starboard (right).
+  // Sized as a fraction of the wing's thickness so it's visible at all scales.
+  const halfSpan = opts.span / 2;
+  const tipDy = Math.tan(opts.dihedral) * halfSpan;
+  const tipZ  = -opts.rootChord / 2 + opts.sweepBack + opts.tipChord / 2;
+  const lightSize = Math.max(0.12, opts.thickness * 1.2);
+  const mkLight = (color, role) => {
+    const m = new THREE.Mesh(
+      new THREE.BoxGeometry(lightSize, lightSize, lightSize),
+      new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 1, fog: false }),
+    );
+    m.userData.navLight = role;
+    return m;
+  };
+  const portLight = mkLight(0xff2233, "port");
+  portLight.position.set(-halfSpan, tipDy, tipZ);
+  const stbdLight = mkLight(0x33ff44, "starboard");
+  stbdLight.position.set( halfSpan, tipDy, tipZ);
+  g.add(portLight); g.add(stbdLight);
+
   return g;
 }
 
@@ -116,7 +143,7 @@ function _windowStrip({ count = 8, spacing = 0.8, w = 0.25, h = 0.18 }) {
 }
 
 /** Spinning propeller disc (visual blur). Returns a Group with two thin blades. */
-function _prop({ diameter = 2.0, color = 0x202020 }) {
+function _prop({ diameter = 2.0, color = 0x202020, spinRate = 40 }) {
   const g = new THREE.Group();
   const blade1 = new THREE.Mesh(
     new THREE.BoxGeometry(diameter, 0.04, 0.18),
@@ -129,6 +156,10 @@ function _prop({ diameter = 2.0, color = 0x202020 }) {
   // Hub
   const hub = new THREE.Mesh(new THREE.SphereGeometry(0.18, 10, 8), _mat(0x111111));
   g.add(hub);
+  // P2.T3 tag: Drone._animateModel spins this group around its local Y axis
+  // every frame, scaled by spinRate and (for airplanes) throttle fraction.
+  g.userData.isProp = true;
+  g.userData.spinRate = spinRate;
   return g;
 }
 
@@ -1115,6 +1146,56 @@ export class Drone {
 
     if (this.position.y < 1) this.position.y = 1;
     this._syncCamera();
+    this._animateModel(dt);
+  }
+
+  /**
+   * P2.T3: per-frame model animation.
+   *   - Spin every group tagged userData.isProp around its local Y axis,
+   *     scaled by spinRate and (for airplanes) by the current throttle
+   *     fraction so a parked airplane's prop slows to idle.
+   *   - For AIRPLANE mode, deflect aileron-tagged wing halves around their
+   *     root by the current roll command (A/D keys).
+   *   - Pulse nav-light opacity in a 1.5 s sine cycle (red/green wingtip
+   *     lights from _wing()). Cheap, no extra geometry.
+   */
+  _animateModel(dt) {
+    const model = this._currentModel;
+    if (!model || !model.visible) return;
+    const t = (this._navLightT = (this._navLightT ?? 0) + dt);
+
+    // Throttle fraction drives prop spin for airplanes; non-airplane presets
+    // (Mavic, UFO) just spin at full nominal rate.
+    let throttle = 1;
+    if (this.flightMode === FlightMode.AIRPLANE) {
+      const preset = presetById(this.speedPresetId);
+      const maxMs = preset.kmh * KMH_TO_MS;
+      throttle = Math.max(0.15, Math.min(this.airspeedMs / maxMs, 1.2));
+    }
+
+    // Aileron deflection from keyboard input — only meaningful in AIRPLANE
+    // mode; hovercraft uses strafing, no ailerons.
+    let aileron = 0;
+    if (this.flightMode === FlightMode.AIRPLANE) {
+      if (this.keys.has("a")) aileron += 1;
+      if (this.keys.has("d")) aileron -= 1;
+    }
+    const aileronAngle = aileron * 0.18;     // visible but subtle wing flex
+    const navPulse = 0.4 + 0.6 * Math.abs(Math.sin(t * 3.5));
+
+    model.traverse((child) => {
+      if (child.userData?.isProp) {
+        child.rotation.y += (child.userData.spinRate ?? 40) * dt * throttle;
+      }
+      if (child.userData?.surface === "aileron-R") {
+        child.rotation.z = -aileronAngle;     // right wing tip up = roll left
+      } else if (child.userData?.surface === "aileron-L") {
+        child.rotation.z =  aileronAngle;     // left wing tip up = roll right
+      }
+      if (child.userData?.navLight && child.material) {
+        child.material.opacity = navPulse;
+      }
+    });
   }
 
   /**
