@@ -1104,6 +1104,13 @@ export class UI {
     ctx.arc(cx, cy, r, 0, Math.PI * 2);
     ctx.clip();
 
+    // P6.T7: faint 10% black wash inside the bezel. The indicator is
+    // otherwise transparent (sky/earth fills were removed) so the white
+    // ladder + horizon can wash out against a bright daytime sky; this
+    // gives just enough contrast without reintroducing an opaque face.
+    ctx.fillStyle = "rgba(0, 0, 0, 0.10)";
+    ctx.fillRect(0, 0, W, H);
+
     // Rotate by bank, slide by pitch (10° = `pxPerDeg` px).
     const pxPerDeg = r / 30;     // ±30° of pitch visible inside the bezel
     const pitchDeg = (pitchRad * 180) / Math.PI;
@@ -1603,8 +1610,17 @@ export class UI {
         this.headingDigital.textContent = `${headingDeg.toFixed(0)}° ${compass}${hov}`;
       }
     }
-    if (hdgMoving || this._hudCache.lastCompassDraw !== displayHdg.toFixed(2)) {
-      this._hudCache.lastCompassDraw = displayHdg.toFixed(2);
+    // P6.T6: decide redraw with a wrap-safe numeric delta, not a
+    // toFixed(2) string compare. The string form makes 359.99° and 0.01°
+    // look maximally different (a 359.98 "change") so the compass needle
+    // stutters every frame across the 360°→0° seam; the shortest-angle
+    // diff treats them as 0.02° apart.
+    const lastDrawn = this._hudCache.lastCompassDrawNum;
+    const drawDelta = lastDrawn == null
+      ? Infinity
+      : Math.abs(((displayHdg - lastDrawn + 540) % 360) - 180);
+    if (hdgMoving || drawDelta > 0.01) {
+      this._hudCache.lastCompassDrawNum = displayHdg;
       this._drawHeadingCompass(displayHdg);
     }
 
@@ -1738,6 +1754,44 @@ export class UI {
     this._bakeMinimapPolygons(wx, wz);
   }
 
+  // P6.T2: colorblind-safe category texture for the radar fills. Red and
+  // purple/orange airspaces are hard to tell apart by hue alone, so the
+  // two "you-may-not-just-fly-here" categories get a non-colour cue:
+  // diagonal hatch on Prohibited, a dot grid on Restricted. (The 3-D walls
+  // were left untextured — ExtrudeGeometry's world-scale UVs make a tiled
+  // diffuse map render as fine noise; the top-down radar is where pattern
+  // distinction is legible.) Patterns are cached by kind+colour+tile.
+  _categoryMinimapPattern(ctx, category, cssColor, tilePx) {
+    const kind = category === "Prohibited" ? "hatch"
+               : category === "Restricted" ? "dots" : null;
+    if (!kind) return null;
+    this._patternCache ??= new Map();
+    const key = `${kind}|${cssColor}|${tilePx}`;
+    const cached = this._patternCache.get(key);
+    if (cached) return cached;
+    const t = tilePx;
+    const pc = document.createElement("canvas");
+    pc.width = t; pc.height = t;
+    const p = pc.getContext("2d");
+    p.strokeStyle = cssColor;
+    p.fillStyle = cssColor;
+    if (kind === "hatch") {
+      p.lineWidth = Math.max(1, t / 6);
+      p.beginPath();
+      p.moveTo(0, t); p.lineTo(t, 0);
+      p.moveTo(-t, t); p.lineTo(t, -t);
+      p.moveTo(0, 2 * t); p.lineTo(2 * t, 0);
+      p.stroke();
+    } else {
+      p.beginPath();
+      p.arc(t / 2, t / 2, Math.max(1, t / 5), 0, Math.PI * 2);
+      p.fill();
+    }
+    const pat = ctx.createPattern(pc, "repeat");
+    this._patternCache.set(key, pat);
+    return pat;
+  }
+
   _bakeMinimapPolygons(bx, bz) {
     const SIZE = 2048;
     const BAKE_WORLD_M = 700_000;       // 700 km span → ~342 m/px
@@ -1777,6 +1831,10 @@ export class UI {
       }
       ctx.closePath();
       ctx.fill();
+      // P6.T2: overlay the colorblind pattern on Prohibited / Restricted.
+      const pat = this._categoryMinimapPattern(
+        ctx, c.airspace.category, cssColor, Math.max(6, Math.round(sw(7))));
+      if (pat) { ctx.fillStyle = pat; ctx.fill(); }
       ctx.stroke();
       if (on) {
         ctx.strokeStyle = "rgba(102, 255, 204, 0.85)";
