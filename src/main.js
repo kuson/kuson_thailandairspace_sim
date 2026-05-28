@@ -270,6 +270,10 @@ flightHistory.onChange = (state) => ui?.updateHistoryButtons?.(state);
   scene.add(layer.labelRoot);
   scene.add(layer.identifyLabelsGroup);
 
+  // P4.T5: hand the airspace layer to the drone so its tiered geofence
+  // can run unfiltered membership queries each substep.
+  drone.setAirspaceLayer(layer);
+
   tourGuide = new TourGuide({
     drone,
     flyTo,
@@ -416,6 +420,10 @@ function loop(t) {
       ui?.updateIdentifyPanel([]);
     }
   });
+
+  // P4.T5: pulse authorisation-airspace outlines at 1 Hz so the user sees
+  // the volume that's currently capping their altitude.
+  _safe("geofence-flash", () => layer.tickGeofenceFlash(dt));
 
   _safe("label-scales", () => layer.updateLabelScales(camera, renderer));
   _safe("city-scales", () => cityBeacons.updateScales(camera, renderer));

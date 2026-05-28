@@ -66,7 +66,7 @@ function outlineMatFor(color, baseOpacity, highlight) {
   return m;
 }
 
-const MILITARY_CTR_IDS = new Set([
+export const MILITARY_CTR_IDS = new Set([
   "KPS-CTR", "VTPI-CTR", "VTBC-CTR", "VTUR-KKZ", "VTBU-CTR",
 ]);
 
@@ -266,7 +266,7 @@ function pointToSegmentDistSq(px, pz, ax, az, bx, bz) {
  * volume. Combines horizontal (ring) distance with vertical (lower/upper)
  * clearance using a 3-D Pythagorean.
  */
-function nearestDistanceTo(px, py, pz, c) {
+export function nearestDistanceTo(px, py, pz, c) {
   const horizInside = pointInRing(px, pz, c.ring);
   let dH = 0;
   if (!horizInside) {
@@ -509,6 +509,98 @@ export class AirspaceLayer {
       if (pointInRing(x, z, c.ring)) hits.push(c.airspace);
     }
     return hits;
+  }
+
+  // P4.T5 bug fix (pass3.md #11): geofence membership must be evaluated even
+  // when military airspaces are visually hidden. Same as airspacesAt but
+  // skips the showMilitary filter so Geofence sees no-fly hits regardless of
+  // the user's display toggle.
+  airspacesAtUnfiltered(x, y, z) {
+    const hits = [];
+    for (const c of this.compiled) {
+      if (y < c.lower || y > c.upper) continue;
+      if (pointInRing(x, z, c.ring)) hits.push(c.airspace);
+    }
+    return hits;
+  }
+
+  /**
+   * P4.T5: nearest 2-D ring distance for advisory-tier geofence. Considers
+   * any compiled airspace whose category matches `categories` (e.g. CTR /
+   * TMA). Inside the ring → distance 0 and the id is reported.
+   * Vertical extent is ignored (advisory ring is a horizontal proximity).
+   * Military filter is intentionally bypassed (same reason as
+   * airspacesAtUnfiltered).
+   */
+  nearestLateralRingDistance(x, z, categories) {
+    const catSet = categories instanceof Set ? categories : new Set(categories);
+    let best = Infinity;
+    const insideIds = [];
+    for (const c of this.compiled) {
+      if (!catSet.has(c.airspace.category)) continue;
+      if (pointInRing(x, z, c.ring)) {
+        best = 0;
+        insideIds.push(c.airspace.id);
+        continue;
+      }
+      let dSq = Infinity;
+      const ring = c.ring;
+      for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+        const a = ring[j], b = ring[i];
+        const s = pointToSegmentDistSq(x, z, a.x, a.z, b.x, b.z);
+        if (s < dSq) dSq = s;
+      }
+      const d = Math.sqrt(dSq);
+      if (d < best) best = d;
+    }
+    return { distanceM: best, insideIds };
+  }
+
+  /**
+   * P4.T5: pulse the outline of authorisation-tier airspaces at 1 Hz so the
+   * user has an obvious 3-D cue that the ceiling clamp is active. We toggle
+   * topLine/botLine.visible on a 0.5 s on / 0.5 s off cycle for the supplied
+   * id set; everything else is left alone. Passing an empty set clears the
+   * effect (outlines restored to visible).
+   */
+  setGeofenceFlash(idSet) {
+    const next = idSet instanceof Set ? idSet : new Set(idSet);
+    const prev = this._geofenceFlashIds;
+    // Called every substep (120 Hz) by the geofence host — skip the work
+    // when the set hasn't actually changed.
+    if (prev && prev.size === next.size) {
+      let same = true;
+      for (const id of next) { if (!prev.has(id)) { same = false; break; } }
+      if (same) return;
+    }
+    // Restore outlines for ids that are no longer flashing.
+    if (prev) {
+      for (const id of prev) {
+        if (next.has(id)) continue;
+        const c = this._compiledById.get(id);
+        if (!c) continue;
+        const ud = c.mesh.userData;
+        if (ud.topLine) ud.topLine.visible = true;
+        if (ud.botLine) ud.botLine.visible = true;
+      }
+    }
+    this._geofenceFlashIds = next;
+    if (next.size === 0) this._geofenceFlashClock = 0;
+  }
+
+  tickGeofenceFlash(dt) {
+    const ids = this._geofenceFlashIds;
+    if (!ids || ids.size === 0) return;
+    this._geofenceFlashClock = (this._geofenceFlashClock ?? 0) + dt;
+    // 1 Hz square wave: visible 0–0.5 s, hidden 0.5–1.0 s.
+    const on = (this._geofenceFlashClock % 1) < 0.5;
+    for (const id of ids) {
+      const c = this._compiledById.get(id);
+      if (!c) continue;
+      const ud = c.mesh.userData;
+      if (ud.topLine) ud.topLine.visible = on;
+      if (ud.botLine) ud.botLine.visible = on;
+    }
   }
 
   /** Fly-to overview at 40 000 ft AMSL, framed to fit the volume. */

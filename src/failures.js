@@ -336,3 +336,136 @@ export class RadioLink {
     this.lostS = 0;
   }
 }
+
+// P4.T5: tiered geofence enforcement.
+//
+// Three tiers, matching the CAAT "stay clear / coordinate / forbidden"
+// ladder the playbook references:
+//   - advisory       : within 5 NM laterally of any CTR/TMA. Yellow ribbon
+//                      only; no constraint on movement. Cue the user that
+//                      they're approaching controlled airspace.
+//   - authorisation  : laterally inside a Class D CTR or TMA. Clamp
+//                      altitude to ≤ 120 m AGL (the CAAT recreational
+//                      ceiling), red ribbon, outline flashes in the 3-D
+//                      view at 1 Hz so the user can find the volume.
+//   - noFly          : inside Prohibited or any military CTR (matched via
+//                      MILITARY_CTR_IDS / isMilitaryAirspace at the host).
+//                      Aircraft is frozen — host reverts position to the
+//                      last safe sample. Bug-fix per pass3.md #11: even
+//                      when the operator has hidden military airspaces
+//                      visually, geofence still triggers (the host queries
+//                      airspacesAtUnfiltered, not airspacesAt).
+//
+// This class is pure (no THREE / DOM). The host owns the AirspaceLayer,
+// runs the unfiltered membership query each substep, and applies the
+// position clamp / freeze that evaluate() returns. AGL handling is
+// punted to Phase 4 T4: until terrain.bin lands, agl == y (AMSL above
+// the world's flat zero plane), which is correct for the Bangkok delta
+// where most early geofence smoke-testing happens. When T4 lands, the
+// host just swaps the agl source — Geofence itself is terrain-agnostic.
+const GEOFENCE_DEFAULTS = Object.freeze({
+  advisoryRangeM: 5 * 1852,   // 5 NM (NM_TO_M = 1852)
+  authCeilingAGLM: 120,       // CAAT recreational ceiling
+});
+
+export class Geofence {
+  constructor(opts = {}) {
+    Object.assign(this, GEOFENCE_DEFAULTS, opts);
+    /** 'clear' | 'advisory' | 'authorisation' | 'noFly' */
+    this.tier = "clear";
+    this.advisoryIds = [];
+    this.authIds = [];
+    this.noFlyIds = [];
+    /** UI-ready ribbon descriptor or null. */
+    this.ribbon = null;
+    /** True for one step on the first entry into noFly. UI surfaces a
+     *  one-shot popup keyed off this flag. */
+    this.noFlyJustEntered = false;
+    this._prevNoFly = false;
+  }
+
+  /**
+   * @param {{
+   *   y: number,                  // AMSL altitude (m)
+   *   agl: number,                // AGL altitude (m); equals y until P4.T4
+   *   advisoryDistanceM: number,  // nearest lateral distance to any CTR/TMA
+   *   advisoryInsideIds: string[],
+   *   authHits:  Array<{id:string, shortName:string}>,
+   *   noFlyHits: Array<{id:string, shortName:string}>,
+   * }} q
+   * @returns {{ clampY: number|null, freeze: boolean }}
+   *   clampY: when non-null, host should clamp position.y down to this AMSL.
+   *   freeze: when true, host should revert position to its last-safe sample
+   *           and zero velocities so the aircraft sticks at the boundary.
+   */
+  evaluate(q) {
+    this.noFlyJustEntered = false;
+
+    if (q.noFlyHits && q.noFlyHits.length > 0) {
+      this.tier = "noFly";
+      this.noFlyIds = q.noFlyHits.map((a) => a.id);
+      this.authIds = [];
+      this.advisoryIds = [];
+      const names = q.noFlyHits.map((a) => a.shortName).join(", ");
+      this.ribbon = {
+        kind: "noFly",
+        text: `✕ NO-FLY ZONE — ${names} · frozen at boundary`,
+      };
+      if (!this._prevNoFly) this.noFlyJustEntered = true;
+      this._prevNoFly = true;
+      return { clampY: null, freeze: true };
+    }
+    this._prevNoFly = false;
+
+    if (q.authHits && q.authHits.length > 0) {
+      this.tier = "authorisation";
+      this.authIds = q.authHits.map((a) => a.id);
+      this.noFlyIds = [];
+      this.advisoryIds = q.advisoryInsideIds ?? [];
+      const names = q.authHits.map((a) => a.shortName).join(", ");
+      this.ribbon = {
+        kind: "authorisation",
+        text: `⚠ AUTHORISATION REQUIRED — ${names} · ceiling ${this.authCeilingAGLM} m AGL`,
+      };
+      // Clamp AMSL to ground + 120 m. Without T4, ground = y - agl = 0 most
+      // places, so the clamp resolves to 120 m AMSL.
+      const ground = q.y - q.agl;
+      const ceiling = ground + this.authCeilingAGLM;
+      return {
+        clampY: q.y > ceiling ? ceiling : null,
+        freeze: false,
+      };
+    }
+
+    const advisoryByProx = q.advisoryDistanceM != null &&
+                            q.advisoryDistanceM <= this.advisoryRangeM;
+    if (advisoryByProx) {
+      this.tier = "advisory";
+      this.advisoryIds = q.advisoryInsideIds ?? [];
+      this.authIds = [];
+      this.noFlyIds = [];
+      this.ribbon = {
+        kind: "advisory",
+        text: `▲ ADVISORY — controlled airspace within 5 NM`,
+      };
+      return { clampY: null, freeze: false };
+    }
+
+    this.tier = "clear";
+    this.advisoryIds = [];
+    this.authIds = [];
+    this.noFlyIds = [];
+    this.ribbon = null;
+    return { clampY: null, freeze: false };
+  }
+
+  reset() {
+    this.tier = "clear";
+    this.advisoryIds = [];
+    this.authIds = [];
+    this.noFlyIds = [];
+    this.ribbon = null;
+    this.noFlyJustEntered = false;
+    this._prevNoFly = false;
+  }
+}

@@ -1436,6 +1436,44 @@ export class UI {
       }
     }
 
+    // P4.T5: tiered geofence ribbon + one-shot no-fly toast. Ribbon text +
+    // tier class come straight from the Geofence; the toast is fired the
+    // single substep that .noFlyJustEntered flips true and auto-fades.
+    const gf = this.drone.geofence;
+    if (gf) {
+      const ribbon = document.getElementById("geofenceRibbon");
+      if (ribbon) {
+        const r = gf.ribbon;
+        const key = r ? `${r.kind}|${r.text}` : "off";
+        if (this._hudCache.geofenceKey !== key) {
+          this._hudCache.geofenceKey = key;
+          if (r) {
+            ribbon.textContent = r.text;
+            ribbon.className = `tier-${r.kind}`;
+            ribbon.hidden = false;
+          } else {
+            ribbon.hidden = true;
+          }
+        }
+      }
+      if (gf.noFlyJustEntered) {
+        const toast = document.getElementById("geofenceNoFlyToast");
+        if (toast) {
+          const names = (gf.noFlyIds ?? []).join(", ");
+          toast.textContent =
+            `NO-FLY ZONE — ${names}\n` +
+            `Restricted military / prohibited airspace. Flight frozen at boundary.`;
+          toast.hidden = false;
+          toast.classList.remove("fade");
+          clearTimeout(this._noFlyToastT);
+          this._noFlyToastT = setTimeout(() => {
+            toast.classList.add("fade");
+            setTimeout(() => { toast.hidden = true; }, 400);
+          }, 4500);
+        }
+      }
+    }
+
     // P4.T2: RTH ribbon. Visible whenever the state machine is active.
     // Text varies by reason so the user can read why it engaged.
     const rth = this.drone.rth;

@@ -4,7 +4,8 @@ import { FlightMode, EasyMode, resolveMode } from "./modes.js";
 import { QuadrotorModel, FixedWingModel } from "./physics.js";
 import { getInputSettings, pollGamepad } from "./input.js";
 import { currentWind, DEFAULT_WIND } from "./wind.js";
-import { BatterySystem, ReturnToHome, RadioLink } from "./failures.js";
+import { BatterySystem, ReturnToHome, RadioLink, Geofence } from "./failures.js";
+import { isMilitaryAirspace } from "./airspace.js";
 
 const KMH_TO_MS = 1 / 3.6;
 const BOOST_FACTOR = 3;
@@ -907,6 +908,13 @@ export class Drone {
     // > 3 s of contiguous loss triggers signal-RTH via the host wiring.
     this.radio = new RadioLink();
 
+    // P4.T5: tiered geofence. Pure evaluator — host owns the AirspaceLayer
+    // and feeds membership queries each substep. Set via setAirspaceLayer()
+    // from main.js after the layer JSON has finished loading.
+    this.geofence = new Geofence();
+    this._airspaceLayer = null;
+    this._lastSafePos = null;
+
     this._bindEvents();
   }
 
@@ -1256,7 +1264,98 @@ export class Drone {
       y: this.position.y,
     });
 
+    // P4.T5: tiered geofence. Evaluated AFTER physics so the membership
+    // query sees the integrated position. Applies to every flight mode —
+    // the educational intent is "this airspace means something to *any*
+    // pilot", not "this only matters for the Mavic". Tour mode is gated
+    // out at the host (main.js skips physicsStep while tour/flyTo drive
+    // the camera) so synthetic playback never triggers freezes.
+    this._applyGeofence(dt);
+
     if (this.position.y < 1) this.position.y = 1;
+  }
+
+  // P4.T5 host wiring. main.js calls this once the AirspaceLayer JSON has
+  // finished loading. Passing null disables the geofence (useful for tests
+  // and headless runs).
+  setAirspaceLayer(layer) {
+    this._airspaceLayer = layer;
+    this.geofence.reset();
+    this._lastSafePos = { x: this.position.x, y: this.position.y, z: this.position.z };
+  }
+
+  _applyGeofence(dt) {
+    const layer = this._airspaceLayer;
+    if (!layer) return;
+    const p = this.position;
+
+    // Bug fix per pass3.md #11: use the unfiltered query so geofence still
+    // fires even when the operator has hidden military airspaces visually.
+    const unfiltered = layer.airspacesAtUnfiltered(p.x, p.y, p.z);
+    const noFlyHits = [];
+    const authHits = [];
+    for (const a of unfiltered) {
+      if (a.category === "Prohibited" || isMilitaryAirspace(a)) {
+        noFlyHits.push({ id: a.id, shortName: a.shortName });
+      } else if (a.category === "TMA" ||
+                 (a.category === "CTR" && a.class === "D")) {
+        authHits.push({ id: a.id, shortName: a.shortName });
+      }
+    }
+    const advisory = layer.nearestLateralRingDistance(p.x, p.z, ["CTR", "TMA"]);
+
+    // Until P4.T4 (terrain.bin) lands, AGL == AMSL — ground sits at y=0
+    // in the world frame, which is exactly correct around Bangkok and a
+    // mild under-estimate up north. The host can swap this expression for
+    // a terrain lookup later without touching Geofence itself.
+    const agl = p.y;
+
+    const out = this.geofence.evaluate({
+      y: p.y,
+      agl,
+      advisoryDistanceM: advisory.distanceM,
+      advisoryInsideIds: advisory.insideIds,
+      authHits,
+      noFlyHits,
+    });
+
+    if (out.freeze) {
+      if (this._lastSafePos) {
+        this.position.x = this._lastSafePos.x;
+        this.position.y = this._lastSafePos.y;
+        this.position.z = this._lastSafePos.z;
+      }
+      // Zero the quadrotor's velocities so the controller can't immediately
+      // ram the boundary again next substep. Other flight models read the
+      // position back from this.position so reverting position is enough.
+      if (this._quadrotor) {
+        if (this._quadrotor.velocityHoriz) {
+          this._quadrotor.velocityHoriz.x = 0;
+          this._quadrotor.velocityHoriz.z = 0;
+        }
+        if ("velocityVert" in this._quadrotor) this._quadrotor.velocityVert = 0;
+        if ("currentClimb" in this._quadrotor) this._quadrotor.currentClimb = 0;
+      }
+      this.airspeedMs = 0;
+    } else {
+      if (out.clampY != null && p.y > out.clampY) {
+        this.position.y = out.clampY;
+        if (this._quadrotor && this._quadrotor.velocityVert > 0) {
+          this._quadrotor.velocityVert = 0;
+        }
+      }
+      // Update the last-safe sample only when we're not frozen and not
+      // currently inside a no-fly zone — the geofence's reverted position
+      // is by definition safe, so refreshing on every clear/advisory/auth
+      // step keeps the snapback point honest.
+      if (!this._lastSafePos) this._lastSafePos = { x: 0, y: 0, z: 0 };
+      this._lastSafePos.x = this.position.x;
+      this._lastSafePos.y = this.position.y;
+      this._lastSafePos.z = this.position.z;
+    }
+
+    // Drive the 1 Hz outline pulse for authorisation-tier airspaces.
+    layer.setGeofenceFlash(new Set(this.geofence.authIds));
   }
 
   // P3.T1: per-frame, non-physics work — camera follow + model animation.

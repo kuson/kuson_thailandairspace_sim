@@ -261,6 +261,52 @@
     }
     #rthRibbon[hidden] { display: none; }
 
+    /* P4.T5: geofence ribbon. Tier drives color band — advisory yellow,
+       authorisation orange-red, no-fly red with a slow pulse. Sits below
+       the RTH ribbon so both can be visible at once (low-bat RTH while
+       passing through a CTR is plausible). */
+    #geofenceRibbon {
+      position: fixed; top: 50px; left: 50%; transform: translateX(-50%);
+      padding: 6px 14px; border-radius: 8px;
+      font-family: var(--mono); font-size: 12px; letter-spacing: 0.04em;
+      color: #fff; box-shadow: var(--shadow); z-index: 49;
+      pointer-events: none;
+    }
+    #geofenceRibbon[hidden] { display: none; }
+    #geofenceRibbon.tier-advisory {
+      background: rgba(255,220,80,0.18);
+      border: 1px solid rgba(255,220,80,0.55);
+      color: #fff3a0;
+    }
+    #geofenceRibbon.tier-authorisation {
+      background: rgba(255,80,60,0.22);
+      border: 1px solid rgba(255,80,60,0.65);
+      color: #ffd6cc;
+    }
+    #geofenceRibbon.tier-noFly {
+      background: rgba(255,30,30,0.32);
+      border: 1px solid rgba(255,30,30,0.85);
+      color: #fff;
+      animation: geofenceNoFlyPulse 1s steps(2) infinite;
+    }
+    @keyframes geofenceNoFlyPulse {
+      0% { opacity: 1; } 50% { opacity: 0.55; } 100% { opacity: 1; }
+    }
+    /* One-shot toast that names the no-fly zone the user just hit. */
+    #geofenceNoFlyToast {
+      position: fixed; top: 92px; left: 50%; transform: translateX(-50%);
+      padding: 10px 16px; border-radius: 10px;
+      background: rgba(20,8,10,0.92);
+      border: 1px solid rgba(255,80,60,0.75);
+      color: #fff;
+      font-family: var(--mono); font-size: 12px; max-width: 420px;
+      text-align: center; box-shadow: var(--shadow); z-index: 51;
+      pointer-events: none;
+      transition: opacity 0.35s ease;
+    }
+    #geofenceNoFlyToast[hidden] { display: none; }
+    #geofenceNoFlyToast.fade { opacity: 0; }
+
     /* ---- Minimap ---- */
     #minimap {
       position: fixed; left: 14px; bottom: 14px;
@@ -547,6 +593,8 @@
   <div id="identifyPanel" aria-live="polite"></div>
   <div id="loading">Loading scene & airspace data…</div>
   <div id="rthRibbon" role="status" aria-live="polite" hidden>⚠ RTH ENGAGED — Returning to launch</div>
+  <div id="geofenceRibbon" role="status" aria-live="polite" hidden></div>
+  <div id="geofenceNoFlyToast" role="alert" aria-live="assertive" hidden></div>
 
   <div id="telemetryStack">
     <div id="hud">
