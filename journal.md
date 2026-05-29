@@ -879,3 +879,29 @@ Reload browser and try: cycle speed presets to see all 5 aircraft models in chas
 - TaskList: 5 new tasks all completed (altitude dock, attitude indicator, ground detail, airplane + pause + UFO, docs).
 - No git commit (not requested).
 - No background processes.
+
+---
+
+## 2026-05-29 (a) — Betterment-2 Phase 1: critical correctness (E4 + E1 root)
+
+**Operator:** Claude Code (Opus 4.7/4.8), session continued from playbook authoring.
+**Branch:** `betterment2-20260529` (cut from `main` @ 07b428d).
+**Playbook:** [20260529_betterment2.md](20260529_betterment2.md). **Tracker:** [20260529_todo.md](20260529_todo.md).
+
+### Context
+Operator field reports E1–E4 + external audit ([20260529_afterbettermentreport.md](20260529_afterbettermentreport.md)) P0 items. Decisions captured via interview before any code (see playbook §0): Strict-CAAT toggle default OFF, keep 100× UFO default, sky-blue-to-60km, scope = E1–E4 + P0.
+
+### Done this phase
+- **P1.T1** (9394d28) — Diagnosed E4 "airspace click stays put." Root cause: `tourGuide.stop({silent:true})` skipped `onStop`, leaving `UI._tourRunning` stuck true → silent no-op on card clicks (ui.js:1317/1324). Wrote `doc/flyto_state_machine.md`.
+- **P1.T2** (986f01c) — Fixed at root. `tourGuide.stop` always fires `onStop({silent})` (silent now only scopes the history entry). `startFlyTo` returns `{ok, reason?}`. New `UI._requestFlyTo` surfaces lockout reasons as a `#flyToToast` — never silent. Browser-verified: stuck-flag clears, valid click flies, tour-click + invalid-id toast.
+- **P1.T3** (2e77d5d) — E1 "kicked back to 100m" = the auth-tier `position.y` clamp in `Drone._applyGeofence`. Removed; replaced with transition-edged `geofence:authCeilingExceeded` window event for the Phase-2 alert queue. Verified: Learjet at 3000m inside Bangkok TMA holds altitude; one event fires.
+- **P1.T4** (c57c28e) — New `src/simState.js` singleton (`isStrictCaat()`, the §3.12 seam, persisted). HUD "CAAT: OFF/ON" row at bottom of telemetry. No-fly snapback now gated on `isStrictCaat()` — default OFF = advisory only (warning toast unaffected). Verified: toggle persists; OFF no snapback, ON snaps back.
+
+### Key discovery (not a bug)
+The preview browser served a **long-stale ES-module graph** (pre-betterment `_updateFree`/`setSpeedMultiplier` instead of `physicsStep`), making the app look broken — blank list, bootstrap stall, per-frame `physicsStep is not a function`. The HTTP server served correct files; only the browser module cache was stale. Bust: `fetch('/src/*.js',{cache:'reload'})` for every module, then reload. Logged in todo "Verification gotchas." Verified the clean base showed the identical symptom with my changes stashed — confirming it was environmental, not code.
+
+### State at close
+- Phase 1 complete + smoke green (boot clean, 144 airspaces, physics/geofence live, CAAT default OFF). Tag `betterment2-phase-1-complete` applied.
+- Net E1/E4 effect: by default nothing is enforced (no altitude clamp, no no-fly snapback) so the Airspace Tour and jets fly freely; warnings still surface. Strict CAAT opt-in restores enforcement.
+- **Next action:** Phase 2 (P2.T1) — per-preset ceiling table in `src/modes.js`, then `altitudeAdvisor.js` + `alerts.js`. The `geofence:authCeilingExceeded` event already emits, awaiting the queue subscriber.
+- Working tree clean. Not pushed (push not requested).
