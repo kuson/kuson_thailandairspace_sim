@@ -978,3 +978,34 @@ This session's preview ran with `document.hidden = true`, which pauses the rAF r
 - Phases 1–4 complete + tagged. E1, E4, E2, E3 + external P0 #1/#3/#4/#7 all delivered.
 - **Next action:** Phase 5 (P5.T1) — update spec.md/README to match shipped behaviour; journal closeout; PR. (Note: spec §10 already drafted in the planning commit; reconcile against final implementation — e.g. ceilings live in `ceilings.js`, the Mavic auth-clamp is applied in `_applyGeofence` not `altitudeAdvisor.js`, sky fix is camera-follow.)
 - Working tree clean. Not pushed.
+
+---
+
+## 2026-05-29 (e) — Betterment-2 Phase 5: documentation & release · STATUS: BETTERMENT2_COMPLETE
+
+**Operator:** Claude Code (Opus 4.8). **Branch:** `betterment2-20260529`.
+
+### Done this phase
+- **P5.T1** (ae74150) — Reconciled `spec.md` §3/§10 with the shipped implementation: clamp lives in `Drone._applyGeofence` (not `altitudeAdvisor.js`); ceilings in `ceilings.js`; advisor CAAT-independent; sky fix is camera-follow; history taxonomy = shipped types (boundary in, alert-change out); fly-to root cause; identify cap; ground (linewidth no-op, prominence halos); `__sim` surface + file layout.
+- **P5.T2** (54237c1) — Updated `README.md`: advisory-by-default geofence + opt-in Strict CAAT, altitude warnings + per-aircraft limits, collapsible history, camera-following blue sky, single alert banner, new modules in file layout.
+- **P5.T3** — This closeout block.
+- **P5.T4** — PR (see below).
+
+### Betterment-2 outcome (Phases 1–5)
+Delivered all four operator field reports + the four external P0 items in scope:
+- **E1** — altitude clamp removed; per-aircraft op/reg ceilings with always-on warnings; Strict-CAAT toggle (default OFF) gates the only enforcement (Mavic 120 m AGL clamp + no-fly snapback). Jets no longer get "kicked back."
+- **E2** — flight history rebuilt as a 100-entry collapsible event log; course/location/state events, view changes excluded.
+- **E3** — sky dome follows the camera (kills the black void) + vivid blue to 60 km; ground detail z12 + bolder provinces + city halos.
+- **E4** — airspace-click fly-to never silently no-ops; lockout reasons toast.
+- **External P0** — #1 single-banner alert priority queue; #3 RTH reason sync; #4 identify card cap; #5 spec drift; #7 undo/redo index.
+
+Parked (in `20260529_todo.md` Discovered): external P1/P2 (stall callout, onboarding, 9 km stand-off chip, time-of-day, contact shadow, tablet path, Line2 outlines, filter virtualisation, magnetic variation, cloud layer).
+
+### Tags
+`betterment2-phase-1-complete` … `-phase-4-complete`, plus `betterment2-complete` at release.
+
+### Verification caveat (carried)
+This session's preview browser ran `document.hidden = true`, pausing the rAF loop (betterment-1 P1.T6), so live HUD/screenshot capture was unavailable for Phase 4. All logic verified via state inspection + direct `updateHUD`/advisor/queue calls + a Node ESM harness for flight history. A foreground-tab visual pass (sky colour, ground crispness, halos, tape chip, identify cap layout) is the one remaining manual smoke.
+
+### State at close
+- Working tree clean. Branch ready for PR/merge.
