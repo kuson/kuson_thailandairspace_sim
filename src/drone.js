@@ -1336,11 +1336,28 @@ export class Drone {
       }
       this.airspeedMs = 0;
     } else {
-      if (out.clampY != null && p.y > out.clampY) {
-        this.position.y = out.clampY;
-        if (this._quadrotor && this._quadrotor.velocityVert > 0) {
-          this._quadrotor.velocityVert = 0;
-        }
+      // Betterment-2 P1.T3: the authorisation-tier ceiling is ADVISORY by
+      // default. We no longer clamp position.y here — that silently kicked
+      // jets/airliners back to ~120 m AGL the instant they entered any TMA
+      // (operator report E1: "fly to 1.5 km, get kicked back to 100 m").
+      // Instead emit a transition-edged event for the alert queue (P2.T4) to
+      // surface as a warning. Strict-CAAT mode (P2.T6) re-applies the clamp
+      // for the Mavic 3 only, inside altitudeAdvisor.js.
+      this._authCeilingExceeded ??= false;
+      const exceeded = out.clampY != null && p.y > out.clampY;
+      if (exceeded !== this._authCeilingExceeded) {
+        this._authCeilingExceeded = exceeded;
+        try {
+          window.dispatchEvent(new CustomEvent("geofence:authCeilingExceeded", {
+            detail: {
+              exceeded,
+              clampY: out.clampY ?? null,
+              currentY: p.y,
+              agl,
+              authIds: [...this.geofence.authIds],
+            },
+          }));
+        } catch { /* no window (unit tests) — state is still tracked */ }
       }
       // Update the last-safe sample only when we're not frozen and not
       // currently inside a no-fly zone — the geofence's reverted position
