@@ -48,6 +48,79 @@ const WALL_MAT_HIGHLIGHT = new THREE.MeshBasicMaterial({
   depthTest: true,
 });
 
+// P6.T2 (3-D walls): colorblind-safe patterns on the two "restricted-ish"
+// categories — diagonal hatch on Prohibited, a dot grid on Restricted —
+// so the volume is distinguishable without relying on hue. The pattern is
+// PROCEDURAL from world position (triplanar-ish), injected via
+// onBeforeCompile. World-space rather than UV avoids the ExtrudeGeometry
+// world-scale-UV noise that made a tiled diffuse map unusable; combining
+// x+z for the horizontal coord avoids per-orientation streaking on the
+// vertical walls (degenerate only for exact NW–SE walls, which circles
+// average out). Non-patterned categories keep the shared WALL_MAT
+// singletons, so this only adds 4 materials total (2 kinds × 2 states).
+const WALL_PATTERN_KIND = { Prohibited: 1, Restricted: 2 };   // 1 hatch, 2 dots
+const WALL_PAT_PERIOD = 450;        // metres between hatch lines / dot cells
+const WALL_PAT_STRENGTH = 0.5;      // how much darker the marks render
+const WALL_MAT_POOL = new Map();
+
+function _injectWallPattern(mat, kind) {
+  mat.onBeforeCompile = (shader) => {
+    shader.uniforms.uPatKind = { value: kind };
+    shader.uniforms.uPatPeriod = { value: WALL_PAT_PERIOD };
+    shader.uniforms.uPatStrength = { value: WALL_PAT_STRENGTH };
+    shader.vertexShader = shader.vertexShader
+      .replace("#include <common>",
+        "#include <common>\nvarying vec3 vWallWorld;")
+      .replace("#include <begin_vertex>",
+        "#include <begin_vertex>\n\tvWallWorld = (modelMatrix * vec4(position, 1.0)).xyz;");
+    shader.fragmentShader = shader.fragmentShader
+      .replace("#include <common>",
+        "#include <common>\nvarying vec3 vWallWorld;\nuniform float uPatKind;\nuniform float uPatPeriod;\nuniform float uPatStrength;")
+      .replace("#include <dithering_fragment>",
+        `#include <dithering_fragment>
+        {
+          float p = uPatPeriod;
+          float vv = vWallWorld.y;
+          float uu = vWallWorld.x + vWallWorld.z;
+          float mark;
+          if (uPatKind > 1.5) {
+            vec2 g = vec2(fract(uu / p), fract(vv / p)) - 0.5;
+            mark = 1.0 - smoothstep(0.16, 0.26, length(g));
+          } else {
+            float d = vv + uu * 0.7;
+            float tri = abs(fract(d / p) - 0.5) * 2.0;
+            mark = 1.0 - smoothstep(0.58, 0.74, tri);
+          }
+          gl_FragColor.rgb *= mix(1.0, 1.0 - uPatStrength, mark);
+          gl_FragColor.a = mix(gl_FragColor.a, min(1.0, gl_FragColor.a * 3.0), mark);
+        }`);
+  };
+  // CRITICAL: three's default program cache key ignores onBeforeCompile, so
+  // without this the hatch/dots/plain materials would collide on one program.
+  mat.customProgramCacheKey = () => "wallpat-" + kind;
+  return mat;
+}
+
+function wallMatFor(categoryKey, highlight) {
+  const kind = WALL_PATTERN_KIND[categoryKey];
+  if (!kind) return highlight ? WALL_MAT_HIGHLIGHT : WALL_MAT_NORMAL;
+  const key = `${categoryKey}|${highlight ? 1 : 0}`;
+  const existing = WALL_MAT_POOL.get(key);
+  if (existing) return existing;
+  const m = new THREE.MeshBasicMaterial({
+    color: 0xffffff,
+    vertexColors: true,
+    transparent: true,
+    opacity: highlight ? WALL_OPACITY_HIGHLIGHT : WALL_OPACITY_NORMAL,
+    side: THREE.DoubleSide,
+    depthWrite: false,
+    depthTest: true,
+  });
+  _injectWallPattern(m, kind);
+  WALL_MAT_POOL.set(key, m);
+  return m;
+}
+
 // P2.T7b — Outline material pool. Keyed by (color, baseOpacity, highlight),
 // so e.g. every Class-D ring shares one normal + one highlight material.
 const OUTLINE_MAT_POOL = new Map();
@@ -181,7 +254,7 @@ export function makeTextSprite(text, { fontSize = 28, maxWidth = 512, depthTest 
   return sprite;
 }
 
-function buildVolumeMesh(ring, lower, upper, color, opacity) {
+function buildVolumeMesh(ring, lower, upper, color, opacity, categoryKey) {
   const depth = Math.max(upper - lower, 1);
 
   // P2.T7b — outline materials come from the shared pool (one per
@@ -230,11 +303,17 @@ function buildVolumeMesh(ring, lower, upper, color, opacity) {
   }
   wallGeo.setAttribute("color", new THREE.BufferAttribute(colors, 3));
 
-  const wallMesh = new THREE.Mesh(wallGeo, WALL_MAT_NORMAL);
+  // P6.T2: per-category wall materials (patterned for Prohibited/Restricted,
+  // shared singletons otherwise). setHighlighted swaps between the two.
+  const wallMatNormal = wallMatFor(categoryKey, false);
+  const wallMatHi = wallMatFor(categoryKey, true);
+  const wallMesh = new THREE.Mesh(wallGeo, wallMatNormal);
 
   const group = new THREE.Group();
   group.add(wallMesh, topLine, botLine);
   group.userData.wallMesh = wallMesh;
+  group.userData.wallMatNormal = wallMatNormal;
+  group.userData.wallMatHi = wallMatHi;
   group.userData.topLine = topLine;
   group.userData.botLine = botLine;
   group.userData.outlineMatNormal = outlineMatNormal;
@@ -323,7 +402,7 @@ export class AirspaceLayer {
       const upper = ftToY(a.upperFt);
       const color = colorFor(a);
       const opacity = opacityFor(a);
-      const mesh = buildVolumeMesh(ring, lower, upper, color, opacity);
+      const mesh = buildVolumeMesh(ring, lower, upper, color, opacity, categoryKeyFor(a));
       mesh.userData.airspace = a;
       this.group.add(mesh);
 
@@ -432,7 +511,10 @@ export class AirspaceLayer {
       // shared material instead of toggling visibility. Outline material
       // swaps for the same reason (pool entries are mutation-shared).
       if (ud.wallMesh) {
-        ud.wallMesh.material = on ? WALL_MAT_HIGHLIGHT : WALL_MAT_NORMAL;
+        // P6.T2: swap per-category wall material (patterned for Prohibited/
+        // Restricted, shared singletons otherwise — identical to the old
+        // behaviour for non-patterned categories).
+        ud.wallMesh.material = on ? ud.wallMatHi : ud.wallMatNormal;
       }
       const lineMat = on ? ud.outlineMatHi : ud.outlineMatNormal;
       if (ud.topLine) ud.topLine.material = lineMat;
