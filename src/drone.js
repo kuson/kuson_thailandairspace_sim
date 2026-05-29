@@ -1350,6 +1350,17 @@ export class Drone {
       // for the Mavic 3 only, inside altitudeAdvisor.js.
       this._authCeilingExceeded ??= false;
       const exceeded = out.clampY != null && p.y > out.clampY;
+      // P2.T6: Strict-CAAT enforcement. Only the Mavic 3 (drone) clamps to the
+      // auth-tier ceiling, and only when the operator opted into CAAT. Every
+      // other preset stays advisory even with CAAT on; CAAT off never clamps.
+      // The altitude advisor surfaces the warning regardless of this clamp.
+      const isMavic = this.activePreset?.()?.id === "1x";
+      if (exceeded && isMavic && simState.isStrictCaat()) {
+        this.position.y = out.clampY;
+        if (this._quadrotor && this._quadrotor.velocityVert > 0) {
+          this._quadrotor.velocityVert = 0;
+        }
+      }
       if (exceeded !== this._authCeilingExceeded) {
         this._authCeilingExceeded = exceeded;
         try {
