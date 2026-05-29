@@ -604,6 +604,17 @@
       pointer-events: none;
     }
     #identifyPanel.visible { display: flex; }
+    /* P4.T3: when expanded, cap height and scroll instead of growing up the screen. */
+    #identifyPanel.expanded { max-height: 60vh; overflow-y: auto; pointer-events: auto; }
+    /* The expand/collapse control is the one clickable element in the panel. */
+    #identifyPanel .ic-more {
+      pointer-events: auto; cursor: pointer; align-self: center;
+      padding: 5px 14px; border-radius: 999px;
+      font-family: var(--mono); font-size: 11px;
+      background: rgba(16,22,32,0.92); color: var(--accent);
+      border: 1px solid rgba(102,255,204,0.4);
+    }
+    #identifyPanel .ic-more:hover { background: rgba(102,255,204,0.16); }
     .identify-card {
       padding: 10px 14px; border-radius: 10px;
       border: 1px solid rgba(255,255,255,0.14);

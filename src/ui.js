@@ -142,6 +142,8 @@ export class UI {
     this._compassDisplayHeading = 0;
     this._compassHeadingReady = false;
     this._identifyPanelKey = "";
+    this._identifyExpanded = false;       // P4.T3: identify-card cap expander
+    this._lastIdentifyEntries = [];
 
     this.showMapUnderlay = true;
     this.showFov = true;
@@ -878,20 +880,37 @@ export class UI {
     const panel = this.identifyPanel;
     if (!panel) return;
     if (!entries?.length) {
-      panel.classList.remove("visible");
+      panel.classList.remove("visible", "expanded");
       panel.innerHTML = "";
       this._identifyPanelKey = "";
+      this._identifyExpanded = false;   // each identify session starts collapsed
+      this._lastIdentifyEntries = [];
       return;
     }
+    this._lastIdentifyEntries = entries;
     // Entries arrive pre-sorted by nearest first (see airspace.identifyInfoForIds).
-    // Include unit-system + distance bucket in the cache key so a unit toggle or
-    // a meaningful distance change repaints, but per-frame jitter doesn't.
+    // Include unit-system, distance bucket, and expand state in the cache key so
+    // a unit toggle / meaningful distance change / expand repaints, but per-frame
+    // jitter doesn't.
     const key = entries
       .map((e) => `${e.id}:${Math.round((e.distanceM ?? -1) / 50)}`)
-      .join("|") + `|${this.unitSystem}`;
+      .join("|") + `|${this.unitSystem}|${this._identifyExpanded ? 1 : 0}`;
     if (key === this._identifyPanelKey) return;
     this._identifyPanelKey = key;
-    panel.innerHTML = entries.map((e) => {
+    this._renderIdentifyCards(entries);
+  }
+
+  // P4.T3 (external P0 #4): cap the bottom identify stack at the 3 nearest
+  // volumes with a "+N more — expand" row, so a country-scale view doesn't
+  // bury the viewport under 10+ cards. Expanding reveals the rest in a
+  // height-capped scroll region.
+  _renderIdentifyCards(entries) {
+    const panel = this.identifyPanel;
+    if (!panel) return;
+    const CAP = 3;
+    const expanded = this._identifyExpanded;
+    const shown = expanded ? entries : entries.slice(0, CAP);
+    const cardHtml = (e) => {
       const cls = `cat-${e.categoryKey.replace(/\s/g, "")}`;
       const distLabel = e.distanceM == null ? ""
         : e.distanceM < 1 ? "INSIDE"
@@ -904,8 +923,25 @@ export class UI {
           <div class="ic-row"><span class="ic-label">Radius</span>${e.radiusLabel}</div>
           <div class="ic-row"><span class="ic-label">Base / Ceiling</span>${this.fmtFloorCeiling(e.lowerFt, e.upperFt)}</div>
         </div>`;
-    }).join("");
+    };
+    let extra = "";
+    if (entries.length > CAP) {
+      extra = expanded
+        ? `<button type="button" class="ic-more" data-act="less">▴ show less</button>`
+        : `<button type="button" class="ic-more" data-act="more">+${entries.length - CAP} more — expand</button>`;
+    }
+    panel.innerHTML = shown.map(cardHtml).join("") + extra;
+    panel.classList.toggle("expanded", expanded && entries.length > CAP);
     panel.classList.add("visible");
+    const moreBtn = panel.querySelector(".ic-more");
+    if (moreBtn) {
+      moreBtn.addEventListener("click", (ev) => {
+        ev.stopPropagation();
+        this._identifyExpanded = moreBtn.dataset.act === "more";
+        this._identifyPanelKey = "";   // force repaint next frame / now
+        this._renderIdentifyCards(this._lastIdentifyEntries);
+      });
+    }
   }
 
   _smoothCompassHeading(targetDeg, dt) {
