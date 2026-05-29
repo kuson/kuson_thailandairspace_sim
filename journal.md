@@ -935,3 +935,26 @@ The preview browser served a **long-stale ES-module graph** (pre-betterment `_up
 - Phase 2 complete + smoke green. Tags `betterment2-phase-2-complete`.
 - **Next action:** Phase 3 (P3.T1) — flight history rebuild (E2): `HISTORY_EVENT_TYPES` taxonomy, 100-entry ring, collapsible UI, undo/redo index fix.
 - Working tree clean. Not pushed.
+
+---
+
+## 2026-05-29 (c) — Betterment-2 Phase 3: flight-history rebuild (E2)
+
+**Operator:** Claude Code (Opus 4.8). **Branch:** `betterment2-20260529`. **Tag:** `betterment2-phase-3-complete`.
+
+### Done this phase (commit 7c5db41)
+- `src/flightHistory.js` rebuilt from an undo/redo bookmark stack into a curated event log. `HISTORY_EVENT_TYPES` taxonomy; `track(ctx)` diffs state each frame and logs course (≥15°), position (≥2 km), preset, mode, pause, RTH, boundary. Camera view / identify / map / unit / settings are excluded *by construction* (nothing calls record() for them) — directly satisfies E2 "a view change is not a course change." 100-entry ring; `resetBaseline()` stops undo/redo restores from self-logging; cursor + redo-tail truncation fixed (external P0 #7).
+- `main.js`: per-frame `track(historyContext(free))`; typed `record()` for start/reset/flyto/tour; `resetBaseline` on snapshot restore; removed the 12 s time-based "Manual flight" push and the now-dead `_historySampleT`.
+- `ui.js` + `index.html`: collapsible "FLIGHT HISTORY" strip with count badge, **default collapsed** (persisted to `kuson.history.collapsed`), newest-first list with per-type glyphs + current-entry highlight.
+
+### Verification
+- **Logic harness** (Node ESM, verbatim module copy in `/tmp/golden/20260529/`): course/position thresholds, sub-15° no-log, preset/boundary events, identical-state (view-change) no-log, undo 3→2 redo re-enabled, baseline-reset no spurious log, cap 100/idx99, undo-then-event truncates redo tail. All pass.
+- **In-browser**: boot clean, history collapsed by default, move 4 km→`position`, camera down-view toggle→**no entry**, turn 25°→`course`, toggle expands + persists, undo 4→3 cursor "4/5", current entry highlighted.
+
+### Environment note (resolved)
+Mid-phase the `ExtremeProApple` external drive lost OS-level access (EPERM on getcwd / `/Volumes` reads across Bash, Node, git, Read tool, preview server). Phase 3 edits were already written to disk; I verified the data-layer logic via a verbatim `/tmp` copy and stopped. Operator restored drive access next session; re-verified the source files survived intact (syntax + in-browser smoke) before committing.
+
+### State at close
+- Phases 1–3 complete + tagged. E1, E4, E2 + external P0 #1/#3/#7 all delivered.
+- **Next action:** Phase 4 (P4.T1) — sky shader floor lift (blue dome to ~60 km), then ground detail, identify-card cap, altitude-tape warning chip.
+- Working tree clean. Not pushed.
