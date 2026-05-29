@@ -905,3 +905,33 @@ The preview browser served a **long-stale ES-module graph** (pre-betterment `_up
 - Net E1/E4 effect: by default nothing is enforced (no altitude clamp, no no-fly snapback) so the Airspace Tour and jets fly freely; warnings still surface. Strict CAAT opt-in restores enforcement.
 - **Next action:** Phase 2 (P2.T1) — per-preset ceiling table in `src/modes.js`, then `altitudeAdvisor.js` + `alerts.js`. The `geofence:authCeilingExceeded` event already emits, awaiting the queue subscriber.
 - Working tree clean. Not pushed (push not requested).
+
+---
+
+## 2026-05-29 (b) — Betterment-2 Phase 2: altitude warning system (E1 main)
+
+**Operator:** Claude Code (Opus 4.8), continued from Phase 1.
+**Branch:** `betterment2-20260529`. **Tag:** `betterment2-phase-2-complete`.
+
+### Done this phase
+- **P2.T1** (907d3d7) — `src/ceilings.js`: per-preset operational + regulated ceilings (spec §10.2.1), AGL/AMSL ref per band, operator overrides persisted to localStorage. *Deviation:* dedicated module rather than `modes.js` — the mutable+persisted override logic doesn't belong in the FlightMode enum file; spec §10.2.1 explicitly allows "wherever preset metadata lives."
+- **P2.T3 + P2.T4** (b279b57) — `src/alerts.js` single-banner priority queue (NO_FLY > AUTH_CLAMP > RTH > ALT_OVER_REG > ALT_OVER_OP > ALT_AT_* > ADVISORY) + `src/altitudeAdvisor.js` per-preset ceiling state machine (independent op/reg bands so Mavic's 120 m AGL vs 6000 m AMSL mix works; 90/85% NEAR, 100/95% OVER hysteresis). Retired the stacked `#rthRibbon`/`#geofenceRibbon`/no-fly-toast → one `#alertBanner` + `#alertChips`. ui.js `updateHUD` funnels geofence + RTH + altitude into the queue. Closes external P0 #1.
+- **P2.T5** (ad6359a) — RTH `reason` re-derived from live telemetry each step (manual sticky; auto flips battery→signal→"returning"). Closes external P0 #3 (BAT 97% + "low battery").
+- **P2.T6** (ee5ba14) — Strict-CAAT enforcement: Mavic 3 only re-clamps to the auth-tier ceiling (~120 m AGL) when CAAT is ON; all other presets advisory-only; CAAT off never clamps. The only enforcement re-introduced after P1.T3.
+- **P2.T2** (1f9202c) — Collapsible "Altitude limits" Settings section: editable op/reg metres per preset + per-row reset, routed through ceilings.js → live advisor thresholds. UFO read-only "Unlimited".
+
+### Verification highlights (all in-browser, cache-busted module reload)
+- Advisor: Cessna NORMAL→AT_REG→OVER_REG→OVER_OP→NORMAL; Mavic AGL-based; UFO silent.
+- Sattahip stack (NO_FLY + RTH + ADVISORY + ALT_OVER_REG) → one banner "NO-FLY ZONE", three chips. The P0 #1 de-stack.
+- CAAT enforcement matrix: Mavic@3000m CAAT-on→131; CAAT-off→3000; Learjet/Cessna CAAT-on→3000.
+- RTH reason: bat10%→battery, bat97%→returning, siglost→signal, manual+lowbat→manual.
+- Editor: Cessna op 4267→5000 changes advisor (OVER_OP at 5100 not 4300); reset restores.
+
+### Architecture notes (for future sessions)
+- Warnings are CAAT-independent **by construction** — the advisor never reads `isStrictCaat()`; only the geofence clamp/freeze does. So "warnings always show, enforcement is opt-in" holds without per-site checks.
+- `geofence:authCeilingExceeded` window event (P1.T3) is still emitted but currently has no subscriber — the Mavic clamp is applied inline in `_applyGeofence`. The event remains available for any future consumer.
+
+### State at close
+- Phase 2 complete + smoke green. Tags `betterment2-phase-2-complete`.
+- **Next action:** Phase 3 (P3.T1) — flight history rebuild (E2): `HISTORY_EVENT_TYPES` taxonomy, 100-entry ring, collapsible UI, undo/redo index fix.
+- Working tree clean. Not pushed.
