@@ -10,7 +10,7 @@ import { geoToWorld } from "./coords.js";
 
 const PROVINCES_URL = "data/provinces.geojson";
 const LINE_COLOR = 0xc8a050;   // muted gold (playbook spec)
-const LINE_OPACITY = 0.35;
+const LINE_OPACITY = 0.55;     // P4.T2: stronger province boundaries (was 0.35)
 const LINE_Y = 1;
 
 function _ringToSegments(ring, segments) {

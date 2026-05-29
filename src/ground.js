@@ -48,8 +48,10 @@ export class DynamicGround {
   /** Available presets — exposed for the Settings UI. */
   static qualityPresets() {
     return {
+      // Betterment-2 P4.T2 (E3 "ground doesn't look detailed"): bump the
+      // default Medium detail tiles z11→z12 for crisper streets/coastline.
       low:   { baseZoom: 8,  detailZoom: 10, baseRange: 2, detailRange: 2 },
-      med:   { baseZoom: 9,  detailZoom: 11, baseRange: 3, detailRange: 2 },
+      med:   { baseZoom: 9,  detailZoom: 12, baseRange: 3, detailRange: 2 },
       high:  { baseZoom: 10, detailZoom: 12, baseRange: 3, detailRange: 3 },
       ultra: { baseZoom: 10, detailZoom: 13, baseRange: 4, detailRange: 4 },
     };

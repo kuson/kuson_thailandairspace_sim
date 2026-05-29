@@ -103,6 +103,43 @@ function _cityDot(color = 0xfff2c8) {
   return m;
 }
 
+// Betterment-2 P4.T2 (E3): glowing halo behind each city dot so beacons read
+// at a glance. Tinted by prominence tier for visual variety (major cities
+// warm amber, secondary cyan, minor soft green).
+const HALO_COLORS = { 3: 0xffcc66, 2: 0x66ddff, 1: 0x88ffaa };
+
+let _haloTex = null;
+function _haloTexture() {
+  if (_haloTex) return _haloTex;
+  const size = 128;
+  const cvs = document.createElement("canvas");
+  cvs.width = size; cvs.height = size;
+  const ctx = cvs.getContext("2d");
+  const g = ctx.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2);
+  g.addColorStop(0.0, "rgba(255,255,255,0.9)");
+  g.addColorStop(0.3, "rgba(255,255,255,0.35)");
+  g.addColorStop(1.0, "rgba(255,255,255,0)");
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, size, size);
+  _haloTex = new THREE.CanvasTexture(cvs);
+  _haloTex.colorSpace = THREE.SRGBColorSpace;
+  return _haloTex;
+}
+
+function _cityHalo(prominence) {
+  const sp = new THREE.Sprite(new THREE.SpriteMaterial({
+    map: _haloTexture(),
+    color: HALO_COLORS[prominence] ?? 0xffffff,
+    transparent: true,
+    depthTest: false,
+    depthWrite: false,
+    fog: false,
+    opacity: 0.85,
+  }));
+  sp.renderOrder = -1;
+  return sp;
+}
+
 /**
  * Install Thai city beacons into the scene.
  *
@@ -120,10 +157,12 @@ export function installCityBeacons(scene, { y = 200, topN = null } = {}) {
     const w = geoToWorld(city.lat, city.lon);
     const dot = _cityDot();
     dot.position.set(w.x, y - 80, w.z);
+    const halo = _cityHalo(city.prominence);
+    halo.position.set(w.x, y - 80, w.z);
     const label = _cityLabelSprite(city.name);
     label.position.set(w.x, y + 320, w.z);
-    group.add(dot); group.add(label);
-    entries.push({ city, dot, label });
+    group.add(halo); group.add(dot); group.add(label);
+    entries.push({ city, dot, halo, label });
   }
   scene.add(group);
 
@@ -146,6 +185,7 @@ export function installCityBeacons(scene, { y = 200, topN = null } = {}) {
         const visible = keep.has(e);
         e.dot.visible = visible;
         e.label.visible = visible;
+        if (e.halo) e.halo.visible = visible;
       }
     }
     for (const e of ranked) {
@@ -162,8 +202,11 @@ export function installCityBeacons(scene, { y = 200, topN = null } = {}) {
       const clamped = THREE.MathUtils.clamp(s, minS, maxS);
       e.label.scale.set(cw * clamped, ch * clamped, 1);
       // Dot size — roughly the line height of the label, but in world units.
-      const dotR = Math.max(80, targetPx * worldPerPx * 4);
+      // P4.T2: +30% so beacons read more clearly on the busier z12 ground.
+      const dotR = Math.max(80, targetPx * worldPerPx * 4) * 1.3;
       e.dot.scale.setScalar(dotR / 120);  // sphere geom radius 120
+      // Halo glow sits behind the dot at ~3.5× its radius.
+      if (e.halo) e.halo.scale.setScalar(dotR * 3.5);
       // Long-distance fade: prominence-1 cities fade out beyond 250 km, 2 at
       // 400 km, 3 (Bangkok/Chiang Mai/Phuket) never fade.
       const fadeStart = [0, 250_000, 400_000, Infinity][e.city.prominence] ?? Infinity;
@@ -174,6 +217,7 @@ export function installCityBeacons(scene, { y = 200, topN = null } = {}) {
       e.label.material.opacity = alpha;
       e.dot.material.opacity = alpha;
       e.dot.material.transparent = alpha < 1;
+      if (e.halo) e.halo.material.opacity = 0.85 * alpha;
     }
   }
 
