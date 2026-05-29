@@ -8,6 +8,7 @@ import { elevationAt, isLoaded as terrainLoaded } from "./terrain.js";
 import { SPEED_PRESETS } from "./drone.js";
 import { FlightMode, EasyMode } from "./modes.js";
 import { lookupAdmin } from "./geocode.js";
+import { simState } from "./simState.js";
 import { MinimapTileCache } from "./ground.js";
 import { getInputSettings, setInputSettings, DEFAULT_INPUT_SETTINGS } from "./input.js";
 
@@ -78,6 +79,7 @@ export class UI {
     this.toggleAltBtn = document.getElementById("toggleAltTape");
     this.toggleAttitudeBtn = document.getElementById("toggleAttitude");
     this.togglePauseBtn = document.getElementById("togglePause");
+    this.toggleStrictCaatBtn = document.getElementById("toggleStrictCaat");
 
     // Cached HUD element refs (avoid per-frame querySelector in updateHUD)
     this._el = {
@@ -452,6 +454,8 @@ export class UI {
     this.toggleAltBtn?.addEventListener("click", () => this.toggleAltTape());
     this.toggleAttitudeBtn?.addEventListener("click", () => this.toggleAttitude());
     this.togglePauseBtn?.addEventListener("click", () => this._togglePauseFromButton());
+    this.toggleStrictCaatBtn?.addEventListener("click", () => this._toggleStrictCaat());
+    this._syncStrictCaatButton();   // reflect persisted state on load
 
     // Global keyboard: U units / M map-primary / + - zoom map
     window.addEventListener("keydown", (e) => {
@@ -550,6 +554,21 @@ export class UI {
     if (!this.drone) return;
     this.drone.paused = !this.drone.paused;
     this.drone.onPauseChange?.(this.drone.paused);
+  }
+
+  // Betterment-2 P1.T4: Strict-CAAT policy toggle. Flips enforcement on/off
+  // (drone clamp + no-fly snapback). Warnings are unaffected — they always
+  // show. State persists via simState → localStorage.
+  _toggleStrictCaat() {
+    simState.setStrictCaat(!simState.isStrictCaat());
+    this._syncStrictCaatButton();
+  }
+
+  _syncStrictCaatButton() {
+    const on = simState.isStrictCaat();
+    if (!this.toggleStrictCaatBtn) return;
+    this.toggleStrictCaatBtn.textContent = on ? "CAAT: ON" : "CAAT: OFF";
+    this.toggleStrictCaatBtn.classList.toggle("on", on);
   }
 
   // ---------------- Unit system ----------------

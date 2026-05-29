@@ -64,6 +64,21 @@
     }
     #hudToggles button:hover { background: rgba(255,255,255,0.10); }
 
+    /* Betterment-2 P1.T4: Strict-CAAT policy toggle — its own row at the
+       bottom of the HUD so it reads as a mode switch, not an instrument.
+       Amber when ON (enforcement active). */
+    #caatRow { margin-top: 6px; }
+    #caatRow button {
+      width: 100%; padding: 4px 6px; font-size: 11px; line-height: 1.2;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--panel-border); border-radius: 4px;
+      color: var(--muted); font-family: var(--mono); cursor: pointer;
+    }
+    #caatRow button.on {
+      background: rgba(255,184,74,0.20); border-color: rgba(255,184,74,0.55); color: var(--warn);
+    }
+    #caatRow button:hover { background: rgba(255,255,255,0.10); }
+
     /* Altitude tape — vertical bar glued to the right edge of the HUD.
        Auto-zooms around the aircraft's current altitude, with reference
        bands for typical Thai-aviation operating heights and a red drone
@@ -655,6 +670,10 @@
         <button type="button" id="toggleAltTape" class="active" title="Show/hide altitude tape">Altitude</button>
         <button type="button" id="toggleAttitude" title="Show/hide artificial horizon (pitch + bank indicator)">Horizon</button>
         <button type="button" id="togglePause" title="Pause / resume the simulation (P)">Pause [P]</button>
+      </div>
+      <div class="row" id="caatRow">
+        <button type="button" id="toggleStrictCaat"
+          title="Strict CAAT: enforce altitude & geofence limits (drone clamps to 120 m AGL in controlled airspace). OFF = advisory warnings only, so tours and jets fly unrestricted.">CAAT: OFF</button>
       </div>
     </div>
     <canvas id="altTape" width="88" height="360" aria-label="Altitude reference graph"></canvas>

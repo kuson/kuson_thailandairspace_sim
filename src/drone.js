@@ -7,6 +7,7 @@ import { currentWind, DEFAULT_WIND } from "./wind.js";
 import { BatterySystem, ReturnToHome, RadioLink, Geofence } from "./failures.js";
 import { isMilitaryAirspace } from "./airspace.js";
 import { AGL as terrainAGL } from "./terrain.js";
+import { simState } from "./simState.js";
 
 const KMH_TO_MS = 1 / 3.6;
 const BOOST_FACTOR = 3;
@@ -1317,7 +1318,11 @@ export class Drone {
       noFlyHits,
     });
 
-    if (out.freeze) {
+    // Betterment-2 P1.T4: the no-fly snapback is ENFORCEMENT — gate it on
+    // Strict CAAT. Default OFF → advisory only (the warning toast still fires
+    // from geofence.noFlyJustEntered, evaluated above), so tours and free
+    // flight are never teleported out of Prohibited/military volumes.
+    if (out.freeze && simState.isStrictCaat()) {
       if (this._lastSafePos) {
         this.position.x = this._lastSafePos.x;
         this.position.y = this._lastSafePos.y;
@@ -1359,14 +1364,16 @@ export class Drone {
           }));
         } catch { /* no window (unit tests) — state is still tracked */ }
       }
-      // Update the last-safe sample only when we're not frozen and not
-      // currently inside a no-fly zone — the geofence's reverted position
-      // is by definition safe, so refreshing on every clear/advisory/auth
-      // step keeps the snapback point honest.
-      if (!this._lastSafePos) this._lastSafePos = { x: 0, y: 0, z: 0 };
-      this._lastSafePos.x = this.position.x;
-      this._lastSafePos.y = this.position.y;
-      this._lastSafePos.z = this.position.z;
+      // Update the last-safe sample only in air we could legally return to —
+      // never while physically inside a no-fly volume (out.freeze). With CAAT
+      // off the snapback doesn't fire, but we still keep a valid pre-incursion
+      // anchor so enabling CAAT mid-flight reverts to somewhere sane.
+      if (!out.freeze) {
+        if (!this._lastSafePos) this._lastSafePos = { x: 0, y: 0, z: 0 };
+        this._lastSafePos.x = this.position.x;
+        this._lastSafePos.y = this.position.y;
+        this._lastSafePos.z = this.position.z;
+      }
     }
 
     // Drive the 1 Hz outline pulse for authorisation-tier airspaces.
