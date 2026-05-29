@@ -9,6 +9,8 @@ import { SPEED_PRESETS } from "./drone.js";
 import { FlightMode, EasyMode } from "./modes.js";
 import { lookupAdmin } from "./geocode.js";
 import { simState } from "./simState.js";
+import { alerts, AlertTier } from "./alerts.js";
+import { AltitudeAdvisor } from "./altitudeAdvisor.js";
 import { MinimapTileCache } from "./ground.js";
 import { getInputSettings, setInputSettings, DEFAULT_INPUT_SETTINGS } from "./input.js";
 
@@ -80,6 +82,14 @@ export class UI {
     this.toggleAttitudeBtn = document.getElementById("toggleAttitude");
     this.togglePauseBtn = document.getElementById("togglePause");
     this.toggleStrictCaatBtn = document.getElementById("toggleStrictCaat");
+
+    // Betterment-2 P2.T3/T4: altitude advisor + single-banner alert queue.
+    // All warnings (geofence, RTH, altitude) funnel through `alerts`; one
+    // banner shows the top-priority alert, the rest become chips.
+    this.altitudeAdvisor = new AltitudeAdvisor(alerts);
+    this.alertBanner = document.getElementById("alertBanner");
+    this.alertChips = document.getElementById("alertChips");
+    alerts.subscribe((payload) => this._renderAlerts(payload));
 
     // Cached HUD element refs (avoid per-frame querySelector in updateHUD)
     this._el = {
@@ -569,6 +579,30 @@ export class UI {
     if (!this.toggleStrictCaatBtn) return;
     this.toggleStrictCaatBtn.textContent = on ? "CAAT: ON" : "CAAT: OFF";
     this.toggleStrictCaatBtn.classList.toggle("on", on);
+  }
+
+  // Betterment-2 P2.T4: render the alert queue → one banner + chips.
+  _renderAlerts({ active, chips }) {
+    if (this.alertBanner) {
+      if (active) {
+        this.alertBanner.textContent = active.message;
+        this.alertBanner.className = `tier-${active.tier.cls}`;
+        this.alertBanner.hidden = false;
+      } else {
+        this.alertBanner.hidden = true;
+      }
+    }
+    if (this.alertChips) {
+      if (chips.length) {
+        this.alertChips.innerHTML = chips
+          .map((c) => `<span class="alert-chip tier-${c.tier.cls}">${c.message}</span>`)
+          .join("");
+        this.alertChips.hidden = false;
+      } else {
+        this.alertChips.hidden = true;
+        this.alertChips.innerHTML = "";
+      }
+    }
   }
 
   // ---------------- Unit system ----------------
@@ -1582,67 +1616,50 @@ export class UI {
       }
     }
 
-    // P4.T5: tiered geofence ribbon + one-shot no-fly toast. Ribbon text +
-    // tier class come straight from the Geofence; the toast is fired the
-    // single substep that .noFlyJustEntered flips true and auto-fades.
+    // Betterment-2 P2.T3/T4: all warnings funnel through the alert queue so
+    // exactly one banner shows (highest priority), the rest become chips.
+    // Replaces the betterment-1 stacked #geofenceRibbon + #rthRibbon +
+    // one-shot no-fly toast (external audit P0 #1: three banners at once).
+
+    // (1) Altitude advisor — publishes ALT_* by comparing altitude to the
+    // active preset's ceilings.
+    const presetId = this.drone.activePreset?.()?.id ?? null;
+    if (presetId) {
+      this.altitudeAdvisor.tick(presetId, altM, Math.max(0, altM - groundM), this.unitSystem);
+    }
+
+    // (2) Geofence — its own tier (advisory/authorisation/noFly) is already
+    // resolved in gf.ribbon. Map to a queue tier.
     const gf = this.drone.geofence;
     if (gf) {
-      const ribbon = document.getElementById("geofenceRibbon");
-      if (ribbon) {
-        const r = gf.ribbon;
-        const key = r ? `${r.kind}|${r.text}` : "off";
-        if (this._hudCache.geofenceKey !== key) {
-          this._hudCache.geofenceKey = key;
-          if (r) {
-            ribbon.textContent = r.text;
-            ribbon.className = `tier-${r.kind}`;
-            ribbon.hidden = false;
-          } else {
-            ribbon.hidden = true;
-          }
-        }
-      }
-      if (gf.noFlyJustEntered) {
-        const toast = document.getElementById("geofenceNoFlyToast");
-        if (toast) {
-          const names = (gf.noFlyIds ?? []).join(", ");
-          toast.textContent =
-            `NO-FLY ZONE — ${names}\n` +
-            `Restricted military / prohibited airspace. Flight frozen at boundary.`;
-          toast.hidden = false;
-          toast.classList.remove("fade");
-          clearTimeout(this._noFlyToastT);
-          this._noFlyToastT = setTimeout(() => {
-            toast.classList.add("fade");
-            setTimeout(() => { toast.hidden = true; }, 400);
-          }, 4500);
-        }
+      const r = gf.ribbon;
+      if (r) {
+        const tier = r.kind === "noFly" ? AlertTier.NO_FLY
+          : r.kind === "authorisation" ? AlertTier.AUTH_CLAMP
+          : AlertTier.ADVISORY;
+        alerts.publish({ key: "geofence", tier, message: r.text });
+      } else {
+        alerts.retract("geofence");
       }
     }
 
-    // P4.T2: RTH ribbon. Visible whenever the state machine is active.
-    // Text varies by reason so the user can read why it engaged.
+    // (3) RTH — active state. Reason is read live each frame (P2.T5).
     const rth = this.drone.rth;
-    if (rth) {
-      const ribbon = document.getElementById("rthRibbon");
-      if (ribbon) {
-        const want = !!rth.active;
-        const reasonText = rth.reason === "battery" ? "low battery"
-          : rth.reason === "signal" ? "signal lost"
-          : "manual";
-        const text = `⚠ RTH ENGAGED — Returning to launch (${reasonText} · ${rth.state})`;
-        const key = `${want ? 1 : 0}|${text}`;
-        if (this._hudCache.rthKey !== key) {
-          this._hudCache.rthKey = key;
-          if (want) {
-            ribbon.textContent = text;
-            ribbon.hidden = false;
-          } else {
-            ribbon.hidden = true;
-          }
-        }
-      }
+    if (rth && rth.active) {
+      const reasonText = rth.reason === "battery" ? "low battery"
+        : rth.reason === "signal" ? "signal lost"
+        : "manual";
+      alerts.publish({
+        key: "rth",
+        tier: AlertTier.RTH_ACTIVE,
+        message: `RTH ENGAGED (${reasonText}) — ${rth.state}`,
+      });
+    } else {
+      alerts.retract("rth");
     }
+
+    // (4) Emit to the banner/chips only if the active set changed.
+    alerts.flush();
 
     this._drawAltTape(altM, groundM);
     this._drawAttitudeIndicator(this.drone.bodyPitch ?? 0, this.drone.bodyRoll ?? 0);
