@@ -1,14 +1,28 @@
-// sky.js — atmospheric sky dome + sun disc (Phase 2 P2.T1).
+// sky.js — atmospheric sky dome + sun disc (Phase 2 P2.T1; Betterment-2 P4.T1).
 //
-// Replaces the flat-blue scene.background with the three.js Sky shader
-// (Preetham analytical scattering) and a soft sun-disc sprite. The sun
-// direction is shared with the scene's DirectionalLight so the lighting
-// matches the sky's sun position.
+// Uses the three.js Sky shader (Preetham analytical scattering) + a soft
+// sun-disc sprite, sharing the scene DirectionalLight's sun direction.
+//
+// Betterment-2 P4.T1 (operator report E3 "skies should be blue — it's dark as
+// space"): the root cause was that the sky dome was added at the world origin
+// and never moved, so flying away from Bangkok (or climbing in the 100× UFO)
+// put the camera near the edge of the 450 km sky box — half the view became
+// black void. Fixes:
+//   1. updateSky() re-centres the dome + sun on the camera every frame, so the
+//      sky always fully surrounds the viewer (no black wedge).
+//   2. Richer Preetham params for a vivid daytime blue.
+//   3. Altitude transition: full blue up to ~60 km AMSL, fading toward space
+//      black by ~100 km (the UFO is the only preset that climbs that high).
 import * as THREE from "three";
 import { Sky } from "three/addons/objects/Sky.js";
 
-// Radial-gradient canvas texture for the sun-disc sprite. Cached so swapping
-// sun position doesn't rebuild it.
+// Base Preetham params (sea-level). Altitude scales rayleigh/mie toward 0 to
+// fade the dome to black at extreme altitude.
+const BASE = { turbidity: 6, rayleigh: 3, mieCoefficient: 0.005, mieDirectionalG: 0.8 };
+const SKY_BLUE_CEILING_M = 60_000;   // full blue at/below this
+const SKY_SPACE_M        = 100_000;  // ~black at/above this
+const SUN_DISTANCE = 200_000;
+
 function _sunDiscTexture() {
   const size = 256;
   const cvs = document.createElement("canvas");
@@ -27,41 +41,65 @@ function _sunDiscTexture() {
 }
 
 /**
- * Install the sky dome and sun sprite into the scene.
- *
- * @param {THREE.Scene} scene
- * @param {THREE.WebGLRenderer} renderer  (currently unused; reserved for tonemap-aware sky)
- * @param {THREE.Vector3} sunDir  unit vector from origin toward the sun
- * @returns {{ sky: Sky, sunSprite: THREE.Sprite, sunDir: THREE.Vector3 }}
+ * Install the sky dome and sun sprite. Returns a rig to pass to updateSky()
+ * every frame.
  */
 export function installSky(scene, renderer, sunDir) {
   const sky = new Sky();
-  sky.scale.setScalar(450_000);  // safely outside camera.far / fog.far
+  sky.scale.setScalar(450_000);
 
   const u = sky.material.uniforms;
-  u.turbidity.value        = 4;
-  u.rayleigh.value         = 1.5;
-  u.mieCoefficient.value   = 0.005;
-  u.mieDirectionalG.value  = 0.8;
+  u.turbidity.value       = BASE.turbidity;
+  u.rayleigh.value        = BASE.rayleigh;
+  u.mieCoefficient.value  = BASE.mieCoefficient;
+  u.mieDirectionalG.value = BASE.mieDirectionalG;
   u.sunPosition.value.copy(sunDir);
-
   scene.add(sky);
 
-  // Soft sun-disc sprite placed in the same direction.
   const sunSprite = new THREE.Sprite(
     new THREE.SpriteMaterial({
       map: _sunDiscTexture(),
       transparent: true,
       depthWrite: false,
-      depthTest: false,         // always render in front of fog / haze
+      depthTest: false,
       fog: false,
     }),
   );
-  const SUN_DISTANCE = 200_000;
   sunSprite.position.copy(sunDir).multiplyScalar(SUN_DISTANCE);
   sunSprite.scale.set(18_000, 18_000, 1);
-  sunSprite.renderOrder = -1;   // render before opaque so it sits behind the world
+  sunSprite.renderOrder = -1;
   scene.add(sunSprite);
 
   return { sky, sunSprite, sunDir: sunDir.clone() };
+}
+
+/**
+ * Per-frame update: re-centre the dome + sun on the camera so the sky always
+ * surrounds the viewer, and fade the dome toward space-black above 60 km.
+ *
+ * @param rig     return value of installSky()
+ * @param camPos  THREE.Vector3 camera/eye world position
+ * @param altM    altitude AMSL in metres (for the space transition)
+ */
+export function updateSky(rig, camPos, altM = 0) {
+  if (!rig) return;
+  // Follow the camera horizontally + vertically — the dome is centred on the
+  // eye so its far wall is always 225 km away in every direction.
+  rig.sky.position.set(camPos.x, 0, camPos.z);
+  rig.sunSprite.position.set(
+    camPos.x + rig.sunDir.x * SUN_DISTANCE,
+    rig.sunDir.y * SUN_DISTANCE,
+    camPos.z + rig.sunDir.z * SUN_DISTANCE,
+  );
+
+  // Altitude fade: k = 1 (full blue) at/below 60 km → 0 (~black) at/above 100 km.
+  let k = 1;
+  if (altM > SKY_BLUE_CEILING_M) {
+    k = Math.max(0, 1 - (altM - SKY_BLUE_CEILING_M) / (SKY_SPACE_M - SKY_BLUE_CEILING_M));
+  }
+  const u = rig.sky.material.uniforms;
+  u.rayleigh.value       = BASE.rayleigh * k;
+  u.mieCoefficient.value = BASE.mieCoefficient * k;
+  u.turbidity.value      = BASE.turbidity * k + 0.05;
+  rig.sunSprite.material.opacity = 0.4 + 0.6 * k;
 }

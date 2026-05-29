@@ -12,7 +12,7 @@ import { pickAirspacesAlongRay } from "./identify.js";
 import { getStartLocation } from "./geolocation.js";
 import { geoToWorld, ORIGIN } from "./coords.js";
 import { TourGuide } from "./tourGuide.js";
-import { installSky } from "./sky.js";
+import { installSky, updateSky } from "./sky.js";
 import { installCityBeacons } from "./cities.js";
 import { installProvinceLines } from "./provinces.js";
 import { RigidBody, QuadrotorModel, FixedWingModel } from "./physics.js";
@@ -24,7 +24,7 @@ const scene = new THREE.Scene();
 // Shared sun direction — the Sky shader, the sun-disc sprite, and the
 // DirectionalLight all read from this so lighting matches the sky.
 const SUN_DIR = new THREE.Vector3(0.5, 1.0, 0.4).normalize();
-installSky(scene, undefined, SUN_DIR);
+const skyRig = installSky(scene, undefined, SUN_DIR);
 // Horizon haze hard-coded to match Sky shader output at ~10° above horizon.
 // fog.far is lerped per-frame in the render loop based on altitude (P2.T2).
 const FOG_NEAR_BASE = 30_000;
@@ -508,6 +508,10 @@ function loop(t) {
     const tFog = Math.max(0, Math.min(drone.position.y / 12_000, 0.7));
     scene.fog.far = FOG_FAR_BASE / Math.max(0.3, 1 - tFog);
   });
+
+  // P4.T1: keep the sky dome centred on the camera (no black void when flying
+  // far from Bangkok) and fade it to space-black above 60 km.
+  _safe("sky-follow", () => updateSky(skyRig, camera.position, drone.position.y));
 
   _safe("ground-alt", () => ground.setAltitude(drone.position.y));
   _safe("ground-update", () => ground.updateAround(drone.position.x, drone.position.z));
