@@ -128,6 +128,8 @@ export class UI {
     this._flyToTargetId = null;
     this._listFilter = "";
     this._tourRunning = false;
+    this._flyToToast = document.getElementById("flyToToast");
+    this._flyToToastT = null;
 
     this.tourSkipBtn = document.getElementById("tourSkipBtn");
     this.tourEndBtn = document.getElementById("tourEndBtn");
@@ -1314,17 +1316,42 @@ export class UI {
     this.airspaceList.querySelectorAll("button.teleport").forEach((btn) => {
       btn.addEventListener("click", (e) => {
         e.stopPropagation();
-        if (this._tourRunning) return;
-        this.onFlyTo?.(btn.dataset.id);   // default direction = S (historic)
+        this._requestFlyTo(btn.dataset.id);   // default direction = S (historic)
       });
     });
     this.airspaceList.querySelectorAll("button.dir-btn").forEach((btn) => {
       btn.addEventListener("click", (e) => {
         e.stopPropagation();
-        if (this._tourRunning) return;
-        this.onFlyTo?.(btn.dataset.id, { direction: btn.dataset.dir });
+        this._requestFlyTo(btn.dataset.id, { direction: btn.dataset.dir });
       });
     });
+  }
+
+  // Betterment-2 P1.T2: single user-click entry point for catalog fly-to.
+  // Never silently no-ops — a refused click always surfaces a toast naming
+  // the reason. See doc/flyto_state_machine.md §5 for the contract.
+  _requestFlyTo(id, opts = {}) {
+    if (this._tourRunning) {
+      this._showFlyToToast("Tour in progress — end the tour to fly to a volume.");
+      return;
+    }
+    const result = this.onFlyTo?.(id, opts);
+    if (result && result.ok === false) {
+      this._showFlyToToast(result.reason ?? "Could not fly to that volume.");
+    }
+  }
+
+  _showFlyToToast(message) {
+    const el = this._flyToToast;
+    if (!el) return;
+    el.textContent = message;
+    el.hidden = false;
+    el.classList.remove("fade");
+    clearTimeout(this._flyToToastT);
+    this._flyToToastT = setTimeout(() => {
+      el.classList.add("fade");
+      setTimeout(() => { el.hidden = true; }, 400);
+    }, 2600);
   }
 
   _scheduleHintCollapse() {

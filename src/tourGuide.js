@@ -94,7 +94,11 @@ export class TourGuide {
     this.drone.flightLocked = false;
     this.layer.clearHighlights();
     this._hideOverlay();
-    if (!silent) this.onStop?.();
+    // Betterment-2 P1.T2: always notify the host. `silent` is now scoped to
+    // *what* the callback suppresses (the "Tour complete" history entry),
+    // not whether it fires. Previous behaviour left UI._tourRunning stuck
+    // when reset-during-tour took the silent path — see doc/flyto_state_machine.md.
+    this.onStop?.({ silent });
   }
 
   skipToNext() {

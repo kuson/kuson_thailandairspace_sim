@@ -213,9 +213,12 @@ function resetDrone() {
   flightHistory.push(drone.snapshot(), { label: "Bangkok reset" });
 }
 
+// Betterment-2 P1.T2: startFlyTo now returns {ok, reason?} so the UI can
+// surface lockout reasons as a toast instead of silently no-op'ing. The
+// canonical fly-to state machine is documented in doc/flyto_state_machine.md.
 function startFlyTo(id, { duration = 0.45, onComplete, pushHistory = true, direction = "S" } = {}) {
   const v = layer.overviewVantage(id, camera.fov, direction);
-  if (!v) return false;
+  if (!v) return { ok: false, reason: `No vantage available for ${id}.` };
   const a = layer.airspaces.find((x) => x.id === id);
   ui.markFlyToTarget(id);
   const yaw = Math.atan2(-(v.lookX - v.x), -(v.lookZ - v.z));
@@ -237,7 +240,7 @@ function startFlyTo(id, { duration = 0.45, onComplete, pushHistory = true, direc
       },
     },
   );
-  return true;
+  return { ok: true };
 }
 
 function undoFlight() {
@@ -294,14 +297,20 @@ async function bootstrap() {
     layer,
     camera,
     onFlyTo: startFlyTo,
-    onStop: () => {
+    // Betterment-2 P1.T2: onStop ALWAYS runs the UI/state teardown so
+    // _tourRunning can never get stuck true (the E4 root cause). `silent`
+    // now scopes only the "Tour complete" history entry — the silent path
+    // (reset-during-tour) suppresses the entry but still clears the flags.
+    onStop: ({ silent = false } = {}) => {
       catalogHighlightId = null;
       drone.hover = false;
       drone.flightLocked = false;
       ui?.setTourRunning(false);
       ui?.clearFlyToTarget();
       layer.clearHighlights();
-      flightHistory.push(drone.snapshot(), { label: "Tour complete · explore" });
+      if (!silent) {
+        flightHistory.push(drone.snapshot(), { label: "Tour complete · explore" });
+      }
     },
   });
   await tourGuide.load();

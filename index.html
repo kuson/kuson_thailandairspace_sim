@@ -307,6 +307,22 @@
     #geofenceNoFlyToast[hidden] { display: none; }
     #geofenceNoFlyToast.fade { opacity: 0; }
 
+    /* Betterment-2 P1.T2: fly-to lockout toast. Same anatomy as the
+       no-fly toast, neutral palette — never silent-fail on a click. */
+    #flyToToast {
+      position: fixed; top: 92px; left: 50%; transform: translateX(-50%);
+      padding: 10px 16px; border-radius: 10px;
+      background: rgba(8,14,20,0.92);
+      border: 1px solid rgba(120,180,255,0.6);
+      color: #e8f1ff;
+      font-family: var(--mono); font-size: 12px; max-width: 460px;
+      text-align: center; box-shadow: var(--shadow); z-index: 51;
+      pointer-events: none;
+      transition: opacity 0.35s ease;
+    }
+    #flyToToast[hidden] { display: none; }
+    #flyToToast.fade { opacity: 0; }
+
     /* ---- Minimap ---- */
     #minimap {
       position: fixed; left: 14px; bottom: 14px;
@@ -601,6 +617,7 @@
   <div id="rthRibbon" role="status" aria-live="polite" hidden>⚠ RTH ENGAGED — Returning to launch</div>
   <div id="geofenceRibbon" role="status" aria-live="polite" hidden></div>
   <div id="geofenceNoFlyToast" role="alert" aria-live="assertive" hidden></div>
+  <div id="flyToToast" role="status" aria-live="polite" hidden></div>
 
   <div id="telemetryStack">
     <div id="hud">
