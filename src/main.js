@@ -17,6 +17,7 @@ import { installProvinceLines } from "./provinces.js";
 import { RigidBody, QuadrotorModel, FixedWingModel } from "./physics.js";
 import { SimMode, SimModeMachine } from "./simMode.js";
 import { simState } from "./simState.js";
+import * as ceilings from "./ceilings.js";
 
 const scene = new THREE.Scene();
 // Shared sun direction — the Sky shader, the sun-disc sprite, and the
@@ -557,6 +558,6 @@ document.addEventListener("visibilitychange", () => {
 
 window.__sim = {
   scene, camera, drone, layer, ground, flightHistory, tourGuide, ui, simMode,
-  simState,
+  simState, ceilings,
   physics: { RigidBody, QuadrotorModel, FixedWingModel },
 };
