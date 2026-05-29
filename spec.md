@@ -1,6 +1,6 @@
 # Thai Airspace Sim — Specification
 
-> **Status:** Phase 1 (Thailand-wide catalog, Bangkok-centered projection), updated 2026-05-21 (session d — telemetry layout, attitude indicator, airplane flight model, P pause, UFO model, ground-detail settings).
+> **Status:** Phase 1 + Betterment-1 (2026-05-28) + Betterment-2 (2026-05-29, in progress). Thailand-wide catalog, Bangkok-centered projection, dual flight modes, second-order physics, SRTM-backed AGL terrain, atmospheric sky, advisory altitude system with optional Strict-CAAT enforcement.
 > **License:** MIT.
 > **Disclaimer:** Educational visualization only. Not for flight planning. Data may be approximate or out of date. Consult CAAT and current AIP Thailand.
 
@@ -19,7 +19,7 @@ Not a flight planner. Not a real-time avionics product. The data resolution and 
 | Aspect | Decision |
 |---|---|
 | Geographic scope | **Catalog:** 144 airspaces nationwide (airports, TMAs, full ENR 5.1 P/R/D set). **Projection:** equirectangular tangent plane anchored at Bangkok (13.7563°N, 100.5018°E), scaled by `cos(13.7563°)` — accurate to <1% within ~300 km of origin; usable farther with increasing drift |
-| Elevation | Flat ground at Y=0 (no terrain); AGL and AMSL treated as equivalent |
+| Elevation | **SRTM/Mapzen Terrarium-baked terrain grid** (~30 arc-sec, `data/terrain.bin`); **AGL and AMSL are distinct** — HUD shows both. Flat-Y=0 fallback only until the binary loads. (Legacy "flat ground" assumption from pre-Betterment Phase 1 is retired.) |
 | Browser support | Desktop only (Chromium, Firefox, Safari with ESM + WebGL2) |
 | Build step | None — `index.html` + ES modules + Three.js from CDN via importmap |
 | Hosting | Local `python3 -m http.server` or any static HTTP server (file:// blocked by browser security) |
@@ -33,8 +33,8 @@ Out-of-scope for Phase 1: terrain, weather, NOTAMs, real-time tracking, mobile/t
 
 ### 3.1 Scene
 - 3D scene rendered with **Three.js r0.170.0** via CDN importmap.
-- Sky: `scene.background = 0x89b4dc` + distance fog — **no sky sphere** (the low-poly gradient sphere showed as a brown ball on the horizon).
-- Fog: `THREE.Fog(0xa9c1da, 80_000, 400_000)`.
+- Sky: **`three.js` `Sky` shader** (Rayleigh/Mie scattering) — see `src/sky.js`. Drives a sun disc sprite + a `DirectionalLight`; fog far-plane is altitude-lerped. **Betterment-2 (§10.4) raises the "fade-to-space" floor** so the blue dome stays vivid up to ~60 km AMSL; only above ~100 km does it darken. (Pre-betterment flat `0x89b4dc` background is retired.)
+- Fog: altitude-driven `THREE.Fog`; near/far interpolated by `lerp(altM, 0..15_000)` between sea-level haze and high-altitude clarity.
 - Ground (`DynamicGround`): zoom-9 base **7×7 following drone** + zoom-11 detail 5×5; detail tiles at **Y=0.4**, base at Y=0 (prevents z-fight streaks). Fallback plane follows drone.
 - Compass: N/S/E/W at **200 km** on the horizon ring **around the aircraft** (sprites + poles reposition each frame at drone position + world cardinal offset); 192 px font on 12 km sprites.
 - Camera: fixed `near=2`, `far=600_000` (do not mutate clip planes per frame while panning).
@@ -45,7 +45,7 @@ Out-of-scope for Phase 1: terrain, weather, NOTAMs, real-time tracking, mobile/t
 - Built/maintained via `scripts/build_airspaces.py` from AIP ENR 5.1 extract + curated overrides + ENR 2.1 airport CTR/TMA table.
 - Categories supported: `CTR`, `TMA`, `Class D`, `Prohibited`, `Restricted`, `Danger`.
 - Each volume is defined between `lowerFt` and `upperFt` (converted by `FT_TO_M = 0.3048`).
-- **Rendering (anti-flicker):** wireframe cages — top/bottom rings + vertical ribs. **Highlight fill** (extruded cap mesh, `depthWrite: false`) appears only during identify mode or catalog fly-to overview.
+- **Rendering:** **shaded translucent extruded walls** (Betterment-1 P2.T7) with floor→ceiling gradient; outline pool for edges; depth-stable. **Colorblind hatch pattern** on Prohibited / Restricted, injected world-space into the wall material via `onBeforeCompile` (Betterment-1 P6.T2). The legacy wireframe-cage rendering is retired. **Highlight overlay** (brighter top cap + dashed accent on radar) appears only during identify mode or catalog fly-to overview.
 - Optional **3D sprite labels** at each volume centroid (toggle in panel **Display options**). Sub-toggle **Label floor & ceiling (ft)** appends the altitude band to the label text. Labels scale with camera distance, clamped to **14–28 px** on screen.
 - Color/opacity policy (top-cap / outline):
   | Category | Color | Opacity |
@@ -165,10 +165,13 @@ Nationwide airport CTR/TMA overlays (including RTAF bases Takhli, Khorat, Kampha
 - Tour completion pushes flight-history entry `Tour complete · explore`; manual catalog fly-to disabled while tour runs.
 - **Cinematic dwell orbit (2026-05-21):** at every dwell stop the aircraft slowly orbits the airspace centre (vantage `lookX/lookZ`, falling back to Bangkok ORIGIN for non-airspace stops). Angular rate `(2π)/90 s`. Direction alternates per stop index. Orbit is cleared on `_runCurrentStop` so flying to the next stop is a clean warp, not a curve.
 
-### 3.7 Flight history
-- `FlightHistory` maintains an undo/redo stack (max 120 entries) of drone snapshots: position, body yaw/pitch, speed preset, hover, optional airspace label/id.
+### 3.7 Flight history (Betterment-2 §10.5)
+
+- `FlightHistory` maintains an undo/redo **ring buffer capped at 100 entries** of drone snapshots: position, body yaw/pitch, speed preset, hover, optional airspace label/id, trigger reason.
+- **Event taxonomy** (`HISTORY_EVENT_TYPES` in `src/flightHistory.js`) — **additive only** (removing a type is a breaking change). Includes: preset change, mode change (Easy↔Realistic), throttle preset jump, pause/resume, RTH on/off, fly-to start/end, geofence boundary cross, alert state change (per §3.11 queue), course delta ≥ **15°** (cumulative since last entry), position delta ≥ **2 km** straight-line. **Excludes:** camera view toggle (V, ←, →, ↓), identify toggle, map-primary toggle, unit toggle, settings panel events. View-only changes do not count as "course changes."
+- **UI:** collapsed by default — single-row strip `[▶ History 23]` in the HUD. Click to expand a scrollable card list (newest on top). Collapsed state persists to `localStorage`.
 - Manual flight path sampled as XZ polyline for minimap/debug (2000 points max).
-- Undo/Redo restores full drone state including camera mode and speed preset.
+- Undo/Redo restores full drone state including camera mode and speed preset. Cursor displays `<current>/<total>`; reaching head/tail disables the corresponding button. When the ring trims an oldest entry, the cursor and any "future" redo entries clamp accordingly.
 - Fly-to and reset push/pop stack entries; catalog warp pushes on completion.
 
 ### 3.8 Overlays
@@ -185,6 +188,36 @@ Nationwide airport CTR/TMA overlays (including RTAF bases Takhli, Khorat, Kampha
 ### 3.10 Mobile fallback
 - `matchMedia("(pointer: coarse)") && !matchMedia("(pointer: fine)")` → show "Desktop required" notice.
 
+### 3.11 Alert priority queue (Betterment-2 §10.3)
+
+A **single** alert banner renders at any time. Lower-tier alerts remain visible as chips (so the operator can see they exist) but do not own the banner. The queue is the single source of truth — no module writes directly to the banner DOM.
+
+**Priority (high → low):**
+
+1. `NO_FLY` — Prohibited / Restricted active hours
+2. `AUTH_CLAMP` — Class D / TMA above authorisation ceiling (only fires when Strict CAAT is **on**, §3.12)
+3. `RTH_ACTIVE` — banner reads `RTH ENGAGED (${triggerReason})`; reason is one of `battery` / `link` / `manual` and re-evaluates each frame (closes external P0 #3 banner-staleness bug)
+4. `ALT_OVER_REG` — above regulated ceiling for the active preset
+5. `ALT_OVER_OP` — above operational ceiling for the active preset
+6. `ALT_AT_REG` / `ALT_AT_OP` — approaching ceiling (≥ 90% — hysteresis exit at 85%)
+7. `ADVISORY` — within 5 NM of CTR/TMA, low battery, link degraded
+
+**Module:** `src/alerts.js` — emitters publish `{tier, key, message, sourceTs}` objects; the renderer selects `max(by priority)` and writes to `#alertBanner`. Subscribers (HUD chips, history) receive the full list.
+
+### 3.12 Strict CAAT mode (Betterment-2 §10.1)
+
+A single **boolean contract** that gates all altitude / geofence physical enforcement. The default is **OFF** — every preset (drone, GA, jet, airliner, UFO) flies wherever the operator commands, with the alert system reporting violations advisorily. This is required for the Airspace Tour to traverse Class D/TMA/Restricted without being silently clamped.
+
+- **State:** `simState.strictCaat: boolean`, persisted to `localStorage` under key `kuson.sim.strictCaat`.
+- **Accessor:** `simState.isStrictCaat()` — the **only** sanctioned read path. No scattered `if (window.__sim.strict)` checks. Code that observes the flag through any other route is a defect.
+- **UI:** visible HUD toggle on the telemetry column (top or bottom — confirmed during P1.T4 smoke). Label: `CAAT: OFF` / `CAAT: ON`. Not buried in Settings.
+- **Effects when ON:**
+  - The `AUTH_CLAMP` alert tier becomes enforceable for the **Mavic 3 preset only** inside controlled airspace — re-applies the 120 m AGL clamp in `src/altitudeAdvisor.js` (not in `failures.js`).
+  - Other presets remain warning-only even with the toggle on — a Cessna in VTBD-TMA still receives an `ALT_OVER_REG` banner, never a clamp.
+- **Effects when OFF (default):**
+  - No altitude clamp from any source.
+  - The pre-Betterment-2 unconditional 120 m AGL clamp in the geofence path is retired. Its emission point is now an event `geofence:authCeilingExceeded` consumed by the alert queue.
+
 ---
 
 ## 4. Non-functional requirements
@@ -198,9 +231,9 @@ Nationwide airport CTR/TMA overlays (including RTAF bases Takhli, Khorat, Kampha
 | Geolocation | `navigator.geolocation.getCurrentPosition` with Thailand bounds check; 12 s timeout |
 | Offline behavior | Falls back to procedural dark ground if tiles fail; airspaces load from local JSON; geocode shows "…" offline |
 | Frame rate target | 60 FPS on a 2020-era laptop iGPU |
-| Render stability | Wireframe-cage airspaces (no solid side walls); `logarithmicDepthBuffer`; fixed camera clip; detail tiles follow drone |
+| Render stability | Shaded translucent walls with shared materials + outline pool (Betterment-1 P2.T7 / P5.T5); `logarithmicDepthBuffer`; fixed camera clip; detail tiles follow drone; baked minimap polygons (P5.T4); dynamic DPR under frame pressure (P5.T8) |
 | Error UX | Catch in bootstrap; loading splash text replaced with a failure message |
-| Debug surface | `window.__sim = { scene, camera, drone, layer, ground, flightHistory, tourGuide }` |
+| Debug surface | `window.__sim = { scene, camera, drone, layer, ground, flightHistory, tourGuide, simState, altitudeAdvisor, alerts }` |
 
 ---
 
@@ -402,3 +435,78 @@ the 3-D walls (the latter a procedural world-space pattern injected into
 the wall material via `onBeforeCompile`, avoiding ExtrudeGeometry's
 world-scale-UV noise); identify-mode floating 3D labels; 8-direction
 vantage compass-rose per airspace card.
+
+---
+
+## 10. Betterment-2 architecture (2026-05-29)
+
+Implements [20260529_betterment2.md](20260529_betterment2.md), which addresses operator field reports E1–E4 and external audit P0 items #1, #3, #4, #5, #7. Items P1/P2 from the external audit are parked in [20260529_todo.md](20260529_todo.md) `Discovered` section.
+
+### 10.1 Strict CAAT contract (`simState.strictCaat`)
+
+See §3.12. The single architectural seam for all altitude / geofence physical enforcement. Read through `simState.isStrictCaat()` only.
+
+**Migration:** the unconditional 120 m AGL clamp inside `failures.js` `Geofence.evaluate()` is removed. Its emission point becomes an event `geofence:authCeilingExceeded` published to the alert queue (§3.11). The clamp re-applies only inside `src/altitudeAdvisor.js` and only for the Mavic 3 preset when `isStrictCaat() === true`.
+
+### 10.2 Altitude advisor (`src/altitudeAdvisor.js`)
+
+Owner of the altitude-state machine; no altitude logic in `failures.js`, `drone.js`, or `physics.js`.
+
+- **States per preset:** `NORMAL → AT_OP → OVER_OP → AT_REG → OVER_REG`.
+- **Hysteresis:** enter `AT_*` at 90% of ceiling, enter `OVER_*` at 100%, leave `AT_*` at 85%, leave `OVER_*` at 95%. Prevents banner flapping at the boundary.
+- **Per-preset ceilings** (§10.2.1). Editable at runtime in Settings; persisted to `localStorage`; reset-to-default button per row.
+- **Outputs:** publishes `ALT_AT_OP` / `ALT_OVER_OP` / `ALT_AT_REG` / `ALT_OVER_REG` events to the alert queue. Each carries a `descendTo` value used in the banner message (e.g. `OVER REGULATED — descend to 10 000 ft`).
+
+#### 10.2.1 Default ceiling table
+
+| Preset | Class | Operational ceiling | Regulated ceiling | Rationale |
+|---|---|---|---|---|
+| Mavic 3 | Consumer drone | 6 000 m AMSL (svc) | 120 m AGL (CAAT) | DJI service ceiling / CAAT §2 hobbyist rule |
+| Cessna 172 | GA piston | 4 267 m AMSL (14 000 ft) | 3 048 m AMSL (10 000 ft / no O₂) | Type cert / FAA-CAAT supplemental-O₂ |
+| Learjet 35 | Light biz-jet | 13 716 m AMSL (45 000 ft) | 12 497 m AMSL (FL410) | Type cert / RVSM upper |
+| Boeing 777 | Heavy airliner | 13 137 m AMSL (43 100 ft) | 12 497 m AMSL (FL410) | Type cert / RVSM upper |
+| UFO (100×) | N/A | `Infinity` | `Infinity` | Joke preset; no warnings |
+
+### 10.3 Alert queue (`src/alerts.js`)
+
+See §3.11 for the priority list. Single subscriber renders to `#alertBanner`; lower-tier alerts surface as chips. The queue replaces the betterment-1 ad-hoc banner stack observed at Sattahip (RTH + ADVISORY + NO-FLY firing simultaneously with a stale RTH reason).
+
+**API surface:**
+
+```
+alerts.publish({ tier, key, message, descendTo?, sourceTs })
+alerts.retract(key)
+alerts.subscribe(listener)  // listener({active, chips})
+alerts.isStrictCaat()        // re-export of simState accessor for convenience
+```
+
+### 10.4 Sky shader floor lift (`src/sky.js`)
+
+Rayleigh/Mie extinction constants retuned so the dome luminance ≥ 55% of sea-level at any altitude up to 60 km AMSL. Above ~100 km it correctly fades to black. Documented in the journal block for P4.T1 (revertable constants).
+
+Closes operator field report E3 first half — the "dark as space" observation occurred at airliner altitudes where the betterment-1 shader was already physically transitioning to vacuum.
+
+### 10.5 Flight history rewrite (`src/flightHistory.js`)
+
+See §3.7. The full module is rewritten around `HISTORY_EVENT_TYPES` and a 100-entry ring buffer. The undo/redo cursor bug from external audit Medium #7 is closed by clamping the cursor against the ring on every push.
+
+### 10.6 Fly-to lockout transparency (`src/flyto.js`)
+
+Pre-betterment-2, a user-initiated fly-to click would silently no-op when a state guard (`flightLocked`, tour active, RTH active) was set. After betterment-2 P1.T1/T2:
+
+- A click on an airspace card **always** produces either a fly-to start or a toast naming the lockout reason ("Tour in progress — end tour to fly to volume").
+- The state machine is documented in `doc/flyto_state_machine.md` as the canonical reference; future guards must be added there.
+
+Closes operator field report E4.
+
+### 10.7 Identify card cap (`src/identify.js`, `src/ui.js`)
+
+The bottom identify panel shows the top **3 nearest** cards plus a `+N more — expand` row. Expansion reveals the remainder in a scrollable section that does not grow the bottom strip beyond its capped height. Closes external audit P0 #4.
+
+### 10.8 Ground detail (`src/ground.js`, `src/cities.js`, `src/provinces.js`)
+
+- Default Carto Positron zoom raised one step at "Medium" (z11 → z12).
+- Province boundary overlay opacity 0.35 → 0.55, line width +1.
+- City beacon sprites +30% scale; each gains a colored halo (Bangkok = magenta, Chiang Mai = cyan, etc — list maintained in `src/cities.js`).
+
+Closes operator field report E3 second half.
