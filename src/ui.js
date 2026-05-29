@@ -1648,6 +1648,7 @@ export class UI {
     if (rth && rth.active) {
       const reasonText = rth.reason === "battery" ? "low battery"
         : rth.reason === "signal" ? "signal lost"
+        : rth.reason === "returning" ? "auto-return"
         : "manual";
       alerts.publish({
         key: "rth",

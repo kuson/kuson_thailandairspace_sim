@@ -199,6 +199,18 @@ export class ReturnToHome {
     }
     if (!this.active) return null;
 
+    // P2.T5: keep `reason` in sync with live telemetry so the banner can't go
+    // stale (external audit: BAT 97% while RTH still read "low battery"). A
+    // manual RTH stays manual (user intent). For auto-RTH, re-derive each
+    // step: if the original trigger cleared but another holds, flip to it; if
+    // all auto conditions cleared, report "returning" — we're committed to
+    // completing the return, but we don't lie about why.
+    if (this.reason !== "manual") {
+      const lowBat = telemetry.batteryPct != null && telemetry.batteryPct < this.lowBatteryPct;
+      const lostSig = telemetry.signalLostS != null && telemetry.signalLostS > this.signalTimeoutS;
+      this.reason = lowBat ? "battery" : lostSig ? "signal" : "returning";
+    }
+
     const pos = telemetry.position;
     const dx = this.home.x - pos.x;
     const dz = this.home.z - pos.z;
