@@ -395,6 +395,32 @@
     }
     #inputOptions .opt-reset:hover { background: rgba(255,255,255,0.12); }
 
+    /* ---- Altitude limits editor (Betterment-2 P2.T2) ---- */
+    #altLimits { display: flex; flex-direction: column; gap: 5px; margin: 4px 0 10px 0; }
+    #altLimits .alt-hint { font-size: 10px; color: var(--muted); line-height: 1.4; margin-bottom: 2px; }
+    #altLimits .alt-row {
+      display: grid; grid-template-columns: 1fr auto auto auto; gap: 6px; align-items: center;
+      font-size: 11px;
+    }
+    #altLimits .alt-name { color: var(--text); }
+    #altLimits .alt-band { display: flex; align-items: center; gap: 3px; }
+    #altLimits .alt-lab { color: var(--muted); font-size: 10px; }
+    #altLimits .alt-ref { color: var(--muted); font-size: 9px; }
+    #altLimits .alt-input {
+      width: 56px; padding: 2px 4px; font-family: var(--mono); font-size: 10px;
+      background: rgba(255,255,255,0.06); color: var(--text);
+      border: 1px solid var(--panel-border); border-radius: 4px;
+      text-align: right; font-variant-numeric: tabular-nums;
+    }
+    #altLimits .alt-unlimited { color: var(--muted); width: 56px; text-align: right; display: inline-block; }
+    #altLimits .alt-reset {
+      padding: 2px 6px; font-size: 11px; cursor: pointer; line-height: 1;
+      background: rgba(255,255,255,0.06); color: var(--text);
+      border: 1px solid var(--panel-border); border-radius: 4px;
+    }
+    #altLimits .alt-reset:hover:not(:disabled) { background: rgba(255,255,255,0.12); }
+    #altLimits .alt-reset:disabled { opacity: 0.3; cursor: default; }
+
     /* ---- Educational panel ---- */
     #panel {
       position: fixed; right: 14px; top: 14px; width: 360px; max-height: calc(100% - 28px);
@@ -698,6 +724,8 @@
       <div id="displayOptions"></div>
       <h3 class="collapsible-head" id="inputOptionsToggle">Controls</h3>
       <div id="inputOptions" class="collapsible-body collapsed"></div>
+      <h3 class="collapsible-head" id="altLimitsToggle">Altitude limits</h3>
+      <div id="altLimits" class="collapsible-body collapsed"></div>
       <h3>Legend</h3>
       <div id="legend"></div>
       <h3 class="collapsible-head" id="droneRulesToggle">Thailand drone rules</h3>

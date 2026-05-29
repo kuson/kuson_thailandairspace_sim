@@ -11,6 +11,7 @@ import { lookupAdmin } from "./geocode.js";
 import { simState } from "./simState.js";
 import { alerts, AlertTier } from "./alerts.js";
 import { AltitudeAdvisor } from "./altitudeAdvisor.js";
+import { getCeilings, setCeiling, resetCeilings } from "./ceilings.js";
 import { MinimapTileCache } from "./ground.js";
 import { getInputSettings, setInputSettings, DEFAULT_INPUT_SETTINGS } from "./input.js";
 
@@ -172,6 +173,7 @@ export class UI {
     this._buildSpeedControls();
     this._buildDisplayOptions();
     this._buildInputOptions();
+    this._buildAltLimits();
     this._bindRadar();
     this._bind();
     this._scheduleHintCollapse();
@@ -431,6 +433,68 @@ export class UI {
 
     // Collapsible header wiring (matches drone-rules pattern).
     const toggle = document.getElementById("inputOptionsToggle");
+    if (toggle && !toggle._bound) {
+      toggle.addEventListener("click", () => {
+        const collapsed = el.classList.toggle("collapsed");
+        toggle.classList.toggle("expanded", !collapsed);
+      });
+      toggle._bound = true;
+    }
+  }
+
+  // Betterment-2 P2.T2: per-aircraft ceiling editor. One row per preset with
+  // editable operational + regulated metres and a reset. Values feed the
+  // altitude advisor (src/altitudeAdvisor.js) via src/ceilings.js, persisted
+  // to localStorage. UFO (null ceilings) is shown as "Unlimited", read-only.
+  _buildAltLimits() {
+    const el = document.getElementById("altLimits");
+    if (!el) return;
+
+    const cell = (presetId, band, c) => {
+      if (!c) return `<span class="alt-unlimited">—</span>`;
+      return `<input type="number" class="alt-input" data-preset="${presetId}" data-band="${band}"
+        min="10" step="10" value="${Math.round(c.m)}" /> <span class="alt-ref">${c.ref}</span>`;
+    };
+
+    const rows = SPEED_PRESETS.map((p) => {
+      const c = getCeilings(p.id);
+      const unlimited = !c.operational && !c.regulated;
+      return `
+        <div class="alt-row" data-preset="${p.id}">
+          <div class="alt-name">${p.display}</div>
+          <div class="alt-band"><span class="alt-lab">Op</span> ${cell(p.id, "operational", c.operational)}</div>
+          <div class="alt-band"><span class="alt-lab">Reg</span> ${cell(p.id, "regulated", c.regulated)}</div>
+          <button type="button" class="alt-reset" data-preset="${p.id}" ${unlimited ? "disabled" : ""} title="Reset to defaults">↺</button>
+        </div>`;
+    }).join("");
+
+    el.innerHTML = `
+      <div class="alt-hint">Warning thresholds per aircraft (metres). Op = service ceiling · Reg = legal limit.</div>
+      ${rows}`;
+
+    el.querySelectorAll("input.alt-input").forEach((inp) => {
+      inp.addEventListener("change", () => {
+        const m = parseFloat(inp.value);
+        if (setCeiling(inp.dataset.preset, inp.dataset.band, m)) {
+          // re-read (clamps/normalises) and reflect
+          const c = getCeilings(inp.dataset.preset);
+          inp.value = Math.round(c[inp.dataset.band].m);
+        } else {
+          // invalid → restore from current effective value
+          const c = getCeilings(inp.dataset.preset);
+          inp.value = Math.round(c[inp.dataset.band].m);
+        }
+      });
+    });
+
+    el.querySelectorAll("button.alt-reset").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        resetCeilings(btn.dataset.preset);
+        this._buildAltLimits(); // re-render the row(s) at defaults
+      });
+    });
+
+    const toggle = document.getElementById("altLimitsToggle");
     if (toggle && !toggle._bound) {
       toggle.addEventListener("click", () => {
         const collapsed = el.classList.toggle("collapsed");
