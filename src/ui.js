@@ -15,6 +15,13 @@ import { getCeilings, setCeiling, resetCeilings } from "./ceilings.js";
 import { MinimapTileCache } from "./ground.js";
 import { getInputSettings, setInputSettings, DEFAULT_INPUT_SETTINGS } from "./input.js";
 
+// Betterment-2 P3.T3: glyph per history event type for the collapsible list.
+const HISTORY_GLYPHS = {
+  start: "●", reset: "⟲", flyto: "→", tour: "◎",
+  course: "↻", position: "⇢", preset: "✈", mode: "⚙",
+  pause: "⏸", rth: "⌂", boundary: "▢",
+};
+
 const CAT_DESCR = {
   CTR: "Control Zone — controlled airspace surrounding an airport from the ground up. ATC clearance required.",
   TMA: "Terminal Manoeuvring Area — controlled airspace where arrivals and departures sequence.",
@@ -65,7 +72,12 @@ export class UI {
     this.easyModeIntroClose = document.getElementById("easyModeIntroClose");
     this.undoBtn = document.getElementById("undoBtn");
     this.redoBtn = document.getElementById("redoBtn");
-    this.historyLabel = document.getElementById("historyLabel");
+    this.historyToggle = document.getElementById("historyToggle");
+    this.historyToggleIcon = document.getElementById("historyToggleIcon");
+    this.historyPanel = document.getElementById("historyPanel");
+    this.historyList = document.getElementById("historyList");
+    this.historyCount = document.getElementById("historyCount");
+    this.historyCursor = document.getElementById("historyCursor");
     this.airspaceFilter = document.getElementById("airspaceFilter");
     this.crosshairs = document.getElementById("crosshairs");
     this.crosshairInfo = document.getElementById("crosshairInfo");
@@ -174,6 +186,7 @@ export class UI {
     this._buildDisplayOptions();
     this._buildInputOptions();
     this._buildAltLimits();
+    this._initHistoryCollapse();
     this._bindRadar();
     this._bind();
     this._scheduleHintCollapse();
@@ -267,14 +280,41 @@ export class UI {
     this._updateRadarLabel();
   }
 
-  updateHistoryButtons({ canUndo, canRedo, index, total, label }) {
+  // Betterment-2 P3.T3/T4 (E2): render the collapsible flight-history block —
+  // count badge, cursor, undo/redo state, and the newest-first list.
+  updateHistoryButtons({ canUndo, canRedo, index, total, entries = [] }) {
     if (this.undoBtn) this.undoBtn.disabled = !canUndo;
     if (this.redoBtn) this.redoBtn.disabled = !canRedo;
-    if (this.historyLabel) {
-      this.historyLabel.textContent = total
-        ? `${index + 1}/${total}${label ? " · " + label : ""}`
-        : "—";
+    if (this.historyCount) this.historyCount.textContent = String(total);
+    if (this.historyCursor) {
+      this.historyCursor.textContent = total ? `${index + 1}/${total}` : "—";
     }
+    if (this.historyList) {
+      this.historyList.innerHTML = entries.map((e) => {
+        const glyph = HISTORY_GLYPHS[e.type] ?? "·";
+        const cls = e.i === index ? ' class="current"' : "";
+        const label = (e.label || e.type).replace(/[<>&]/g, "");
+        return `<li${cls}><span class="h-type">${glyph}</span><span class="h-label">${label}</span></li>`;
+      }).join("");
+    }
+  }
+
+  _initHistoryCollapse() {
+    if (!this.historyToggle || !this.historyPanel) return;
+    let collapsed = true;
+    try {
+      collapsed = localStorage.getItem("kuson.history.collapsed") !== "0";
+    } catch { /* default collapsed */ }
+    const apply = () => {
+      this.historyPanel.classList.toggle("collapsed", collapsed);
+      this.historyToggle.classList.toggle("expanded", !collapsed);
+    };
+    apply();
+    this.historyToggle.addEventListener("click", () => {
+      collapsed = !collapsed;
+      try { localStorage.setItem("kuson.history.collapsed", collapsed ? "1" : "0"); } catch { /* ignore */ }
+      apply();
+    });
   }
 
   _buildDisplayOptions() {

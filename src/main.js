@@ -6,7 +6,8 @@ import { UI } from "./ui.js";
 import { loadTerrain } from "./terrain.js";
 import { DynamicGround } from "./ground.js";
 import { FlyToController } from "./flyto.js";
-import { FlightHistory } from "./flightHistory.js";
+import { FlightHistory, HISTORY_EVENT_TYPES } from "./flightHistory.js";
+import { EasyMode } from "./modes.js";
 import { pickAirspacesAlongRay } from "./identify.js";
 import { getStartLocation } from "./geolocation.js";
 import { geoToWorld, ORIGIN } from "./coords.js";
@@ -188,7 +189,6 @@ const layer = new AirspaceLayer();
 let ui;
 let tourGuide;
 let catalogHighlightId = null;
-let _historySampleT = 0;
 let _applyingHistory = false;
 
 // P5.T7: authoritative top-level mode, derived each frame from the live
@@ -196,12 +196,31 @@ let _applyingHistory = false;
 // flag-AND tangle the loop used to juggle.
 const simMode = new SimModeMachine();
 
+// Betterment-2 P3: build the per-frame context the flight-history event log
+// diffs against. Cheap — airspacesAt is AABB-accelerated.
+function historyContext(free) {
+  const inside = layer?.airspacesAt?.(drone.position.x, drone.position.y, drone.position.z) ?? [];
+  return {
+    snapshot: drone.snapshot(),
+    free,
+    presetId: drone.speedPresetId,
+    presetDisplay: drone.activePreset?.()?.display,
+    easy: EasyMode.enabled,
+    paused: !!drone.paused,
+    rthActive: !!drone.rth?.active,
+    insideId: inside[0]?.id ?? null,
+  };
+}
+
 function applySnapshot(s) {
   if (!s) return;
   _applyingHistory = true;
   drone.restore(s);
   ui?.syncSpeedButtons?.();
   ui?.setCameraMode?.(drone.cameraMode);
+  // P3: re-seed the event-log baseline so the restore teleport isn't logged
+  // as a spurious course/position/preset change on the next frame.
+  flightHistory.resetBaseline(historyContext(false));
   _applyingHistory = false;
 }
 
@@ -212,7 +231,7 @@ function resetDrone() {
   catalogHighlightId = null;
   ui?.clearFlyToTarget();
   flightHistory.clear();
-  flightHistory.push(drone.snapshot(), { label: "Bangkok reset" });
+  flightHistory.record(HISTORY_EVENT_TYPES.RESET, drone.snapshot(), { label: "Reset to Bangkok" });
 }
 
 // Betterment-2 P1.T2: startFlyTo now returns {ok, reason?} so the UI can
@@ -311,7 +330,7 @@ async function bootstrap() {
       ui?.clearFlyToTarget();
       layer.clearHighlights();
       if (!silent) {
-        flightHistory.push(drone.snapshot(), { label: "Tour complete · explore" });
+        flightHistory.record(HISTORY_EVENT_TYPES.TOUR, drone.snapshot(), { label: "Tour complete · explore" });
       }
     },
   });
@@ -359,7 +378,7 @@ async function bootstrap() {
   }
 
   ground.updateAround(w.x, w.z);
-  flightHistory.push(drone.snapshot(), {
+  flightHistory.record(HISTORY_EVENT_TYPES.START, drone.snapshot(), {
     label: start.source === "gps" ? "GPS start" : "Bangkok start",
   });
 
@@ -469,13 +488,17 @@ function loop(t) {
     physAccum = 0;
   }
 
-  if (mode === SimMode.FREE && drone.currentSpeed > 0.5) {
-    _historySampleT += dt;
-    if (_historySampleT >= 12) {
-      _historySampleT = 0;
-      _safe("history-push", () => flightHistory.push(drone.snapshot(), { label: "Manual flight" }));
+  // Betterment-2 P3 (E2): log course/location + discrete state changes, not a
+  // periodic "Manual flight" snapshot. Discrete events (preset/mode/pause/RTH/
+  // boundary) track in any mode; course/position deltas only count in free
+  // flight (tour/fly-to drive the drone and shouldn't fill the log). Skip
+  // while an undo/redo restore is being applied — that frame's jump isn't a
+  // user manoeuvre.
+  if (!_applyingHistory) {
+    _safe("history-track", () => flightHistory.track(historyContext(mode === SimMode.FREE)));
+    if (mode === SimMode.FREE && drone.currentSpeed > 0.5) {
+      _safe("history-sample", () => flightHistory.samplePosition(drone.position));
     }
-    _safe("history-sample", () => flightHistory.samplePosition(drone.position));
   }
 
   // Altitude-driven fog falloff (P2.T2). THREE.Fog is linear so we adapt the
