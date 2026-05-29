@@ -95,7 +95,7 @@ When you fly the Mavic 3 in Realistic Mode, a full CAAT-flavoured systems stack 
 
 - **Ground:** zoom-9 base grid plus zoom-11 detail tiles that follow the aircraft (`DynamicGround` in `src/ground.js`), over CARTO Positron basemap tiles. Bangkok (13.7563°N, 100.5018°E) is at the origin.
 - **Sky:** the three.js `Sky` shader (Rayleigh/Mie atmospheric scattering) with a sun disc and altitude-adaptive fog for depth.
-- **Airspaces:** continuous **translucent extruded walls** with a floor→ceiling colour gradient and outline rings — not wireframe cages. Optional 3D sprite labels. Colored by category — red CTR, orange TMA, yellow Class D, solid-red Prohibited, purple Restricted, deep-orange Danger. Prohibited/Restricted also get a colorblind-safe pattern on the radar (hatch / dots).
+- **Airspaces:** continuous **translucent extruded walls** with a floor→ceiling colour gradient and outline rings — not wireframe cages. Optional 3D sprite labels. Colored by category — red CTR, orange TMA, yellow Class D, solid-red Prohibited, purple Restricted, deep-orange Danger. Prohibited/Restricted also get a colorblind-safe pattern — diagonal hatch / dot grid — on both the 3-D walls (procedural, world-space) and the radar.
 - **Cities & provinces:** Thai city beacons and a muted province-boundary overlay for spatial orientation.
 - **Compass:** N/S/E/W marker poles at ±200 km.
 - **HUD (top-left):** lat/lon, **Amphoe + Province** (Nominatim), AMSL + AGL altitude, heading compass, speed, vertical speed, wind, battery/link/next chips, mode chip, and inside-airspace chips.

@@ -397,5 +397,8 @@ scattering) with a shared sun direction driving a sun-disc sprite + a
 
 AGL chip + terrain-relative 90 m line; battery / link / predictive
 "next airspace in Ns" chips; tiered-geofence ribbons + no-fly toast;
-colorblind hatch/dots on Prohibited/Restricted radar fills; identify-mode
-floating 3D labels; 8-direction vantage compass-rose per airspace card.
+colorblind hatch/dots on Prohibited/Restricted — both the radar fills and
+the 3-D walls (the latter a procedural world-space pattern injected into
+the wall material via `onBeforeCompile`, avoiding ExtrudeGeometry's
+world-scale-UV noise); identify-mode floating 3D labels; 8-direction
+vantage compass-rose per airspace card.

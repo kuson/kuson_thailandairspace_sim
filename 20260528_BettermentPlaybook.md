@@ -844,7 +844,7 @@ Files this playbook **does** write:
 
 ### Phase 6 smoke checklist
 - [x] Identify-mode 3D sprites now appear — setHighlighted populates identifyLabelsGroup; verified 3 sprites on a 3-hit pick, 0 after deselect
-- [x] Colorblind hatching renders on Prohibited / Restricted — hatch/dots via createPattern in the minimap bake; 42 distinct alphas sampled inside a Restricted zone (solid fill ≈ 2). NOTE: applied to the radar, not the 3-D walls (ExtrudeGeometry world-scale UVs → tiled map renders as noise)
+- [x] Colorblind hatching renders on Prohibited / Restricted — hatch/dots on the radar (createPattern in the minimap bake; 42 distinct alphas in a Restricted zone vs ≈2 solid) AND on the 3-D walls (procedural world-space pattern via onBeforeCompile — initially deferred for UV noise, completed post-Phase-7 in f617079)
 - [x] Touch-only devices show blocking warning — notice + "Try anyway" gate; desktop start unaffected (simStarted guards visibility restart)
 - [x] Dead code removed; no console warnings — vantagePoint, setSpeedMultiplier, layoutIdentifyLabels gone; live page clean
 - [x] Heading compass smooth across 0°/360° wrap — numeric shortest-angle delta replaces toFixed(2) string compare
