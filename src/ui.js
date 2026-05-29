@@ -1271,6 +1271,24 @@ export class UI {
       ? `Top ${(topM / FT_TO_M_ / 1000).toFixed(topM / FT_TO_M_ >= 10000 ? 0 : 1)}k ft`
       : (topM >= 1000 ? `Top ${(topM / 1000).toFixed(0)} km` : `Top ${topM.toFixed(0)} m`);
     ctx.fillText(topLabel, 4, H - 4);
+
+    // P4.T4: altitude-warning chip at the top of the tape — amber when
+    // approaching a ceiling (AT_*), red when over it (OVER_*). Keeps the
+    // operator's eye in the cockpit; the alert queue still echoes it.
+    const advState = this.altitudeAdvisor?.state;
+    if (advState && advState !== "NORMAL") {
+      const over = advState.startsWith("OVER");
+      const txt = advState.replace("_", " ");
+      ctx.font = "bold 8px ui-monospace, monospace";
+      ctx.textAlign = "center";
+      const cw = ctx.measureText(txt).width + 10;
+      const cx = W / 2;
+      ctx.fillStyle = over ? "rgba(220,40,40,0.95)" : "rgba(230,150,40,0.95)";
+      ctx.fillRect(cx - cw / 2, 1, cw, 12);
+      ctx.fillStyle = over ? "#ffffff" : "#1a1206";
+      ctx.fillText(txt, cx, 10);
+      ctx.textAlign = "left";
+    }
   }
 
   // ---------------- Attitude indicator (artificial horizon) ----------------
