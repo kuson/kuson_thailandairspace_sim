@@ -958,3 +958,23 @@ Mid-phase the `ExtremeProApple` external drive lost OS-level access (EPERM on ge
 - Phases 1–3 complete + tagged. E1, E4, E2 + external P0 #1/#3/#7 all delivered.
 - **Next action:** Phase 4 (P4.T1) — sky shader floor lift (blue dome to ~60 km), then ground detail, identify-card cap, altitude-tape warning chip.
 - Working tree clean. Not pushed.
+
+---
+
+## 2026-05-29 (d) — Betterment-2 Phase 4: beautification (E3 + identify cap)
+
+**Operator:** Claude Code (Opus 4.8). **Branch:** `betterment2-20260529`. **Tag:** `betterment2-phase-4-complete`.
+
+### Done this phase
+- **P4.T1** (d7bcc3f) — E3 "dark as space" root cause: the Sky dome was added at the world origin and never moved, so flying away from Bangkok (or the 100× UFO climbing) put the camera near the edge of the 450 km sky box → black void. `updateSky()` now re-centres the dome + sun on the camera each frame; richer Preetham params (turbidity 6, rayleigh 3); altitude fade keeps full blue ≤60 km, → space-black by 100 km. Verified: sky.position tracks camera at 250 km out; rayleigh 3/3/1.5/0 at 30/60/80/100 km.
+- **P4.T2** (4bd82a3) — ground detail: med tiles z11→z12, province opacity 0.35→0.55, city beacons +30% with prominence-tinted glow halos (major amber / secondary cyan / minor green). Verified params + 30 dots/30 halos.
+- **P4.T3** (e2c0102) — identify stack capped at 3 nearest + "+N more — expand" (60vh scroll); ≤3 shows no pill. Browser-verified (8→3+pill, expand→8, collapse→3).
+- **P4.T4** (a20af7b) — altitude-warning chip on the altitude tape: amber AT_*, red OVER_*, hidden at NORMAL. Verified via the updateHUD chain (advisor tick → tape draw) across NORMAL/AT_REG/OVER_REG/OVER_OP with no error.
+
+### Environment note
+This session's preview ran with `document.hidden = true`, which pauses the rAF render loop (betterment-1 P1.T6) — so the HUD froze, sky stopped following, and `preview_screenshot` timed out. This masqueraded as "the altitude advisor isn't updating," but a direct `ui.updateHUD()` call ticked it correctly. All Phase-4 work verified via state inspection + direct calls rather than screenshots. Visual confirmation (sky colour, ground crispness, halos, tape chip) should be re-checked in a foreground browser tab.
+
+### State at close
+- Phases 1–4 complete + tagged. E1, E4, E2, E3 + external P0 #1/#3/#4/#7 all delivered.
+- **Next action:** Phase 5 (P5.T1) — update spec.md/README to match shipped behaviour; journal closeout; PR. (Note: spec §10 already drafted in the planning commit; reconcile against final implementation — e.g. ceilings live in `ceilings.js`, the Mavic auth-clamp is applied in `_applyGeofence` not `altitudeAdvisor.js`, sky fix is camera-follow.)
+- Working tree clean. Not pushed.
