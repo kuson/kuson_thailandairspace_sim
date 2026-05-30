@@ -1054,3 +1054,42 @@ This session's preview browser ran `document.hidden = true`, pausing the rAF loo
 ### Session close
 - Server left running on port 8765 (operator can stop with Ctrl+C in that terminal).
 - No git commit (not requested).
+
+---
+
+## 2026-05-31 (a) — Betterment-3: Visual overhaul (blue water/sky, Voyager basemap, military branch colours)
+
+**Operator ask:** "Make the waters blue, skies blue. Maps higher contrast and MUCH more detailed. Make the visuals pop. Change the military designation — Turquoise = RTAF, Navy = RTN, Green = RTA. Put this in the spec as a very important point." + a question on Don Mueang / Suvarnabhumi airspace.
+
+Brainstormed; operator locked two decisions: branch = **fill** colour (warm=civil / cool=military), and the **big-push** detail level. Shipped as 6 feature commits + spec §11, all verified in-browser (port 8080) with `renderer` exposed on `window.__sim`.
+
+### Bangkok airspace answer
+Don Mueang (VTBD) + Suvarnabhumi (VTBS) share **one** combined `VTBD-CTR` (35 NM, 0–11 000 ft) + `VTBD-TMA`; there are no separate per-airport drums. Matches current AIP Thailand (fields ~25 km apart under unified Bangkok Approach). Recorded in spec §11.4.
+
+### Changes
+| Commit | What |
+|---|---|
+| `6a0e1ed` | `airspace.js` — `branchOf()` + `BRANCH_COLOR`; `colorFor()` resolves branch before category. 71 zones tagged (RTAF 49 / RTN 21 / RTA 1). Military Danger keeps hatch (`DangerMil`). Identify data carries `.branch`. |
+| `fa438de` | `sky.js`+`main.js` — Preetham `turbidity 6→3`, `rayleigh 3→4`, `mie 0.005→0.004`; fog `0xc8d4dc→0xa6cdee`. |
+| `363d2fd` | `ground.js`+`main.js` — basemap **Positron → Voyager** (`BASEMAP_STYLE`); base/preload planes → ocean blue `0x125a96` / `0x10416e`. |
+| `982de33` | `provinces.js` amber-gold `0xf0c040` @ 0.7; `cities.js` +12 cities; `topN 18→24`. |
+| `409a2e1` | `ui.js` — legend gains RTAF/RTN/RTA group; identify card branch badge. |
+| `e7de155` | `main.js` — **NeutralToneMapping** (was ACES) @ exposure 0.7 — the fix that actually makes the sky read blue + colours pop; `renderer` exposed on `__sim`. |
+| `e272639` | `spec.md` §11 "Visual design language (core product principle)" + §3.1/§3.2/§10.8 reconcile. |
+
+### Key finding
+ACESFilmic @ exposure 1.0 was washing the (correct) Preetham sky to cream-white and muting all fills — no sky-param tuning could fix it. `NeutralToneMapping` @ 0.7 preserves hue/saturation. Found via live exposure/tonemap sweeps using `__sim.renderer`.
+
+### Verified in browser (:8080)
+- 144 airspaces load, 0 console errors; tiles 74/74 textured (Voyager from CDN).
+- Sky blue (zenith near the high sun still washes — physically correct; lower sun is a follow-up lever).
+- Water blue (deep base plane + Voyager tiles; confirmed with military hidden over the Gulf).
+- Recolour visible: RTAF turquoise, RTN navy (VTD23 gulf + danger hatch), RTA green, purple restricted.
+
+### Deferred / follow-ups
+- **3D terrain relief + hypsometric tint** deferred — ground is flat tiles, SRTM is lookup-only; true relief needs a rendered displaced mesh (separate feature). Spec §11.4.
+- Operator taste levers: satellite basemap (one-word `BASEMAP_STYLE` swap), lower sun elevation for a bluer overhead dome, deeper navy hex.
+
+### Session close
+- 8 commits on `betterment2-20260529` (1 reconciliation + 6 feature + 1 spec). Not pushed (push only on request).
+- Preview server (python http.server :8080) left running for operator review.
