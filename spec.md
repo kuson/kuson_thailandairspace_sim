@@ -33,9 +33,9 @@ Out-of-scope for Phase 1: terrain, weather, NOTAMs, real-time tracking, mobile/t
 
 ### 3.1 Scene
 - 3D scene rendered with **Three.js r0.170.0** via CDN importmap.
-- Sky: **`three.js` `Sky` shader** (Rayleigh/Mie scattering) — see `src/sky.js`. Drives a sun disc sprite + a `DirectionalLight`; fog far-plane is altitude-lerped. **Betterment-2 (§10.4) raises the "fade-to-space" floor** so the blue dome stays vivid up to ~60 km AMSL; only above ~100 km does it darken. (Pre-betterment flat `0x89b4dc` background is retired.)
+- Sky: **`three.js` `Sky` shader** (Rayleigh/Mie scattering) — see `src/sky.js`. Drives a sun disc sprite + a `DirectionalLight`; fog far-plane is altitude-lerped. **Betterment-2 (§10.4) raises the "fade-to-space" floor** so the blue dome stays vivid up to ~60 km AMSL; only above ~100 km does it darken. (Pre-betterment flat `0x89b4dc` background is retired.) **Betterment-3 (§11.1)** retunes the dome bluer (`turbidity 6→3`, `rayleigh 3→4`) and the fog tint `0xc8d4dc → 0xa6cdee`.
 - Fog: altitude-driven `THREE.Fog`; near/far interpolated by `lerp(altM, 0..15_000)` between sea-level haze and high-altitude clarity.
-- Ground (`DynamicGround`): zoom-9 base **7×7 following drone** + zoom-11 detail 5×5; detail tiles at **Y=0.4**, base at Y=0 (prevents z-fight streaks). Fallback plane follows drone.
+- Ground (`DynamicGround`): zoom-9 base **7×7 following drone** + zoom-11 detail 5×5; detail tiles at **Y=0.4**, base at Y=0 (prevents z-fight streaks). Fallback plane follows drone. **Betterment-3 (§11.2):** basemap is **CARTO Voyager** (was Positron); base/fallback plane is deep ocean blue `0x125a96`.
 - Compass: N/S/E/W at **200 km** on the horizon ring **around the aircraft** (sprites + poles reposition each frame at drone position + world cardinal offset); 192 px font on 12 km sprites.
 - Camera: fixed `near=2`, `far=600_000` (do not mutate clip planes per frame while panning).
 
@@ -56,6 +56,11 @@ Out-of-scope for Phase 1: terrain, weather, NOTAMs, real-time tracking, mobile/t
   | Prohibited | `0xff0000` solid red | 0.38 |
   | Restricted | `0xa050ff` purple | 0.28 |
   | Danger | `0xff6a1f` deep orange | 0.22 |
+- **Military operator override (Betterment-3 — see §11.3):** any volume whose AIP
+  description names a branch is filled in that branch's **cool** colour instead of
+  the warm category colour above — RTAF `0x19c9c1` turquoise, RTN `0x2b4cd8` navy,
+  RTA `0x33a83a` green. Military **Danger** areas keep the hatch so the danger cue
+  survives. `colorFor()` resolves `branchOf()` before the category table.
 - Groups sorted back-to-front each frame by camera distance (stable tie-break on `id`).
 - Reference handling (`lowerRef`/`upperRef`): GND/AMSL/AGL/FL/UNL are all treated as numeric ft above Y=0. UNL caps at the stored `upperFt` (typically 60000).
 
@@ -521,3 +526,80 @@ The bottom identify panel (`UI._renderIdentifyCards`) shows the top **3 nearest*
 - City beacon dots +30% scale; each gains a glow **halo** sprite tinted by prominence tier (major = amber, secondary = cyan, minor = green) — not per-city colors, which would be noise. Halo + dot fade together via the existing distance-alpha.
 
 Closes operator field report E3 second half.
+
+> **Superseded by §11 (Betterment-3):** basemap is now CARTO **Voyager** (not
+> Positron); province overlay opacity 0.55 → 0.7, colour brightened to `0xf0c040`.
+
+---
+
+## 11. Visual design language (core product principle) — Betterment-3 (2026-05-31)
+
+> **This is a headline product principle, not a cosmetic note.** The sim's appeal
+> — what makes someone *want* to fly it — rests on the world looking vivid,
+> legible, and alive: **blue water, blue sky, a high-contrast detailed map, and
+> airspace colour that instantly tells you who owns the sky.** Treat regressions
+> here as functional regressions, not polish.
+
+### 11.1 Environment — blue water, blue sky
+- **Sky** (`src/sky.js`): vivid daytime blue via richer Preetham params —
+  `turbidity 6→3`, `rayleigh 3→4`, `mieCoefficient 0.005→0.004`. The §10.4
+  camera-follow + altitude fade still hold (full blue ≤60 km, space-black ≥100 km).
+- **Fog** (`src/main.js`): horizon haze tint `0xc8d4dc → 0xa6cdee` so distant
+  terrain melts into a sky-blue band, not a grey one.
+- **Water**: the basemap (§11.2) carries blue water; the wide base plane beneath
+  the tiles is deep ocean blue `0x125a96` (was slate `0x1a2a3a`) and the
+  tile-stream placeholder is `0x10416e`, so the flyer is surrounded by blue
+  rather than a dark void. A dedicated sea-polygon layer was deemed redundant
+  once the basemap supplies coastline + water (§11.4).
+
+### 11.2 Basemap — high contrast, much more detail
+- **`src/ground.js` switched CARTO Positron → CARTO Voyager** (single
+  `BASEMAP_STYLE` constant). Positron was deliberately low-saturation; Voyager is
+  colourful, blue-water, and shows more coastline/road/river detail. The app's own
+  overlays (city beacons, province lines, airspace volumes + labels) sit on top,
+  so legibility is preserved while contrast jumps. One-word switchable (e.g. to
+  satellite imagery).
+- **Province overlay** (`src/provinces.js`): amber-gold `0xc8a050 → 0xf0c040`,
+  opacity `0.55 → 0.7`.
+- **City beacons** (`src/cities.js`): +12 cities (east coast, deep south, central,
+  north); visible cap `topN 18 → 24`.
+
+### 11.3 Airspace colour doctrine — warm = civil, cool = military
+The category palette (§3.2) is **warm** (red/orange/yellow/purple) and stays for
+civil/regulatory zones. **Military zones are recoloured by operating branch**,
+which **overrides** the category fill (`colorFor` in `src/airspace.js` resolves
+`branchOf()` first). This gives an instant warm/cool read — civil ATC vs. military
+— and adds the cool end of the spectrum the old all-warm palette lacked.
+
+| Branch | Colour | Hex |
+|---|---|---|
+| Royal Thai Air Force (RTAF) | Turquoise | `0x19c9c1` |
+| Royal Thai Navy (RTN) | Navy blue | `0x2b4cd8` |
+| Royal Thai Army (RTA) | Green | `0x33a83a` |
+
+- **Branch resolution** (`branchOf`): AIP-description keywords (`RTAF`/`AIR FORCE`/
+  `WING n`; `RTN`/`NAVY`/`NAVAL`; `RTA`/`ARMY`) + a pinned-ID table for named
+  military CTRs. U-Tapao (`VTBU-CTR`), a joint RTN/RTAF base, is tagged **RTN**.
+  Zones with no identifiable branch keep their civil category colour (coverage
+  therefore depends on AIP description detail).
+- **Danger cue survives the recolour**: military **Danger** areas keep the diagonal
+  hatch (synthetic `DangerMil` pattern key) so a turquoise/navy/green range still
+  reads "danger". Prohibited/Restricted keep their existing hatch/dots.
+- **Consequence (intended):** a *military* prohibited/restricted zone reads in its
+  branch colour + hatch, not red/purple; a *non-military* prohibited zone (palace/
+  government) stays red. Warm↔cool is the **operator** axis, not the danger axis.
+- **In-app legend** (`src/ui.js`) documents the branch group; identify cards show a
+  colour-matched branch badge. Legend, identify, and airspace hexes must stay in sync.
+
+### 11.4 Deferred / notes
+- **3D terrain relief + hypsometric tint is deferred.** The ground is flat textured
+  tiles; SRTM (`src/terrain.js`) is elevation-lookup only. True relief needs a
+  rendered, displaced terrain mesh draped with the basemap — a separate feature,
+  not a recolour. "Much more detail" is currently met by the Voyager basemap +
+  denser overlays.
+- All hexes are tuned for **translucent** rendering (floor verts at ~0.35× base ×
+  0.18 opacity), so they look brighter in source than on screen.
+- **Bangkok airspace:** Don Mueang (VTBD) and Suvarnabhumi (VTBS) share **one**
+  combined `VTBD-CTR` (35 NM) + `VTBD-TMA`; there are no separate per-airport drums.
+  This matches current AIP Thailand — the two fields are ~25 km apart under unified
+  Bangkok Approach, so independent CTRs would overlap.
