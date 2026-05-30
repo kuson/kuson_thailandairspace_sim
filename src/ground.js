@@ -1,16 +1,21 @@
 // ground.js — dynamic tile ground that follows the drone for higher detail.
-// Tiles: CARTO Positron (low-saturation labeled basemap) — chosen so the
-// airspace volume overlays stay the visual focus while Thai city/province
-// labels remain readable. Underlying data is still OpenStreetMap.
+// Tiles: CARTO Voyager (colourful, blue-water, higher-detail basemap;
+// Betterment-3, operator: "higher contrast, MUCH more detailed, make it pop").
+// Replaced the old low-saturation Positron style; the app draws its own
+// city/province/airspace labels on top, so a richer basemap adds contrast
+// without losing legibility. Underlying data is still OpenStreetMap.
 import * as THREE from "three";
 import {
   geoToWorld, worldToGeo,
   lonToTileX, latToTileY, tileXToLon, tileYToLat,
 } from "./coords.js";
 
+// Single source of truth for the basemap style — one-word switchable (e.g. to
+// "rastertiles/voyager" → satellite imagery) without touching the URL builder.
+const BASEMAP_STYLE = "rastertiles/voyager";
 const TILE_URL = (x, y, z) => {
   const sub = ["a", "b", "c", "d"][(x + y) % 4];
-  return `https://${sub}.basemaps.cartocdn.com/light_all/${z}/${x}/${y}.png`;
+  return `https://${sub}.basemaps.cartocdn.com/${BASEMAP_STYLE}/${z}/${x}/${y}.png`;
 };
 
 // The minimap underlay draws an 11×11 (=121) tile grid each frame
@@ -111,7 +116,9 @@ export class DynamicGround {
 
     const isDetail = z === this.detailZoom;
     const mat = new THREE.MeshBasicMaterial({
-      color: 0x2a4a3a,
+      // Deep-ocean placeholder while the tile texture streams in (was a dark
+      // green that flashed over water); replaced by the texture on load.
+      color: 0x10416e,
       depthWrite: true,
       depthTest: true,
       polygonOffset: isDetail,

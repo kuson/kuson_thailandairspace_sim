@@ -106,10 +106,13 @@ const cityBeacons = installCityBeacons(scene, { y: 200, topN: 18 });
 // nothing depends on them being ready synchronously.
 installProvinceLines(scene).catch(err => console.warn("[provinces]", err));
 
+// Wide base plane beneath the tiles — reads as the open ocean/atmosphere
+// beyond the loaded basemap. Deep vivid blue (was a dark slate 0x1a2a3a) so
+// the world surrounds the flyer in blue water rather than a void.
 {
   const planeGeo = new THREE.PlaneGeometry(800_000, 800_000);
   const planeMat = new THREE.MeshBasicMaterial({
-    color: 0x1a2a3a,
+    color: 0x125a96,
     depthWrite: true,
     polygonOffset: true,
     polygonOffsetFactor: 4,
