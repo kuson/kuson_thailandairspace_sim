@@ -929,6 +929,7 @@ export class UI {
     const CAP = 3;
     const expanded = this._identifyExpanded;
     const shown = expanded ? entries : entries.slice(0, CAP);
+    const BRANCH_HEX = { RTAF: "#19c9c1", RTN: "#2b4cd8", RTA: "#33a83a" };
     const cardHtml = (e) => {
       const cls = `cat-${e.categoryKey.replace(/\s/g, "")}`;
       const distLabel = e.distanceM == null ? ""
@@ -936,9 +937,12 @@ export class UI {
         : this.fmtDist(e.distanceM);
       const distRow = e.distanceM == null ? "" : `
           <div class="ic-row"><span class="ic-label">Nearest</span><span class="ic-dist">${distLabel}</span></div>`;
+      const branchTag = e.branch
+        ? `<span class="ic-branch" style="color:${BRANCH_HEX[e.branch] || "#fff"};font-size:10px;font-weight:700;margin-left:6px;letter-spacing:.06em">${e.branch}</span>`
+        : "";
       return `
         <div class="identify-card ${cls}">
-          <div class="ic-title">${e.name}<span class="ic-cat">${e.categoryKey}</span></div>${distRow}
+          <div class="ic-title">${e.name}<span class="ic-cat">${e.categoryKey}</span>${branchTag}</div>${distRow}
           <div class="ic-row"><span class="ic-label">Radius</span>${e.radiusLabel}</div>
           <div class="ic-row"><span class="ic-label">Base / Ceiling</span>${this.fmtFloorCeiling(e.lowerFt, e.upperFt)}</div>
         </div>`;
@@ -1610,15 +1614,27 @@ export class UI {
       CTR: "#ff3344", TMA: "#ff9933", "Class D": "#ffe14a",
       Prohibited: "#ff0000", Restricted: "#a050ff", Danger: "#ff6a1f",
     };
-    legend.innerHTML = categories.map(cat => `
+    // Betterment-3 colour doctrine: warm = civil category (above); cool =
+    // military operator, which overrides the category fill. Branch hexes MUST
+    // match BRANCH_COLOR in airspace.js.
+    const branches = [
+      ["RTAF", "#19c9c1", "Royal Thai Air Force — turquoise"],
+      ["RTN",  "#2b4cd8", "Royal Thai Navy — navy blue"],
+      ["RTA",  "#33a83a", "Royal Thai Army — green"],
+    ];
+    const rowHtml = (col, label, desc) => `
       <div class="legend-row">
-        <span class="swatch" style="background:${colorFor[cat]}"></span>
+        <span class="swatch" style="background:${col}"></span>
         <div>
-          <div class="legend-label">${cat}</div>
-          <div class="legend-desc">${CAT_DESCR[cat]}</div>
+          <div class="legend-label">${label}</div>
+          <div class="legend-desc">${desc}</div>
         </div>
       </div>
-    `).join("");
+    `;
+    legend.innerHTML =
+      categories.map(cat => rowHtml(colorFor[cat], cat, CAT_DESCR[cat])).join("")
+      + `<div class="legend-desc" style="margin:4px 0 2px;opacity:.85">Military operator (overrides category colour):</div>`
+      + branches.map(([name, col, desc]) => rowHtml(col, name, desc)).join("");
 
     document.getElementById("droneRules").innerHTML = DRONE_RULES_HTML;
     const rulesToggle = document.getElementById("droneRulesToggle");
