@@ -48,8 +48,12 @@ const renderer = new THREE.WebGLRenderer({
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.outputColorSpace = THREE.SRGBColorSpace;
-renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.0;
+// Neutral (not ACES) tonemapping. ACESFilmic desaturates the bright Preetham
+// sky to cream-white and mutes the airspace colours; NeutralToneMapping
+// preserves hue + saturation, so the sky reads blue and the volumes pop.
+// Exposure 0.7 keeps the Voyager basemap bright without blowing out the sky.
+renderer.toneMapping = THREE.NeutralToneMapping;
+renderer.toneMappingExposure = 0.7;
 renderer.sortObjects = true;
 document.getElementById("app").appendChild(renderer.domElement);
 // Explicitly drop the initial inline style.width/height so the canvas relies
@@ -590,6 +594,6 @@ document.addEventListener("visibilitychange", () => {
 
 window.__sim = {
   scene, camera, drone, layer, ground, flightHistory, tourGuide, ui, simMode,
-  simState, ceilings,
+  simState, ceilings, renderer,
   physics: { RigidBody, QuadrotorModel, FixedWingModel },
 };
