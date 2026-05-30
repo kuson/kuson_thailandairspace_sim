@@ -43,6 +43,19 @@ export const THAI_CITIES = [
   { name: "Roi Et",             lat: 16.0540, lon: 103.6520, prominence: 1 },
   { name: "Phetchaburi",        lat: 13.1119, lon:  99.9407, prominence: 1 },
   { name: "Tak",                lat: 16.8839, lon:  99.1258, prominence: 1 },
+  // Betterment-3: denser coverage (east coast, deep south, central, north).
+  { name: "Samut Prakan",       lat: 13.5990, lon: 100.5998, prominence: 1 },
+  { name: "Rayong",             lat: 12.6833, lon: 101.2372, prominence: 2 },
+  { name: "Chonburi",           lat: 13.3611, lon: 100.9847, prominence: 1 },
+  { name: "Nakhon Sawan",       lat: 15.7030, lon: 100.1372, prominence: 1 },
+  { name: "Kanchanaburi",       lat: 14.0227, lon:  99.5328, prominence: 1 },
+  { name: "Surin",              lat: 14.8820, lon: 103.4960, prominence: 1 },
+  { name: "Yala",               lat:  6.5410, lon: 101.2800, prominence: 2 },
+  { name: "Narathiwat",         lat:  6.4254, lon: 101.8253, prominence: 1 },
+  { name: "Chumphon",           lat: 10.4930, lon:  99.1800, prominence: 1 },
+  { name: "Prachuap Khiri Khan",lat: 11.8126, lon:  99.7957, prominence: 1 },
+  { name: "Nan",                lat: 18.7756, lon: 100.7730, prominence: 1 },
+  { name: "Chanthaburi",        lat: 12.6113, lon: 102.1039, prominence: 1 },
 ];
 
 // Smaller, plainer text sprite than airspace labels — no cyan border, no

@@ -99,7 +99,7 @@ scene.add(ground.group);
 
 // Thai city beacons (Phase 2 P2.T5). Top 18 by prominence × proximity so a
 // satellite-style view doesn't read as a wall of labels.
-const cityBeacons = installCityBeacons(scene, { y: 200, topN: 18 });
+const cityBeacons = installCityBeacons(scene, { y: 200, topN: 24 });
 
 // Thailand province boundary overlay (Phase 2 P2.T6). Async — provinces
 // just don't appear for the first few hundred ms if the fetch is slow;
