@@ -709,6 +709,25 @@ export class UI {
         this.alertChips.innerHTML = "";
       }
     }
+    this._positionAlertStack();
+  }
+
+  // Keep the alert banner below the core telemetry rows (through LINK) so it
+  // never covers LAT/LON/HDG/SPD on narrow viewports where the HUD spans full width.
+  _positionAlertStack() {
+    const banner = this.alertBanner;
+    if (!banner || banner.hidden) return;
+    const anchor = document.getElementById("signalRow")
+      || document.getElementById("windRow")
+      || document.getElementById("hud");
+    if (!anchor) return;
+    const top = Math.round(anchor.getBoundingClientRect().bottom + 6);
+    banner.style.top = `${top}px`;
+    const chips = this.alertChips;
+    if (chips && !chips.hidden) {
+      const bannerH = banner.offsetHeight || 42;
+      chips.style.top = `${top + bannerH + 4}px`;
+    }
   }
 
   // ---------------- Unit system ----------------
@@ -1819,6 +1838,7 @@ export class UI {
 
     // (4) Emit to the banner/chips only if the active set changed.
     alerts.flush();
+    this._positionAlertStack();
 
     this._drawAltTape(altM, groundM);
     this._drawAttitudeIndicator(this.drone.bodyPitch ?? 0, this.drone.bodyRoll ?? 0);

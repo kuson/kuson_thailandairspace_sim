@@ -10,7 +10,19 @@
 
 ---
 
-## 1. Current state (as of 2026-05-21, session d)
+## 1. Current state (as of 2026-05-30, browser smoke)
+
+### Browser smoke 2026-05-30 (Cursor IDE browser @ 9598ea0)
+- [x] Boot clean — 144 airspaces, no console errors, `physicsStep` + alert queue live.
+- [x] CAAT default OFF; toggle persists; Mavic clamp inside TMA when CAAT ON (verified after VTBD-TMA warp).
+- [x] Tour End / Reset-during-tour clears `_tourRunning`; catalog fly-to works afterward.
+- [x] Identify cap (3 + expand pill); flight history collapsible default.
+- [x] **U1 fixed:** alert banner dynamically anchored below LINK row (`_positionAlertStack` in `ui.js`).
+- [x] **U7 fixed:** identify panel usable on narrow viewports (`calc(100vw - 40px)` not `- 300px`).
+
+---
+
+## 1b. Prior state snapshot (2026-05-21, session d)
 
 ### Build & run
 - [x] Single-page app, no build step. Open via `python3 -m http.server` (or any static server) and hit `index.html`.
@@ -99,7 +111,7 @@
 
 Operator should walk through `spec.md §6` in a real browser. Until then these are `[?]`:
 
-- [?] Loading splash disappears within ~2 s; GPS prompt handled.
+- [x] Loading splash disappears within ~2 s; GPS prompt handled. *(2026-05-30 browser smoke)*
 - [?] OSM tiles render at GPS/Bangkok start; base + detail follow drone to Phuket/Chiang Mai warp.
 - [?] Click → pointer-lock; WASD/QE move; mouse looks.
 - [?] `Space` hover; `Esc` releases pointer.
@@ -108,7 +120,7 @@ Operator should walk through `spec.md §6` in a real browser. Until then these a
 - [?] Speed presets: 1× slow, 100× fast; preset name in SPD line.
 - [?] `↓`/`←`/`→` view toggles + badge “press again for front view”; `D` strafes right.
 - [?] HDG tape inertia visible when turning quickly; digital degrees immediate.
-- [?] Identify mode (`I`): bottom stacked cards with category colors, radius, distance to nearest point, base/ceiling — sorted nearest-first; highlight fill more transparent.
+- [x] Identify mode (`I`): bottom stacked cards with category colors, radius, distance to nearest point, base/ceiling — sorted nearest-first; cap 3 + expand pill. *(2026-05-30 browser smoke)*
 - [?] `U` flips speed/alt/distance/floor-ceiling between metric and aero (kt/ft/NM).
 - [?] `M` swaps map ↔ 3D as primary view; inset shows the non-primary one.
 - [?] `+`/`-` zoom map; `Esc` releases pointer.
@@ -121,7 +133,7 @@ Operator should walk through `spec.md §6` in a real browser. Until then these a
 - [?] Drone rules section collapsed by default; expands on click.
 - [?] No flicker flying through nested CTR/TMA.
 - [?] 3D labels toggle; height sub-toggle.
-- [?] Panel title shows current airspace(s); filter box works.
+- [x] Panel title shows current airspace(s); filter box works. *(2026-05-30: VTBD filter → 2 entries)*
 - [?] Movement works after catalog warp (hover not stuck).
 - [?] Express tour completes in ~5 min; full tour visits north/south/east/west stops; finale returns to Bangkok; Skip/End work.
 

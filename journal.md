@@ -1009,3 +1009,48 @@ This session's preview browser ran `document.hidden = true`, pausing the rAF loo
 
 ### State at close
 - Working tree clean. Branch ready for PR/merge.
+
+---
+
+## 2026-05-30 (a) — Browser-agent smoke test + UI overlap fixes
+
+**Operator:** Cursor Agent (Composer).
+**Branch:** `betterment2-20260529` @ 9598ea0.
+**Objective:** Run the sim in the browser agent, table problems in `journal.md` / `state_TODO.md`, fix each confirmed issue.
+
+### Test harness
+- Local server: `python3 -m http.server 8765` → `http://localhost:8765/index.html?v=…`
+- Cursor IDE browser (Glass side panel, ~452 px wide) + CDP `Runtime.evaluate` smoke scripts.
+- Boot: 144 airspaces, `window.__sim` live, zero console errors after load.
+
+### Findings table
+
+| ID | Sev | Finding | Verdict | Fix |
+|---|---|---|---|---|
+| U1 | MED | `#alertBanner` at `top:14px` overlapped LAT/LON telemetry (banner bottom 56 px vs lat row top 14 px) | **Confirmed** | `ui.js` `_positionAlertStack()` anchors banner/chips below `#signalRow` each HUD frame; identify panel width fix in `index.html` |
+| U2 | HIGH | `_tourRunning` stuck after `tourGuide.stop({silent:true})` | **False positive** | End Tour + Reset-during-tour both clear `_tourRunning`; earlier test called `stop()` before `tourGuide` was wired on `__sim` |
+| U5 | HIGH | Sky dome not following camera | **False positive** | `THREE.Sky` has no `name`; traverse `o.isSky` finds it — follow verified at 80 km offset |
+| U6 | HIGH | Mavic CAAT clamp not applied at 500 m | **False positive** | Clamp requires inside TMA + CAAT ON + Mavic preset; verified clamp to ~131 m AGL after warp to VTBD-TMA |
+| U7 | MED | `#identifyPanel` width `min(520px, calc(100vw - 300px))` → **152 px** on narrow viewports | **Confirmed** | Width → `min(520px, calc(100vw - 40px))` — **412 px** at 452 px viewport post-fix |
+
+### Features verified (no code change)
+- CAAT toggle persists; default OFF.
+- Flight history expand/collapse; undo/redo buttons present.
+- Catalog fly-to; tour blocks fly-to with toast; fly-to works after End Tour.
+- Identify cap 3 + `+N more — expand` (expands to 14 cards in test).
+- `U` units, `M` map-primary, `P` pause, `J` alt-tape toggle.
+- Altitude advisor + alert queue (banner + chips) at Cessna 5000 m.
+- Filter box narrows list (VTBD → 2 entries).
+
+### Files touched
+- `index.html` — identify panel width floor (`100vw - 40px`).
+- `src/ui.js` — `_positionAlertStack()` keeps alert banner below LINK row (no HUD overlap).
+- `journal.md`, `state_TODO.md` — this block + checklist ticks.
+
+### Verification (post-fix)
+- U1: `overlapLat=false`; after cache-bust, banner at 214 px (6 px below LINK row), zero core-row overlaps.
+- U7: identify panel width 412 px at 452 px viewport.
+
+### Session close
+- Server left running on port 8765 (operator can stop with Ctrl+C in that terminal).
+- No git commit (not requested).

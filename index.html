@@ -298,6 +298,7 @@
        highest-priority alert; lower-priority alerts become chips beneath it
        so the user knows they exist without the banner fighting itself. */
     #alertBanner {
+      /* Fallback top; _positionAlertStack() in ui.js re-anchors below LINK row each frame. */
       position: fixed; top: 14px; left: 50%; transform: translateX(-50%);
       padding: 6px 14px; border-radius: 8px; max-width: min(620px, calc(100vw - 40px));
       font-family: var(--mono); font-size: 12px; letter-spacing: 0.04em;
@@ -600,7 +601,7 @@
       position: fixed; left: 50%; transform: translateX(-50%);
       bottom: 64px; z-index: 55;
       display: none; flex-direction: column; gap: 8px;
-      max-width: 520px; width: min(520px, calc(100vw - 300px));
+      max-width: 520px; width: min(520px, calc(100vw - 40px));
       pointer-events: none;
     }
     #identifyPanel.visible { display: flex; }
