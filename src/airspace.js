@@ -58,7 +58,10 @@ const WALL_MAT_HIGHLIGHT = new THREE.MeshBasicMaterial({
 // vertical walls (degenerate only for exact NW–SE walls, which circles
 // average out). Non-patterned categories keep the shared WALL_MAT
 // singletons, so this only adds 4 materials total (2 kinds × 2 states).
-const WALL_PATTERN_KIND = { Prohibited: 1, Restricted: 2 };   // 1 hatch, 2 dots
+// "DangerMil" is a synthetic key for military danger areas: they take a
+// cool branch fill (below) but keep the diagonal hatch so the live-fire /
+// danger cue survives the recolour. Civil danger areas stay plain orange.
+const WALL_PATTERN_KIND = { Prohibited: 1, Restricted: 2, DangerMil: 1 };   // 1 hatch, 2 dots
 const WALL_PAT_PERIOD = 450;        // metres between hatch lines / dot cells
 const WALL_PAT_STRENGTH = 0.5;      // how much darker the marks render
 const WALL_MAT_POOL = new Map();
@@ -155,12 +158,44 @@ export function isMilitaryAirspace(a) {
   return MILITARY_KEYWORDS.some((k) => text.includes(k));
 }
 
+// Visual design language (spec §11): warm = civil, cool = military. An
+// airspace whose AIP description names an RTAF / RTN / RTA operator gets a
+// "cool" branch fill that overrides the warm category colour; everything
+// else keeps COLOR_FOR. Hexes are tuned brighter than their real-world
+// connotation so the translucent extruded walls still read against the
+// blue sky/sea (floor verts render at 0.35× base × 0.18 opacity).
+export const BRANCH_COLOR = {
+  RTAF: 0x19c9c1,   // Royal Thai Air Force — turquoise
+  RTN:  0x2b4cd8,   // Royal Thai Navy — navy/royal blue (brightened)
+  RTA:  0x33a83a,   // Royal Thai Army — green
+};
+export const BRANCH_LABEL = { RTAF: "RTAF", RTN: "RTN", RTA: "RTA" };
+
+// Named military CTRs whose AIP description omits the explicit branch token
+// are pinned here. U-Tapao (VTBU) is a joint RTN/RTAF base — tagged RTN, the
+// Royal Thai Navy air station that owns the field.
+const BRANCH_BY_ID = {
+  "KPS-CTR": "RTAF", "VTUR-KKZ": "RTAF", "VTPI-CTR": "RTAF", "VTBC-CTR": "RTAF",
+  "VTBU-CTR": "RTN",
+};
+
+export function branchOf(a) {
+  if (BRANCH_BY_ID[a.id]) return BRANCH_BY_ID[a.id];
+  const t = `${a.name} ${a.description}`.toUpperCase();
+  if (/\bRTAF\b|AIR FORCE|\bWING\s*\d/.test(t)) return "RTAF";
+  if (/\bRTN\b|ROYAL THAI NAV|\bNAVY\b|NAVAL|SURFACE SHIP/.test(t)) return "RTN";
+  if (/\bRTA\b|ROYAL THAI ARMY|\bARMY\b/.test(t)) return "RTA";
+  return null;
+}
+
 function categoryKeyFor(a) {
   if (a.category === "CTR" && a.class === "D") return "Class D";
   return a.category;
 }
 
 function colorFor(a) {
+  const branch = branchOf(a);
+  if (branch) return BRANCH_COLOR[branch];
   return COLOR_FOR[categoryKeyFor(a)] ?? COLOR_FOR[a.category] ?? 0xffffff;
 }
 
@@ -402,7 +437,10 @@ export class AirspaceLayer {
       const upper = ftToY(a.upperFt);
       const color = colorFor(a);
       const opacity = opacityFor(a);
-      const mesh = buildVolumeMesh(ring, lower, upper, color, opacity, categoryKeyFor(a));
+      // Military danger areas keep the hatch (danger cue) over their cool fill.
+      const patKey = (a.category === "Danger" && isMilitaryAirspace(a))
+        ? "DangerMil" : categoryKeyFor(a);
+      const mesh = buildVolumeMesh(ring, lower, upper, color, opacity, patKey);
       mesh.userData.airspace = a;
       this.group.add(mesh);
 
@@ -422,7 +460,7 @@ export class AirspaceLayer {
 
       const c = {
         airspace: a, ring, lower, upper, color, opacity, mesh, label,
-        centroid: cen, midY, military: isMilitaryAirspace(a),
+        centroid: cen, midY, military: isMilitaryAirspace(a), branch: branchOf(a),
       };
       c.cssColor = "#" + c.color.toString(16).padStart(6, "0");
       // P5.T1: precompute the axis-aligned bounding box once, so the hot
@@ -556,6 +594,7 @@ export class AirspaceLayer {
         name: a.shortName,
         category: a.category,
         categoryKey: categoryKeyFor(a),
+        branch: c.branch,
         radiusLabel,
         lowerFt: a.lowerFt,
         upperFt: a.upperFt,
