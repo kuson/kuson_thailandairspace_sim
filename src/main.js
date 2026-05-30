@@ -29,7 +29,9 @@ const skyRig = installSky(scene, undefined, SUN_DIR);
 // fog.far is lerped per-frame in the render loop based on altitude (P2.T2).
 const FOG_NEAR_BASE = 30_000;
 const FOG_FAR_BASE  = 250_000;
-scene.fog = new THREE.Fog(0xc8d4dc, FOG_NEAR_BASE, FOG_FAR_BASE);
+// Bluer horizon haze (was 0xc8d4dc grey-blue) so distant terrain melts into a
+// sky-blue band instead of a flat grey one. Matches the richer Sky dome.
+scene.fog = new THREE.Fog(0xa6cdee, FOG_NEAR_BASE, FOG_FAR_BASE);
 
 const camera = new THREE.PerspectiveCamera(
   70,

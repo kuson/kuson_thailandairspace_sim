@@ -18,7 +18,10 @@ import { Sky } from "three/addons/objects/Sky.js";
 
 // Base Preetham params (sea-level). Altitude scales rayleigh/mie toward 0 to
 // fade the dome to black at extreme altitude.
-const BASE = { turbidity: 6, rayleigh: 3, mieCoefficient: 0.005, mieDirectionalG: 0.8 };
+// Lower turbidity (cleaner air) + higher rayleigh push the daytime dome to a
+// vivid, saturated blue (operator: "make the skies blue"). mie trimmed so the
+// sun's white halo doesn't wash the blue out near the horizon.
+const BASE = { turbidity: 3, rayleigh: 4, mieCoefficient: 0.004, mieDirectionalG: 0.8 };
 const SKY_BLUE_CEILING_M = 60_000;   // full blue at/below this
 const SKY_SPACE_M        = 100_000;  // ~black at/above this
 const SUN_DISTANCE = 200_000;
