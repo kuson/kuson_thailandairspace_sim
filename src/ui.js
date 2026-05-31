@@ -416,6 +416,11 @@ export class UI {
         this.showFov = fovHud.checked;
       });
     }
+    const lfRadar = document.getElementById("optRadarLiveFlights");
+    if (lfRadar) {
+      lfRadar.checked = !!this.showRadarFlights;
+      lfRadar.addEventListener("change", () => { this.showRadarFlights = lfRadar.checked; });
+    }
   }
 
   /** Betterment-4: reflect LiveFlightsLayer status in the Display-options line. */
@@ -2244,6 +2249,45 @@ export class UI {
     }
   }
 
+  _altColor(altM) {
+    const ft = (altM || 0) * 3.28084;
+    if (ft < 10000) return "#33d6ff";
+    if (ft < 24000) return "#5dff8a";
+    if (ft < 35000) return "#ffe14a";
+    return "#ff7ad9";
+  }
+
+  // Live-flight radar blips: alt-coloured heading arrow + V/S caret + flight no.
+  // Emergency squawks (7500/7600/7700) flash red. Toggle = #optRadarLiveFlights.
+  _drawLiveFlightBlips(ctx, cx, cy, wx, wz, SCALE) {
+    const lf = this.liveFlights;
+    if (!this.showRadarFlights || !lf || !lf._enabled || lf.flights.size === 0) return;
+    const W = this.minimap.width, H = this.minimap.height;
+    const flash = (performance.now() % 800) < 400;
+    ctx.font = "8px ui-monospace, monospace";
+    for (const f of lf.flights.values()) {
+      if (f.fade <= 0.05) continue;
+      const bx = cx + (f.world.x - wx) / SCALE;
+      const by = cy + (f.world.z - wz) / SCALE;
+      if (bx < -16 || bx > W + 16 || by < -16 || by > H + 16) continue;
+      const sq = f.fix.squawk;
+      const emerg = sq === "7500" || sq === "7600" || sq === "7700";
+      const sel = lf.selectedId === f.id;
+      const col = emerg ? (flash ? "#ff3b3b" : "#ffd0d0") : this._altColor(f.fix.altM);
+      ctx.save();
+      ctx.translate(bx, by);
+      ctx.rotate((f.fix.headingDeg || 0) * Math.PI / 180);   // 0=N up, 90=E right
+      ctx.fillStyle = col;
+      ctx.beginPath(); ctx.moveTo(0, -5); ctx.lineTo(3.4, 4); ctx.lineTo(0, 2); ctx.lineTo(-3.4, 4); ctx.closePath(); ctx.fill();
+      ctx.restore();
+      if (sel) { ctx.strokeStyle = "rgba(102,255,204,0.95)"; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(bx, by, 8, 0, Math.PI * 2); ctx.stroke(); }
+      if (emerg && flash) { ctx.strokeStyle = "#ff3b3b"; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(bx, by, 9, 0, Math.PI * 2); ctx.stroke(); }
+      const vs = f.fix.vertRateMs || 0;
+      if (Math.abs(vs) > 2) { ctx.fillStyle = vs > 0 ? "#9effa0" : "#ff9e9e"; ctx.fillText(vs > 0 ? "▲" : "▼", bx + 5, by - 3); }
+      if (sel || (f.dist ?? 1e12) < 120000) { ctx.fillStyle = "rgba(255,255,255,0.85)"; ctx.fillText(f.callsign || f.id, bx + 6, by + 4); }
+    }
+  }
+
   drawMinimap() {
     if (this.radarCenterAircraft) {
       this._radarCenter.x = this.drone.position.x;
@@ -2306,6 +2350,9 @@ export class UI {
       ctx.drawImage(b.canvas, 0, 0);
       ctx.restore();
     }
+
+    // Betterment-4.1: live-flight blips (toggle in radar options).
+    this._drawLiveFlightBlips(ctx, cx, cy, wx, wz, SCALE);
 
     const p = this.drone.position;
     const dx = cx + (p.x - wx) / SCALE;
