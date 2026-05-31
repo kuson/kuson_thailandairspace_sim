@@ -15,6 +15,8 @@ import { TourGuide } from "./tourGuide.js";
 import { installSky, updateSky } from "./sky.js";
 import { installCityBeacons } from "./cities.js";
 import { installProvinceLines } from "./provinces.js";
+import { LiveFlightsLayer } from "./liveFlights.js";
+import { getLiveFlightsSettings, setLiveFlightsSettings } from "./flightSources.js";
 import { RigidBody, QuadrotorModel, FixedWingModel } from "./physics.js";
 import { SimMode, SimModeMachine } from "./simMode.js";
 import { simState } from "./simState.js";
@@ -109,6 +111,10 @@ const cityBeacons = installCityBeacons(scene, { y: 200, topN: 24 });
 // just don't appear for the first few hundred ms if the fetch is slow;
 // nothing depends on them being ready synchronously.
 installProvinceLines(scene).catch(err => console.warn("[provinces]", err));
+
+// Betterment-4: live ADS-B traffic overlay. Off by default; allocates nothing
+// and hits no network until the operator toggles "Show me live flights".
+const liveFlights = new LiveFlightsLayer(scene, { camera, renderer });
 
 // Wide base plane beneath the tiles — reads as the open ocean/atmosphere
 // beyond the loaded basemap. Deep vivid blue (was a dark slate 0x1a2a3a) so
@@ -371,6 +377,18 @@ async function bootstrap() {
     applyRendererSize();
   };
 
+  // Betterment-4: live-flights wiring. Each UI control persists then drives the
+  // layer; restore the persisted source/interval/enabled on load.
+  const lfSettings = getLiveFlightsSettings();
+  liveFlights.setSource(lfSettings.source);
+  liveFlights.setIntervalMs(lfSettings.intervalMs);
+  if (lfSettings.proxyBase) liveFlights.setProxyBase(lfSettings.proxyBase);
+  liveFlights.onStatusChange = (s) => ui.setLiveFlightsStatus(s);
+  ui.onLiveFlightsToggle = (on) => { setLiveFlightsSettings({ enabled: on }); liveFlights.setEnabled(on); };
+  ui.onFlightSourceChange = (id) => { setLiveFlightsSettings({ source: id }); liveFlights.setSource(id); };
+  ui.onFlightIntervalChange = (ms) => { setLiveFlightsSettings({ intervalMs: ms }); liveFlights.setIntervalMs(ms); };
+  if (lfSettings.enabled) liveFlights.setEnabled(true);
+
   const start = await getStartLocation();
   const w = geoToWorld(start.lat, start.lon);
   drone.teleport(w.x, start.altM ?? 200, w.z, 0, -0.05);
@@ -552,6 +570,8 @@ function loop(t) {
 
   _safe("label-scales", () => layer.updateLabelScales(camera, renderer));
   _safe("city-scales", () => cityBeacons.updateScales(camera, renderer));
+  _safe("liveflights", () => liveFlights.update(dt, camera.position));
+  _safe("liveflights-labels", () => liveFlights.updateLabelScales(camera, renderer));
 
   if (ui) {
     _safe("hud", () => ui.updateHUD(dt));
@@ -594,6 +614,6 @@ document.addEventListener("visibilitychange", () => {
 
 window.__sim = {
   scene, camera, drone, layer, ground, flightHistory, tourGuide, ui, simMode,
-  simState, ceilings, renderer,
+  simState, ceilings, renderer, liveFlights,
   physics: { RigidBody, QuadrotorModel, FixedWingModel },
 };
