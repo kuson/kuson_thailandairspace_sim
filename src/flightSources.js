@@ -56,7 +56,8 @@ function normalizeAdsbx(a) {
   if (a == null || typeof a.lat !== "number" || typeof a.lon !== "number") return null;
   const onGround = a.alt_baro === "ground";
   const altFt = onGround ? 0 : (typeof a.alt_baro === "number" ? a.alt_baro : (a.alt_geom ?? 0));
-  const heading = a.track ?? a.true_heading ?? a.mag_heading ?? 0;
+  // true_heading has the best coverage (~91%) and is the airframe nose direction.
+  const heading = a.true_heading ?? a.track ?? a.mag_heading ?? 0;
   const seen = a.seen_pos ?? a.seen ?? 0;
   return {
     id: a.hex,
@@ -67,9 +68,13 @@ function normalizeAdsbx(a) {
     lon: a.lon,
     altM: altFt * FT_TO_M,
     headingDeg: heading,
+    rollDeg: (typeof a.roll === "number") ? a.roll : null,   // bank, when broadcast
     velMs: (a.gs ?? 0) * KT_TO_MS,
     vertRateMs: (a.baro_rate ?? a.geom_rate ?? 0) * FPM_TO_MS,
     onGround,
+    reg: a.r || null,
+    desc: a.desc || null,
+    squawk: a.squawk || null,
     tEpoch: Date.now() - seen * 1000,
   };
 }
@@ -169,7 +174,10 @@ function makeMockSource() {
         altM: 3000 + ((i * 700) % 9000),
         headingDeg: (i * 47) % 360,
         velMs: ty.v + (i % 5) * 4,
-        vertRateMs: 0,
+        vertRateMs: (i % 3 === 0 ? 8 : i % 3 === 1 ? -8 : 0),   // climb/descend/level
+        rollDeg: (i % 4 === 0 ? 18 : i % 4 === 2 ? -18 : null), // some banked turns
+        reg: "HS-MK" + i.toString(36).toUpperCase(),
+        desc: ty.t,
         onGround: false,
       });
     }
@@ -218,8 +226,11 @@ export function makeSource(id, { proxyBase = "" } = {}) {
  */
 export function bucketForFlight(nf) {
   const t = (nf.icaoType || "").toUpperCase();
-  if (/^(A31|A32|A21|A22|B73|B38|E19|E29|E17)/.test(t)) return "narrowbody";
-  if (/^(B74|B77|B78|A33|A34|A35|A38|MD11|B76)/.test(t)) return "heavy";
+  // ICAO type prefix is the most reliable signal; check before category.
+  if (/^(AT4|AT5|AT7|DH8|DHC|SF3|SB2|C20|C21|C72|PC12|BE|J32|E12)/.test(t)) return "light";   // turboprop/light → Cessna
+  if (/^(B74|B77|B78|A33|A34|A35|A38|MD11|B76|IL96|A30)/.test(t)) return "heavy";
+  if (/^(A31|A32|A21|A22|A19|A20|B73|B38|B71|E17|E19|E29|E2|CRJ|CR[789]|MD8|MD9)/.test(t)) return "narrowbody";
+  if (/^(C25|C56|GLF|G[45]|LJ|CL[36]|E55|FA|H25|BE40)/.test(t)) return "bizjet";
   switch (nf.category) {
     case "A1": return "light";
     case "A2": return "bizjet";

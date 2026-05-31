@@ -17,6 +17,7 @@ import { geoToWorld } from "./coords.js";
 import { makeTextSprite } from "./airspace.js";
 import { buildLiveAircraftModel } from "./drone.js";
 import { makeSource, bucketForFlight } from "./flightSources.js";
+import { airlineFor, enrichRoute, airlineLogo, chipColor } from "./flightEnrich.js";
 
 const DEG2RAD = Math.PI / 180;
 const MAX_RENDERED = 150;        // hard cap on visible aircraft
@@ -58,6 +59,40 @@ function _planeIcon() {
   _iconTex = new THREE.CanvasTexture(c);
   _iconTex.colorSpace = THREE.SRGBColorSpace;
   return _iconTex;
+}
+
+// Callsign label with the airline logo (or a coloured IATA chip when the logo
+// isn't CORS-loadable into a canvas). The cached logo <img> is shared per airline.
+function _flightLabel(callsign, airline) {
+  const logo = airline.iata ? airlineLogo(airline.iata) : null;
+  const logoReady = !!(logo && logo.complete && logo.naturalWidth > 0);
+  const fs = 22, padX = 12, padY = 7, boxH = 30;
+  const meas = document.createElement("canvas").getContext("2d");
+  meas.font = `bold ${fs}px ui-monospace, monospace`;
+  const tw = Math.ceil(meas.measureText(callsign).width);
+  const badgeW = logoReady ? Math.round(boxH * (logo.naturalWidth / logo.naturalHeight)) : (airline.iata ? 36 : 0);
+  const gap = badgeW ? 8 : 0;
+  const w = padX * 2 + badgeW + gap + tw, h = padY * 2 + boxH;
+  const c = document.createElement("canvas"); c.width = w; c.height = h;
+  const ctx = c.getContext("2d");
+  ctx.fillStyle = "rgba(8,12,20,0.85)"; ctx.beginPath(); ctx.roundRect(0, 0, w, h, 7); ctx.fill();
+  ctx.strokeStyle = "rgba(102,255,204,0.5)"; ctx.lineWidth = 2; ctx.beginPath(); ctx.roundRect(1, 1, w - 2, h - 2, 6); ctx.stroke();
+  let x = padX;
+  if (badgeW) {
+    if (logoReady) { try { ctx.drawImage(logo, x, (h - boxH) / 2, badgeW, boxH); } catch { /* tainted — ignore */ } }
+    else {
+      ctx.fillStyle = chipColor(airline.icao || airline.iata); ctx.beginPath(); ctx.roundRect(x, (h - boxH) / 2, badgeW, boxH, 4); ctx.fill();
+      ctx.fillStyle = "#fff"; ctx.font = "bold 13px ui-monospace, monospace"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.fillText(airline.iata, x + badgeW / 2, h / 2);
+    }
+    x += badgeW + gap;
+  }
+  ctx.fillStyle = "#fff"; ctx.font = `bold ${fs}px ui-monospace, monospace`; ctx.textAlign = "left"; ctx.textBaseline = "middle";
+  ctx.fillText(callsign, x, h / 2 + 1);
+  const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace;
+  const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false, depthWrite: false }));
+  sp.userData.canvasW = w; sp.userData.canvasH = h; sp.userData.baseScale = 10; sp.renderOrder = 9999;
+  return sp;
 }
 
 const _v = new THREE.Vector3();
@@ -186,7 +221,7 @@ export class LiveFlightsLayer {
         f.callsign = nf.callsign || f.callsign;
         f.target.set(w.x, nf.altM, w.z);
         f.vel.copy(this._worldVel(nf));
-        f.holder.rotation.y = Math.PI - nf.headingDeg * DEG2RAD;
+        this._applyOrientation(f.holder, nf);
         f.missedPolls = 0;
         f.dead = false;
         f.lastSeen = now;
@@ -208,11 +243,21 @@ export class LiveFlightsLayer {
     return _v.set(nf.velMs * Math.sin(b), nf.vertRateMs, -nf.velMs * Math.cos(b));
   }
 
+  // Heading + pitch + bank onto the holder (+Z forward, YXZ order). Pitch is
+  // derived from vertical rate vs ground speed; bank only if roll is broadcast.
+  _applyOrientation(holder, nf) {
+    holder.rotation.order = "YXZ";
+    holder.rotation.y = Math.PI - nf.headingDeg * DEG2RAD;
+    const gs = Math.max(nf.velMs || 0, 1);
+    holder.rotation.x = -THREE.MathUtils.clamp(Math.atan2(nf.vertRateMs || 0, gs), -0.26, 0.26);
+    holder.rotation.z = nf.rollDeg != null ? -nf.rollDeg * (Math.PI / 180) : 0;
+  }
+
   _spawn(nf, w) {
     const bucket = bucketForFlight(nf);
     const holder = new THREE.Group();
     holder.position.set(w.x, nf.altM, w.z);
-    holder.rotation.y = Math.PI - nf.headingDeg * DEG2RAD;
+    this._applyOrientation(holder, nf);
 
     const billboard = new THREE.Sprite(new THREE.SpriteMaterial({
       map: _planeIcon(), color: 0xcfefff, transparent: true, opacity: 0, depthTest: true,
@@ -220,7 +265,9 @@ export class LiveFlightsLayer {
     holder.add(billboard);
     this.aircraftGroup.add(holder);
 
-    const label = makeTextSprite(nf.callsign || nf.id, { fontSize: 22, depthTest: false });
+    const airline = airlineFor(nf.callsign, null);   // prefix-table guess (sync)
+    if (airline.iata) airlineLogo(airline.iata);      // warm the shared logo cache
+    const label = _flightLabel(nf.callsign || nf.id, airline);
     label.material.opacity = 0;
     this.labelsGroup.add(label);
 
@@ -237,6 +284,7 @@ export class LiveFlightsLayer {
       vel: this._worldVel(nf).clone(),
       trail: [{ x: w.x, y: nf.altM, z: w.z, t: Date.now() }],
       holder, billboard, model: null, label, line,
+      airline, route: null, _enriched: false, _labelSig: "",
       lastSeen: Date.now(), missedPolls: 0, fade: 0, dead: false, lod: "far",
     };
   }
@@ -252,6 +300,18 @@ export class LiveFlightsLayer {
     f.holder.add(m);
     f.model = m;
     return m;
+  }
+
+  _rebuildLabel(f) {
+    const old = f.label;
+    const next = _flightLabel(f.callsign || f.id, f.airline);
+    next.position.copy(old.position);
+    next.visible = old.visible;
+    next.material.opacity = old.material.opacity;
+    this.labelsGroup.remove(old);
+    old.material.map?.dispose(); old.material.dispose();
+    this.labelsGroup.add(next);
+    f.label = next;
   }
 
   _remove(f) {
@@ -355,6 +415,17 @@ export class LiveFlightsLayer {
       const show = i < 60 && f.fade > 0.05;
       f.label.visible = show;
       if (!show) continue;
+      // Lazy enrich (route/airline) + rebuild the label when airline or logo resolves.
+      if (!f._enriched) {
+        f._enriched = true;
+        enrichRoute(f.callsign).then((r) => {
+          f.route = r; f.airline = airlineFor(f.callsign, r);
+          if (f.airline.iata) airlineLogo(f.airline.iata);
+        });
+      }
+      const lg = f.airline.iata ? airlineLogo(f.airline.iata) : null;
+      const sig = `${f.airline.name}|${lg && lg.complete && lg.naturalWidth > 0 ? 1 : 0}`;
+      if (sig !== f._labelSig) { this._rebuildLabel(f); f._labelSig = sig; }
       f.label.position.set(f.world.x, f.world.y + 220, f.world.z);
       const dist = Math.max(f.dist ?? 1000, 800);
       const worldPerPx = (2 * tanHalf * dist) / hPx;
