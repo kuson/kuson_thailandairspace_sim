@@ -1042,3 +1042,38 @@ Open http://localhost:8080 . Hit F12 for DevTools; Performance tab for profiling
 - **The visual diff has unexpected differences:** screenshot, journal, then decide. Some Phase 2 changes are intentional regressions to the baseline.
 
 The bones are good. The roadmap is clear. Go phase by phase, commit by commit, journal at each session boundary. The work compounds.
+
+---
+
+# Betterment-4 — Live Flights (real ADS-B overlay) · 2026-06-01
+
+> **Goal:** Optional "Show me live flights" toggle overlaying real Thai-airspace ADS-B traffic — realistic models, fading per-flight trails, dead-reckoned motion, configurable source + cadence (5–60 s). Zero backend.
+> **Why:** Standalone, additive; no flight-model coupling. Reuses the model factory + layer/coords/label/persistence/fetch patterns. Spec §3.13 + §12.
+> **Decisions (operator):** backend-free community source; Balanced LOD; add a narrowbody model. **Verification overturned the source pick:** adsb.lol is CORS-blocked browser-direct → default is **airplanes.live** (verified CORS-OK); adsb.lol/OpenSky are proxy-only.
+
+## Phase 1 — Source abstraction + mock
+- [x] P1.T1–T4 — `flightSources.js`: `FlightDataSource`/`NormalizedFlight`, ADSBexchange-family adapter (2-circle merge+dedupe) + OpenSky + synthetic mock, `bucketForFlight`, `get/setLiveFlightsSettings` (key `kuson.liveflights.settings.v1`) — commit b29ddeb
+
+## Phase 2 — Layer + models
+- [x] P2.T1 — `modelNarrowbody()` + `buildLiveAircraftModel()` in `drone.js` (player presets unchanged) — commit fa9b524
+- [x] P2.T2/T3 — `LiveFlightsLayer`: groups, setTimeout poll loop, spawn/update/despawn, category→bucket, heading/altitude — commit d647069
+
+## Phase 3 — Trails + motion + LOD
+- [x] P3.T1/T2/T3 — per-flight trail (8 min/120 pt, age fade, rebuild per poll), exponential-smoothed dead-reckoning, LOD nearest-20 full / billboard / cap 150 + hysteresis, nearest-60 label declutter — commit d647069
+
+## Phase 4 — UI + wiring + verification
+- [x] P4.T1 — Display-options checkbox + source/interval selects + status line — commit 300e803
+- [x] P4.T2 — `main.js` construct/wire/loop-tick/`window.__sim.liveFlights` + restore persisted state — commit 9c292e3
+- [x] P4.T3 — CORS verification → default airplanes.live; adsb.lol/OpenSky relabelled "needs proxy" — commit 8caf18d
+- [x] P4.T4 — spec §3.13 + §12; playbook + journal
+
+## Phase B4 smoke checklist (browser-verified 2026-06-01, port 8080)
+- [x] Loads with feature OFF, no network on load, **0 console errors**
+- [x] `airplanes.live` browser-direct returns real Thai traffic (29 ac: DLH773/A359 etc.); schema matches normaliser; 2-circle merge OK
+- [x] Mock ingest → 40 flights; buckets narrowbody 17 / heavy 12 / light 6 / bizjet 5; LOD exactly 20 full models + 20 billboards (lazy)
+- [x] Narrowbody renders as a recognisable airliner (11 parts); trails + callsign labels (THA100) render
+- [x] `document.hidden` correctly pauses the auto-poll (headless tab; a real focused browser polls normally)
+- [x] Settings persist to `kuson.liveflights.settings.v1`; `window.__sim.liveFlights` exposed
+- [ ] Tag `betterment4-complete` (cut after journal)
+
+> **Note:** the auto-poll can't be exercised in the headless preview (it reports `document.hidden=true`, which by design pauses polling). Verified instead by driving `fetchStates`/`_ingest`/`update` directly + a live `airplanes.live` fetch from the page origin.

@@ -226,6 +226,23 @@ A single **boolean contract** that gates all altitude / geofence physical enforc
 
 ---
 
+### 3.13 Live flights (Betterment-4 §12)
+
+**Optional real-time ADS-B overlay.** When enabled, the sim fetches live aircraft state in the Thailand bounding box and renders each as a realistic model with a fading trail, updated on a configurable cadence. Default **OFF** (no network on load).
+
+- **Toggle:** `Show me live flights` checkbox (`#optLiveFlights`) → `LiveFlightsLayer.setEnabled(true)` starts the poll loop and reveals the aircraft / labels / trails groups; OFF stops polling, disposes flights, hides the groups.
+- **Source (configurable):** `Flight source` select (`#optFlightSource`). All sources implement one `FlightDataSource.fetchStates() → NormalizedFlight[]` interface (`src/flightSources.js`); ADSBexchange-family providers share one normaliser + a 2-circle (north ~16 N / south ~9 N, 250 NM) merge+dedupe.
+  - **`airplaneslive`** (default) — community ADS-B, no key, **verified CORS-enabled** for browser-direct fetch; `adsbfi` is the same format.
+  - **`mock`** — synthetic deterministic fleet, no network; offline/dev + the error fallback.
+  - **`adsblol` / `opensky-proxy`** — labelled **needs proxy**: adsb.lol sends no CORS headers and OpenSky requires OAuth2 client-credentials, so both are inert browser-direct and work only via a user-supplied `proxyBase`.
+- **Cadence (configurable):** `Update interval` select (`#optFlightInterval`) — 5/10/15/30/60 s, default **60 s**. Dead-reckoning keeps motion smooth at any cadence.
+- **Models:** ADS-B emitter category + ICAO type → bucket (`bucketForFlight`) → `buildLiveAircraftModel` (light→Cessna, bizjet→Learjet, narrowbody→**new A320/737 model**, heavy→B777). Each spawn is scale-normalised to a realistic length. Mesh is **+Z-forward**, so `rotation.y = π − trackRad`; `position.y = altM`.
+- **Trails:** per-aircraft polyline (own `BufferGeometry`), capped at **8 min / 120 samples**, rebuilt per poll, age-faded (bright head → dim tail). Despawn after **3 missed polls** with a fade-out.
+- **Motion:** the per-flight target dead-reckons forward by velocity each frame and the rendered position eases toward it (exponential smoothing, τ≈0.4 s), self-correcting on every poll — aircraft glide, never teleport.
+- **Performance:** full model for the nearest **K=20** (lazy-built, hysteresis), billboard sprite beyond, hard cap **150** rendered; nearest **60** get callsign labels with distance declutter. Polling pauses on `document.hidden`; nothing is allocated while off.
+- **Status UI:** `#liveFlightsStatus` shows `N aircraft · updated HH:MM:SS`, plus loading / empty ("no aircraft in range") / error ("source unreachable") states; on error the last-good frame stays on screen.
+- **State/persistence:** `localStorage` key **`kuson.liveflights.settings.v1`** via `get/setLiveFlightsSettings()` — `{ enabled:false, source:"airplaneslive", intervalMs:60000, proxyBase:"" }`. Exposed on `window.__sim.liveFlights`.
+
 ## 4. Non-functional requirements
 
 | Concern | Decision |
@@ -603,3 +620,21 @@ which **overrides** the category fill (`colorFor` in `src/airspace.js` resolves
   combined `VTBD-CTR` (35 NM) + `VTBD-TMA`; there are no separate per-airport drums.
   This matches current AIP Thailand — the two fields are ~25 km apart under unified
   Bangkok Approach, so independent CTRs would overlap.
+
+---
+
+## 12. Betterment-4 architecture (live flights · 2026-06-01)
+
+An optional real-ADS-B overlay with **zero backend**. Every request flows through one `FlightDataSource`; an optional user-supplied `proxyBase` is the only escape hatch for CORS-restricted sources.
+
+### 12.1 Layer (`src/liveFlights.js`)
+`LiveFlightsLayer` owns three scene groups (aircraft / labels / trails) and a `Map<icao24, Flight>`. Methods: `setEnabled / setSource / setIntervalMs / setProxyBase`, per-frame `update(dt, camPos)` + `updateLabelScales(camera, renderer)`, `getStatus()` + `onStatusChange`. The poll loop is a self-re-arming `setTimeout` (independent of the rAF loop): it skips while `document.hidden` or a fetch is in flight, and keeps the last-good frame on error. Lifecycle: spawn on first sighting (lazy model build, scale-normalised), update on poll (set fix/target, push + rebuild trail), despawn after `DESPAWN_POLLS=3` with a fade; geometries/materials disposed on removal.
+
+### 12.2 Source abstraction (`src/flightSources.js`)
+`makeSource(id, {proxyBase})` → a `FlightDataSource` with `async fetchStates()`. The ADSBexchange-family adapter (airplanes.live / adsb.fi / adsb.lol) issues two 250 NM point queries, merges + dedupes by hex, and normalises the `ac[]` rows; OpenSky's positional `states[]` is normalised separately; `mock` is a synthetic dead-reckoned fleet (count via `globalThis.__mockFlightCount`). All emit the common `NormalizedFlight` shape. **CORS reality (verified 2026-06-01):** airplanes.live + adsb.fi send CORS headers (browser-direct OK); adsb.lol does not; OpenSky needs OAuth2 — hence the airplanes.live default and the proxy-only labels.
+
+### 12.3 Performance contract (LOD / interpolation / trails)
+Nearest **K=20** get full models; the rest billboard sprites; total rendered capped at **150** (farthest hidden) with a hysteresis band. Positions are dead-reckoned every frame and exponentially eased toward each new fix, so any cadence (incl. 60 s) looks smooth. Trails cap at 8 min / 120 samples, rebuilt only on poll. Polling pauses on `document.hidden`; nothing is allocated while disabled.
+
+### 12.4 UI / persistence
+Display-options checkbox + two selects (`#optLiveFlights`, `#optFlightSource`, `#optFlightInterval`) → `ui.onLiveFlightsToggle / onFlightSourceChange / onFlightIntervalChange` → `main.js` → layer methods. Status surfaced via `onStatusChange → ui.setLiveFlightsStatus`. All three settings persist to `kuson.liveflights.settings.v1`.
