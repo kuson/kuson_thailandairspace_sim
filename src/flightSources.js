@@ -19,8 +19,9 @@
 //   }
 //
 // Sources (operator-selectable):
-//   adsblol / airplaneslive / adsbfi — ADSBexchange-format community APIs, no
-//     key, browser-direct (CORS permitting). The DEFAULT is adsb.lol.
+//   airplaneslive / adsbfi / adsblol — ADSBexchange-format community APIs, no
+//     key. DEFAULT is airplanes.live (verified CORS-enabled for browser fetch).
+//     adsb.lol does NOT send CORS headers, so it is usable only via a proxy.
 //   mock        — synthetic fleet, no network; deterministic; the error fallback.
 //   opensky-proxy — OpenSky /states/all via a user-supplied proxy base. OpenSky
 //     now requires OAuth2 client-credentials + lacks browser CORS, so it is
@@ -203,8 +204,9 @@ export function makeSource(id, { proxyBase = "" } = {}) {
     case "adsbfi": return makeAdsbxSource(id, ADSBX_BASE.adsbfi, proxyBase);
     case "opensky-proxy": return makeOpenSkySource(proxyBase);
     case "mock": return makeMockSource();
-    case "adsblol":
-    default: return makeAdsbxSource("adsblol", ADSBX_BASE.adsblol, proxyBase);
+    case "adsblol": return makeAdsbxSource("adsblol", ADSBX_BASE.adsblol, proxyBase);
+    case "airplaneslive":
+    default: return makeAdsbxSource("airplaneslive", ADSBX_BASE.airplaneslive, proxyBase);
   }
 }
 
@@ -234,7 +236,7 @@ const LS_KEY = "kuson.liveflights.settings.v1";
 
 export const DEFAULT_LIVEFLIGHTS_SETTINGS = Object.freeze({
   enabled: false,
-  source: "adsblol",
+  source: "airplaneslive",   // verified CORS-OK browser-direct; adsb.lol is not
   intervalMs: 60000,   // operator's "every minute"; interpolation keeps it smooth
   proxyBase: "",
 });

@@ -341,11 +341,11 @@ export class UI {
       <label class="opt">
         Flight source
         <select id="optFlightSource" class="opt-select">
-          <option value="adsblol">adsb.lol (community)</option>
-          <option value="airplaneslive">airplanes.live</option>
-          <option value="adsbfi">adsb.fi</option>
+          <option value="airplaneslive">airplanes.live (community)</option>
+          <option value="adsbfi">adsb.fi (community)</option>
           <option value="mock">Mock / replay (offline)</option>
-          <option value="opensky-proxy">OpenSky (via proxy)</option>
+          <option value="adsblol">adsb.lol (needs proxy)</option>
+          <option value="opensky-proxy">OpenSky (needs proxy)</option>
         </select>
       </label>
       <label class="opt">
