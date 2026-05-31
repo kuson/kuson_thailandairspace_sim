@@ -95,6 +95,19 @@ function _flightLabel(callsign, airline) {
   return sp;
 }
 
+// Great-circle interpolation between two lat/lon points (slerp on the sphere).
+function _gcInterp(lat1, lon1, lat2, lon2, t) {
+  const R = Math.PI / 180, D = 180 / Math.PI;
+  const p1 = lat1 * R, l1 = lon1 * R, p2 = lat2 * R, l2 = lon2 * R;
+  const d = 2 * Math.asin(Math.sqrt(Math.sin((p2 - p1) / 2) ** 2 + Math.cos(p1) * Math.cos(p2) * Math.sin((l2 - l1) / 2) ** 2));
+  if (d < 1e-6) return { lat: lat1, lon: lon1 };
+  const A = Math.sin((1 - t) * d) / Math.sin(d), B = Math.sin(t * d) / Math.sin(d);
+  const x = A * Math.cos(p1) * Math.cos(l1) + B * Math.cos(p2) * Math.cos(l2);
+  const y = A * Math.cos(p1) * Math.sin(l1) + B * Math.cos(p2) * Math.sin(l2);
+  const z = A * Math.sin(p1) + B * Math.sin(p2);
+  return { lat: Math.atan2(z, Math.hypot(x, y)) * D, lon: Math.atan2(y, x) * D };
+}
+
 const _v = new THREE.Vector3();
 
 export class LiveFlightsLayer {
@@ -112,6 +125,7 @@ export class LiveFlightsLayer {
 
     this.flights = new Map();
     this.selectedId = null;   // drives card / route-line / follow / radar highlight
+    this._routeLine = null; this._routeLineFor = null;
     this._enabled = false;
     this._intervalMs = 60000;
     this._proxyBase = "";
@@ -354,6 +368,32 @@ export class LiveFlightsLayer {
     g.setDrawRange(0, n);
   }
 
+  // Great-circle origin→dest line for the selected flight (when its route is known).
+  _updateRouteLine() {
+    const f = this.selectedId ? this.flights.get(this.selectedId) : null;
+    const r = f?.route;
+    const ready = r?.origin?.lat != null && r?.dest?.lat != null;
+    const key = ready ? this.selectedId : null;
+    if (key === this._routeLineFor) return;
+    if (this._routeLine) {
+      this.scene.remove(this._routeLine);
+      this._routeLine.geometry.dispose(); this._routeLine.material.dispose();
+      this._routeLine = null;
+    }
+    this._routeLineFor = key;
+    if (!key) return;
+    const o = r.origin, d = r.dest, N = 96, pos = new Float32Array((N + 1) * 3);
+    for (let i = 0; i <= N; i++) {
+      const ll = _gcInterp(o.lat, o.lon, d.lat, d.lon, i / N);
+      const w = geoToWorld(ll.lat, ll.lon);
+      pos[i * 3] = w.x; pos[i * 3 + 1] = 9000; pos[i * 3 + 2] = w.z;
+    }
+    const g = new THREE.BufferGeometry();
+    g.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+    this._routeLine = new THREE.Line(g, new THREE.LineBasicMaterial({ color: 0xffd24a, transparent: true, opacity: 0.7 }));
+    this.scene.add(this._routeLine);
+  }
+
   // ---------------- per-frame ----------------
 
   update(dt, camPos) {
@@ -394,6 +434,7 @@ export class LiveFlightsLayer {
       f.billboard.material.opacity = 0.95 * f.fade;
       f.line.material.opacity = 0.8 * f.fade;
     }
+    this._updateRouteLine();
   }
 
   updateLabelScales(camera, renderer) {

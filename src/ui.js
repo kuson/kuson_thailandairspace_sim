@@ -979,6 +979,7 @@ export class UI {
     }
 
     canvas.addEventListener("mousedown", (e) => {
+      this._radarDownXY = { x: e.clientX, y: e.clientY };
       if (e.button !== 0 || this.radarCenterAircraft) return;
       this._radarActive = true;
       canvas.classList.add("active");
@@ -1005,6 +1006,25 @@ export class UI {
       if (this.radarCenterAircraft) return;
       this._radarCenter.x = this.drone.position.x;
       this._radarCenter.z = this.drone.position.z;
+    });
+    // Betterment-4.1: click a live-flight blip → select + follow.
+    canvas.addEventListener("click", (e) => {
+      const lf = this.liveFlights;
+      if (!lf || !this.showRadarFlights || !lf._enabled) return;
+      if (this._radarDownXY && (Math.abs(e.clientX - this._radarDownXY.x) > 4 || Math.abs(e.clientY - this._radarDownXY.y) > 4)) return;
+      const rect = canvas.getBoundingClientRect();
+      const px = (e.clientX - rect.left) * (canvas.width / rect.width);
+      const py = (e.clientY - rect.top) * (canvas.height / rect.height);
+      const cx = canvas.width / 2, cy = canvas.height / 2;
+      const wx = this._radarCenter.x, wz = this._radarCenter.z, S = this._radarScale;
+      let best = null, bestD = 196;   // 14 px radius²
+      for (const f of lf.flights.values()) {
+        if (f.fade <= 0.05) continue;
+        const bx = cx + (f.world.x - wx) / S, by = cy + (f.world.z - wz) / S;
+        const d = (bx - px) ** 2 + (by - py) ** 2;
+        if (d < bestD) { bestD = d; best = f; }
+      }
+      if (best) { this._selectFlight(best.id); this.onFollowFlight?.(best.id); }
     });
   }
 
