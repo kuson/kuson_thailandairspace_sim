@@ -767,6 +767,78 @@ function modelUFO() {
   return g;
 }
 
+/**
+ * Generic narrowbody airliner (A320 / 737 family) — the bulk of real Thai
+ * traffic. Single-aisle tube, low swept wings, two underwing nacelles, a
+ * conventional swept tail. Live-flights only (not a flyable SPEED_PRESET).
+ * +Z forward, authored ~38 m long; scale-normalised at spawn.
+ */
+function modelNarrowbody() {
+  const g = new THREE.Group();
+  const skin = _mat(0xe9edf2);
+  const engineDark = _mat(0x3a3f46);
+  const metal = new THREE.MeshPhongMaterial({ color: 0x9aa3ad, shininess: 60, specular: 0xcfd6dd });
+  const tailAccent = _mat(0x2b4cd8);   // subtle blue fin — reads as a livery
+  const winLine = _mat(0x14202a);
+
+  const R = 1.9;     // fuselage radius
+  const LEN = 34;    // fuselage tube length (excl. cones)
+
+  // Fuselage tube (axis along Z) + nose/tail cones.
+  const tube = new THREE.Mesh(new THREE.CylinderGeometry(R, R, LEN, 24), skin);
+  tube.rotation.x = Math.PI / 2;
+  g.add(tube);
+  const nose = new THREE.Mesh(new THREE.ConeGeometry(R, 4.5, 24), skin);
+  nose.rotation.x = Math.PI / 2;        // apex toward +Z (forward)
+  nose.position.z = LEN / 2 + 2.25;
+  g.add(nose);
+  const tailCone = new THREE.Mesh(new THREE.ConeGeometry(R, 6, 24), skin);
+  tailCone.rotation.x = -Math.PI / 2;   // apex toward -Z (aft)
+  tailCone.position.set(0, 0.55, -LEN / 2 - 3);
+  g.add(tailCone);
+
+  // Window cheatlines (a dark band per side — individual windows are invisible
+  // at live-traffic viewing distance).
+  const cheatL = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.45, LEN * 0.82), winLine);
+  cheatL.position.set(-R * 0.98, R * 0.28, 0);
+  g.add(cheatL);
+  const cheatR = cheatL.clone(); cheatR.position.x = R * 0.98; g.add(cheatR);
+
+  // Low-mounted swept wings (slightly aft of centre).
+  const wings = _wing({ rootChord: 6.5, tipChord: 1.8, span: 34, sweepBack: 5, thickness: 0.55, dihedral: 0.09, color: 0xdfe5ec });
+  wings.position.set(0, -R * 0.35, -1.5);
+  g.add(wings);
+
+  // Two underwing nacelles (cowl + bright intake ring), inboard on each wing.
+  function nacelle(x) {
+    const grp = new THREE.Group();
+    const cowl = new THREE.Mesh(new THREE.CylinderGeometry(1.15, 1.0, 4.2, 18), engineDark);
+    cowl.rotation.x = Math.PI / 2;
+    grp.add(cowl);
+    const intake = new THREE.Mesh(new THREE.TorusGeometry(1.12, 0.16, 10, 20), metal);
+    intake.position.z = 2.1;
+    grp.add(intake);
+    grp.position.set(x, -R * 0.95, -1);
+    return grp;
+  }
+  g.add(nacelle(-7)); g.add(nacelle(7));
+
+  // Swept vertical fin + horizontal stabiliser.
+  const fin = new THREE.Mesh(new THREE.BoxGeometry(0.32, 6.2, 4.0), tailAccent);
+  fin.position.set(0, R + 2.5, -LEN / 2 - 0.5);
+  fin.rotation.x = -0.32;               // sweep the top aft
+  g.add(fin);
+  const stab = _wing({ rootChord: 3, tipChord: 1, span: 13, sweepBack: 2.5, thickness: 0.3, dihedral: 0.05, color: 0xdfe5ec });
+  stab.position.set(0, R * 0.5, -LEN / 2 - 1.5);
+  g.add(stab);
+
+  // Tricycle gear (nose strut forward at +Z).
+  const gear = _tricycleGear({ noseZ: LEN / 2 - 3, mainZ: -3, mainSpread: 3.2, dropY: 2.6, wheelR: 0.55, tire: 0x15181c });
+  g.add(gear);
+
+  return g;
+}
+
 /** Choose model per preset id. Order matches SPEED_PRESETS. */
 function buildAircraftModel(presetId) {
   switch (presetId) {
@@ -776,6 +848,22 @@ function buildAircraftModel(presetId) {
     case "b777":       return modelBoeing777();
     case "100x":
     default:           return modelUFO();
+  }
+}
+
+/**
+ * Betterment-4: build a model for a LIVE flight by bucket (see bucketForFlight
+ * in flightSources.js). Reuses the existing builders + the new narrowbody.
+ * Returned group is scale-normalised by the caller (liveFlights.js).
+ */
+export function buildLiveAircraftModel(bucket) {
+  switch (bucket) {
+    case "light":      return modelCessna172();
+    case "bizjet":     return modelLearjet();
+    case "narrowbody": return modelNarrowbody();
+    case "heavy":      return modelBoeing777();
+    case "unknown":
+    default:           return modelLearjet();
   }
 }
 
