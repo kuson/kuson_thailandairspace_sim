@@ -243,6 +243,14 @@ A single **boolean contract** that gates all altitude / geofence physical enforc
 - **Status UI:** `#liveFlightsStatus` shows `N aircraft · updated HH:MM:SS`, plus loading / empty ("no aircraft in range") / error ("source unreachable") states; on error the last-good frame stays on screen.
 - **State/persistence:** `localStorage` key **`kuson.liveflights.settings.v1`** via `get/setLiveFlightsSettings()` — `{ enabled:false, source:"airplaneslive", intervalMs:60000, proxyBase:"" }`. Exposed on `window.__sim.liveFlights`.
 
+**Betterment-4.1 additions (§12.5–12.7):**
+- **Flights list:** collapsible "Live flights (N)" panel section — nearest ~50 rows (airline logo/chip · callsign · airline · ORIG→DEST · ETA) each with a **View** button → follow-cam; click a row → detail card (precise type/reg, route, computed ETA, live alt/gs/vs, best-effort photo, Follow/Clear). Throttled ~1 Hz, rendered only when expanded.
+- **Realistic attitude:** models apply heading (`true_heading`), **pitch** (vertical-rate vs groundspeed) and **bank** (broadcast `roll`, when present) via a YXZ holder; precise model from ICAO type. Callsign labels carry the **airline logo** (avs.io, cached) + name, with an IATA-chip fallback.
+- **Enrichment (`src/flightEnrich.js`):** route + airline from **adsbdb** (free, CORS-OK) + ICAO-prefix airline fallback table; **computed ETA** (great-circle distance-to-dest ÷ groundspeed — free feeds carry no scheduled times); cached airline-logo; best-effort aircraft photo. All lazy + cached (incl. negatives), only for listed/labelled/selected flights.
+- **Radar blips:** radar option **Live flights** → altitude-coloured heading arrow + V/S caret + flight number per aircraft, selection ring, and a flashing ring for emergency squawks (7500/7600/7700). **Click a blip → select + follow.**
+- **Follow-cam (`src/followController.js`):** locks the camera onto a live flight and tracks its dead-reckoned position; pauses/hides the player while active; released by Esc / movement keys / canvas pointer-down.
+- **Route line:** great-circle origin→dest line for the selected flight (rebuilt only on selection/route change).
+
 ## 4. Non-functional requirements
 
 | Concern | Decision |
@@ -638,3 +646,12 @@ Nearest **K=20** get full models; the rest billboard sprites; total rendered cap
 
 ### 12.4 UI / persistence
 Display-options checkbox + two selects (`#optLiveFlights`, `#optFlightSource`, `#optFlightInterval`) → `ui.onLiveFlightsToggle / onFlightSourceChange / onFlightIntervalChange` → `main.js` → layer methods. Status surfaced via `onStatusChange → ui.setLiveFlightsStatus`. All three settings persist to `kuson.liveflights.settings.v1`.
+
+### 12.5 Enrichment (`src/flightEnrich.js`)
+Lazy, cached metadata, called only for listed/labelled/selected flights (never the whole fleet); all results cached incl. negatives + in-flight de-duped. `enrichRoute(callsign)` → **adsbdb** `flightroute` (airline + origin/dest airports; **no scheduled times**), with an ICAO-prefix airline fallback table when the route is unknown. `etaFor(fix, dest)` computes a live ETA from great-circle distance ÷ groundspeed. `airlineLogo(iata)` returns a cached `<img>` from avs.io (CORS-verified) for drawing into the label canvas; a brand-coloured IATA chip is the fallback. `aircraftPhoto(hex)` is best-effort (public photo APIs are flaky → graceful no-photo). **CORS verified 2026-06-01:** adsbdb ✓, avs.io ✓; planespotters/airport-data flaky.
+
+### 12.6 Attitude, labels, follow-cam, selection
+`NormalizedFlight` carries `rollDeg/reg/desc/squawk` and prefers `true_heading`. The model holder applies heading + pitch (from V/S vs GS) + bank (from `roll`, when broadcast) in YXZ order. Callsign labels are canvas sprites with the airline logo + name (chip fallback), rebuilt when the airline/logo resolves. `LiveFlightsLayer.selectedId` is the single selection spine (card · route line · radar highlight · follow). `FollowController` (`src/followController.js`) runs after `drone.update` to own the camera while locked onto `flight.world`; pauses+hides the player; released by Esc / movement keys / canvas pointer-down.
+
+### 12.7 Flights list, detail card, radar blips, route line
+`UI._refreshLiveFlightsList()` (throttled ~1 Hz, only when the section is expanded) renders the nearest ~50 rows + View buttons; `_renderFlightCard()` shows the selected flight's photo/type/route/ETA/telemetry. `UI._drawLiveFlightBlips()` draws altitude-coloured heading arrows + V/S carets + flight numbers in `drawMinimap`, with a minimap click → nearest-blip select+follow. `LiveFlightsLayer._updateRouteLine()` builds a great-circle `THREE.Line` from origin→dest for the selected flight (rebuilt only on change).

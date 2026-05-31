@@ -1077,3 +1077,36 @@ The bones are good. The roadmap is clear. Go phase by phase, commit by commit, j
 - [ ] Tag `betterment4-complete` (cut after journal)
 
 > **Note:** the auto-poll can't be exercised in the headless preview (it reports `document.hidden=true`, which by design pauses polling). Verified instead by driving `fetchStates`/`_ingest`/`update` directly + a live `airplanes.live` fetch from the page origin.
+
+---
+
+# Betterment-4.1 — Live flights: list · richer models · follow-cam · radar blips · 2026-06-01
+
+> **Goal:** Extend the live-flight overlay — collapsible flights list (callsign/airline/route/ETA) with a View→follow link; 3D models honouring heading+pitch+bank with airline-logo callsigns; a radar toggle showing alt-coloured blips; plus all four operator-chosen 10x extras. Spec §3.13 + §12.5–12.7.
+> **Data facts (probed):** adsbdb gives airline + origin→dest airports but **no scheduled times** → computed ETA. airplanes.live carries true_heading/roll/vert-rate/reg/desc. **CORS:** adsbdb ✓, avs.io logos ✓; planespotters/airport-data flaky → photo best-effort.
+
+## Phase 5 — Enrichment service
+- [x] P5 — `flightEnrich.js`: adsbdb route+airline (+prefix fallback), live ETA, avs.io logo cache (+chip), best-effort photo — commit f1d1f04
+
+## Phase 6 — Model fidelity + logo labels
+- [x] P6 — heading(true_heading)/pitch(V/S)/bank(roll) on YXZ holder; refined `bucketForFlight`; airline-logo callsign labels (lazy enrich + rebuild); mock pitch/bank/reg — commit a42906d. Bank/pitch signs browser-verified (THA100).
+
+## Phase 7 — Flights list + detail card
+- [x] P7 — collapsible "Live flights (N)" list (logo/callsign/airline/route/ETA + View) + detail card (photo/type/route/ETA/telemetry) — commit 9d47ffe. Verified: UAE121 → Emirates · A320 · HS-MKL · DXB→IST · ETA.
+
+## Phase 8 — Follow-cam
+- [x] P8 — `FollowController` tracks a live flight; pauses/hides player; released by Esc/movement/pointer — commit aaec23a. Verified: View → follow active, camera tracks.
+
+## Phase 9 — Radar blips + extras
+- [x] P9 — radar "Live flights" toggle: alt-coloured heading arrows + V/S + flight no. + squawk flash — commit d0b85ee (verified 38/40 blips). Click-blip select+follow + great-circle route line — commit 3022a32 (verified DXB→ATH line).
+
+## Phase 10 — Docs
+- [x] P10 — spec §3.13 + §12.5–12.7; playbook + journal. Tag `betterment4.1-complete` after operator sign-off.
+
+## Phase B4.1 smoke checklist (browser-verified 2026-06-01, port 8080)
+- [x] Clean load, 0 console errors after all edits
+- [x] List populates (airline names resolved: Emirates/Singapore/Qatar); View → follow-cam tracks (drone paused, camera moved)
+- [x] Detail card: real route + computed ETA (UAE121 DXB→IST; UAE105 DXB→ATH)
+- [x] Model bank/pitch correct (THA100 roll 18°→right bank; climb→nose-up)
+- [x] Radar blips render alt-coloured w/ flight numbers (38/40 on-radar); route line builds for selected
+- [ ] Tag `betterment4.1-complete` (after sign-off)

@@ -1129,3 +1129,40 @@ b29ddeb sources+persistence · fa9b524 narrowbody · d647069 layer · 300e803 UI
 - 8 commits + spec §3.13/§12 + playbook Betterment-4 + this block. Not pushed.
 - Tag `betterment4-complete` to be cut once the operator signs off.
 - Preview server (python http.server :8080) left running.
+
+---
+
+## 2026-06-01 (b) — Betterment-4.1: flights list · richer models · follow-cam · radar blips · STATUS: IN_PROGRESS (tag pending)
+
+**Operator ask:** update the spec + (1) collapsible flights list (flight no/company/route/times) with a "view the plane" link; (2) 3D models with right resemblance/altitude/heading + pitch/yaw/bank if available, callsign with company name + logo; (3) radar toggle showing other-plane blips (heading + flight number); + "10x" suggestions.
+
+Planned in plan-mode (2 Explore agents + live data probe). Operator chose: free route + **computed ETA** (no scheduled times in free feeds), **follow-cam**, **cached logo CDN**, and **all four** 10x extras. Shipped P5–P9 + docs; browser-verified.
+
+### Key data finding
+ADS-B carries no airline/route/schedule. Probed: **adsbdb** (CORS-OK) gives airline + origin→dest airports but **no times** → ETA computed from gc-distance ÷ groundspeed. **avs.io** logos load (CORS-OK); airhex/planespotters/airport-data dead/flaky → photo best-effort. airplanes.live carries `true_heading`(91%)/`roll`(61%)/vert-rate/`reg`/`desc`/`squawk`.
+
+### Changes (branch betterment2-20260529)
+| Commit | What |
+|---|---|
+| f1d1f04 | `flightEnrich.js` — adsbdb route/airline (+prefix table), live ETA, avs.io logo cache (+chip), best-effort photo; all lazy+cached |
+| a42906d | model heading/pitch(V/S)/bank(roll) on YXZ holder; refined `bucketForFlight`; airline-logo callsign labels; mock pitch/bank/reg |
+| aaec23a | `FollowController` spectator cam + wiring (Esc/movement/pointer release); layer `selectedId` |
+| 9d47ffe | collapsible flights list + detail card (View→follow) |
+| d0b85ee | radar "Live flights" blips — alt-colour + heading arrow + V/S + flight no. + squawk flash |
+| 3022a32 | click-blip select+follow + great-circle route line |
+| (docs) | spec §3.13 + §12.5–12.7; playbook Betterment-4.1; this block |
+
+### Verified in browser (:8080, mock-driven; headless pauses auto-poll)
+- 0 console errors after all edits.
+- List: 40 flights, airlines resolved (Emirates/Singapore/Qatar); card UAE121 → A320·HS-MKL·DXB→IST·ETA 10:07·28543ft/455kt/+1575fpm.
+- Follow-cam: View → active, drone paused, camera tracked (moved 16 km).
+- Attitude: THA100 roll 18°→right bank (rotZ −0.314), climb→nose-up — signs correct.
+- Radar: 38/40 blips alt-coloured w/ flight numbers; route line built (UAE105 DXB→ATH).
+
+### Deferred / notes
+- Aircraft photo is best-effort (public photo APIs flaky); card degrades to no-photo. A keyed schedule API for real STD/STA is a future opt-in.
+- 3D-label logo needs avs.io canvas-CORS (else IATA chip); the panel list/card use plain `<img>` (no CORS).
+
+### Session close
+- 6 feature commits + spec/playbook/journal. Not pushed. Tag `betterment4.1-complete` after operator sign-off.
+- Preview server (:8080) left running.
