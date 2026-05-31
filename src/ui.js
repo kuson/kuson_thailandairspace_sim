@@ -7,6 +7,7 @@ import { isMilitaryAirspace } from "./airspace.js";
 import { elevationAt, isLoaded as terrainLoaded } from "./terrain.js";
 import { SPEED_PRESETS } from "./drone.js";
 import { getLiveFlightsSettings } from "./flightSources.js";
+import { airlineLogo, chipColor, etaFor, fmtEta, enrichRoute, aircraftPhoto } from "./flightEnrich.js";
 import { FlightMode, EasyMode } from "./modes.js";
 import { lookupAdmin } from "./geocode.js";
 import { simState } from "./simState.js";
@@ -46,8 +47,9 @@ const DRONE_RULES_HTML = `
 const COMPASS_TAU = 0.14;
 
 export class UI {
-  constructor({ drone, camera, airspaceLayer, tourGuide, onFlyTo, onUndo, onRedo, onReset }) {
+  constructor({ drone, camera, airspaceLayer, liveFlights, tourGuide, onFlyTo, onUndo, onRedo, onReset }) {
     this.drone = drone;
+    this.liveFlights = liveFlights;
     this.camera = camera;
     this.layer = airspaceLayer;
     this.tourGuide = tourGuide;
@@ -432,6 +434,75 @@ export class UI {
       default: txt = "Live flights: off";
     }
     el.textContent = txt;
+  }
+
+  // ---------------- Betterment-4.1: live-flights list + detail card ----------------
+
+  _lfBadge(a, cs) {
+    const logo = a.iata ? airlineLogo(a.iata) : null;
+    if (logo && logo.complete && logo.naturalWidth > 0) return `<img class="lf-logo" src="${logo.src}" alt="">`;
+    return `<span class="lf-chip" style="background:${chipColor(a.icao || a.iata || cs)}">${a.iata || (a.icao || "").slice(0, 2) || "✈"}</span>`;
+  }
+
+  _refreshLiveFlightsList() {
+    const lf = this.liveFlights;
+    const listEl = document.getElementById("liveFlightsList");
+    const countEl = document.getElementById("liveFlightsCount");
+    if (!lf || !listEl) return;
+    const flights = [...lf.flights.values()].filter((f) => f.fade > 0.05);
+    if (countEl) countEl.textContent = String(flights.length);
+    const section = document.getElementById("liveFlightsSection");
+    if (section && section.classList.contains("collapsed")) return;   // cheap when hidden
+    flights.sort((a, b) => (a.dist ?? 1e12) - (b.dist ?? 1e12));
+    const rows = flights.slice(0, 50).map((f) => {
+      const cs = f.callsign || f.id;
+      const a = f.airline || {};
+      const route = f.route ? `${f.route.origin?.iata || "?"}→${f.route.dest?.iata || "?"}` : "";
+      const eta = f.route?.dest ? etaFor(f.fix, f.route.dest) : null;
+      const sub = [a.name || "", route, eta ? `· ${eta.minsRemaining}m` : ""].filter(Boolean).join(" ");
+      return `<li class="${lf.selectedId === f.id ? "sel" : ""}" data-icao="${f.id}">${this._lfBadge(a, cs)}<span class="lf-main"><span class="lf-cs">${cs}</span><br><span class="lf-sub">${sub || "…"}</span></span><button class="lf-view" data-icao="${f.id}">View</button></li>`;
+    }).join("");
+    listEl.innerHTML = rows || `<li class="empty-list">No live flights — enable in Display options.</li>`;
+    listEl.querySelectorAll("li[data-icao]").forEach((li) =>
+      li.addEventListener("click", () => this._selectFlight(li.dataset.icao)));
+    listEl.querySelectorAll("button.lf-view").forEach((b) =>
+      b.addEventListener("click", (e) => { e.stopPropagation(); this.onFollowFlight?.(b.dataset.icao); }));
+  }
+
+  _selectFlight(icao) {
+    this.onSelectFlight?.(icao);
+    this._renderFlightCard(icao);
+    document.getElementById("liveFlightsList")?.querySelectorAll("li").forEach((li) =>
+      li.classList.toggle("sel", li.dataset.icao === icao));
+  }
+
+  setFollowing(id) { if (id && this.liveFlights) this._renderFlightCard(id); }
+
+  _renderFlightCard(icao) {
+    const card = document.getElementById("liveFlightsCard");
+    const lf = this.liveFlights;
+    if (!card || !lf) return;
+    const f = lf.flights.get(icao);
+    if (!f) { card.className = ""; card.innerHTML = ""; return; }
+    const a = f.airline || {};
+    const route = f.route ? `${f.route.origin?.name || f.route.origin?.iata || "?"} → ${f.route.dest?.name || f.route.dest?.iata || "?"}` : "Route unknown";
+    const eta = f.route?.dest ? fmtEta(etaFor(f.fix, f.route.dest)) : "";
+    const altFt = Math.round(f.fix.altM * 3.28084);
+    const gsKt = Math.round((f.fix.velMs || 0) * 1.94384);
+    const vs = Math.round((f.fix.vertRateMs || 0) * 196.85);
+    card.className = "show";
+    card.innerHTML =
+      `<div id="lfPhoto"></div>` +
+      `<div class="lf-row"><span class="lf-cs">${f.callsign || f.id}</span><span>${a.name || ""}</span></div>` +
+      `<div class="lf-row"><span class="k">Aircraft</span><span>${f.fix.desc || f.bucket}${f.fix.reg ? " · " + f.fix.reg : ""}</span></div>` +
+      `<div class="lf-row"><span class="k">Route</span><span>${route}</span></div>` +
+      (eta ? `<div class="lf-row"><span class="k">ETA</span><span>${eta}</span></div>` : "") +
+      `<div class="lf-row"><span class="k">Alt · GS · VS</span><span>${altFt} ft · ${gsKt} kt · ${vs > 0 ? "+" : ""}${vs} fpm</span></div>` +
+      `<div class="lf-btns"><button data-act="follow">▶ Follow</button><button data-act="clear">✕ Clear</button></div>`;
+    card.querySelector('[data-act="follow"]')?.addEventListener("click", () => this.onFollowFlight?.(icao));
+    card.querySelector('[data-act="clear"]')?.addEventListener("click", () => { this.onSelectFlight?.(null); card.className = ""; card.innerHTML = ""; });
+    if (!f.route) enrichRoute(f.callsign).then((r) => { f.route = r; if (lf.selectedId === icao) this._renderFlightCard(icao); });
+    aircraftPhoto(f.id).then((ph) => { const el = document.getElementById("lfPhoto"); if (ph?.thumb && el && lf.selectedId === icao) el.innerHTML = `<img class="lf-photo" src="${ph.thumb}" alt="">`; });
   }
 
   /**
@@ -1699,6 +1770,16 @@ export class UI {
         rulesToggle.classList.toggle("expanded", !collapsed);
       });
     }
+    // Live flights collapsible (Betterment-4.1)
+    const lfToggle = document.getElementById("liveFlightsToggle");
+    const lfBody = document.getElementById("liveFlightsSection");
+    if (lfToggle && lfBody) {
+      lfToggle.addEventListener("click", () => {
+        const collapsed = lfBody.classList.toggle("collapsed");
+        lfToggle.classList.toggle("expanded", !collapsed);
+        if (!collapsed) this._refreshLiveFlightsList();
+      });
+    }
     this._refreshAirspaceList();
     this._updateRadarLabel();
   }
@@ -1716,6 +1797,11 @@ export class UI {
   }
 
   updateHUD(dt = 0.016) {
+    // Betterment-4.1: throttled live-flights list refresh (~1 Hz).
+    if (this.liveFlights) {
+      const _now = performance.now();
+      if (_now - (this._lfListT || 0) > 1000) { this._lfListT = _now; this._refreshLiveFlightsList(); }
+    }
     const p = this.drone.position;
     const geo = worldToGeo(p.x, p.z);
     const altM = p.y;

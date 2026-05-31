@@ -512,6 +512,25 @@
       color: var(--text); font-family: var(--mono); font-size: 11px;
     }
     #airspaceList .empty-list { font-size: 11px; color: var(--muted); padding: 8px; }
+    /* Live flights list + detail card (Betterment-4.1) */
+    #liveFlightsList { list-style: none; padding: 0; margin: 4px 0 0; display: flex; flex-direction: column; gap: 3px; max-height: 240px; overflow-y: auto; }
+    #liveFlightsList li { display: flex; align-items: center; gap: 6px; font-size: 11px; padding: 3px 4px; border-radius: 5px; cursor: pointer; }
+    #liveFlightsList li:hover { background: rgba(255,255,255,0.06); }
+    #liveFlightsList li.sel { background: rgba(102,255,204,0.14); }
+    #liveFlightsList .lf-logo { width: 22px; height: 22px; object-fit: contain; border-radius: 3px; flex: 0 0 auto; background: rgba(255,255,255,0.06); }
+    #liveFlightsList .lf-chip { width: 22px; height: 22px; border-radius: 3px; flex: 0 0 auto; display: flex; align-items: center; justify-content: center; font-size: 8px; font-weight: 700; color: #fff; }
+    #liveFlightsList .lf-main { flex: 1 1 auto; min-width: 0; }
+    #liveFlightsList .lf-cs { font-weight: 600; }
+    #liveFlightsList .lf-sub { color: var(--muted); font-size: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    #liveFlightsList .lf-view { flex: 0 0 auto; font-family: var(--mono); font-size: 10px; padding: 2px 7px; border-radius: 4px; border: 1px solid var(--panel-border); background: rgba(102,255,204,0.12); color: var(--text); cursor: pointer; }
+    #liveFlightsList .lf-view:hover { background: rgba(102,255,204,0.28); }
+    #liveFlightsCard { font-size: 11px; }
+    #liveFlightsCard.show { margin-bottom: 8px; padding: 8px; border: 1px solid var(--panel-border); border-radius: 8px; background: rgba(255,255,255,0.04); }
+    #liveFlightsCard img.lf-photo { width: 100%; border-radius: 6px; display: block; margin-bottom: 6px; }
+    #liveFlightsCard .lf-row { display: flex; justify-content: space-between; gap: 8px; margin: 2px 0; }
+    #liveFlightsCard .lf-row .k { color: var(--muted); }
+    #liveFlightsCard .lf-btns { display: flex; gap: 6px; margin-top: 6px; }
+    #liveFlightsCard button { font-family: var(--mono); font-size: 11px; padding: 3px 10px; border-radius: 5px; border: 1px solid var(--panel-border); background: rgba(102,255,204,0.14); color: var(--text); cursor: pointer; }
     .badge { display: inline-block; padding: 1px 5px; border-radius: 4px; font-size: 9px; font-weight: 700; letter-spacing: 0.4px; }
     .badge.auth { background: rgba(102,255,204,0.18); color: #b8ffea; }
     .badge.approx { background: rgba(255,184,74,0.20); color: #ffd9a3; }
@@ -770,6 +789,11 @@
       <div id="tourGuideSection"></div>
       <h3>Display options</h3>
       <div id="displayOptions"></div>
+      <h3 class="collapsible-head" id="liveFlightsToggle">Live flights (<span id="liveFlightsCount">0</span>)</h3>
+      <div id="liveFlightsSection" class="collapsible-body collapsed">
+        <div id="liveFlightsCard"></div>
+        <ul id="liveFlightsList"></ul>
+      </div>
       <h3 class="collapsible-head" id="inputOptionsToggle">Controls</h3>
       <div id="inputOptions" class="collapsible-body collapsed"></div>
       <h3 class="collapsible-head" id="altLimitsToggle">Altitude limits</h3>
