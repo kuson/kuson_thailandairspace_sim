@@ -6,6 +6,7 @@ import {
 import { isMilitaryAirspace } from "./airspace.js";
 import { elevationAt, isLoaded as terrainLoaded } from "./terrain.js";
 import { SPEED_PRESETS } from "./drone.js";
+import { getLiveFlightsSettings } from "./flightSources.js";
 import { FlightMode, EasyMode } from "./modes.js";
 import { lookupAdmin } from "./geocode.js";
 import { simState } from "./simState.js";
@@ -336,6 +337,28 @@ export class UI {
           <option value="auto">Auto (alt-adaptive)</option>
         </select>
       </label>
+      <label class="opt"><input type="checkbox" id="optLiveFlights" /> Show me live flights</label>
+      <label class="opt">
+        Flight source
+        <select id="optFlightSource" class="opt-select">
+          <option value="adsblol">adsb.lol (community)</option>
+          <option value="airplaneslive">airplanes.live</option>
+          <option value="adsbfi">adsb.fi</option>
+          <option value="mock">Mock / replay (offline)</option>
+          <option value="opensky-proxy">OpenSky (via proxy)</option>
+        </select>
+      </label>
+      <label class="opt">
+        Update interval
+        <select id="optFlightInterval" class="opt-select">
+          <option value="5000">5 s</option>
+          <option value="10000">10 s</option>
+          <option value="15000">15 s</option>
+          <option value="30000">30 s</option>
+          <option value="60000">60 s</option>
+        </select>
+      </label>
+      <div id="liveFlightsStatus" class="opt" style="opacity:.75;font-size:11px">Live flights: off</div>
     `;
     const military = el.querySelector("#optMilitary");
     const labels = el.querySelector("#optLabels");
@@ -345,6 +368,19 @@ export class UI {
     groundQ?.addEventListener("change", () => {
       this.onGroundQualityChange?.(groundQ.value);
     });
+
+    // Betterment-4: live-flights toggle + source + cadence (persisted settings
+    // set the initial control values; handlers call into main.js → the layer).
+    const liveChk = el.querySelector("#optLiveFlights");
+    const liveSrc = el.querySelector("#optFlightSource");
+    const liveIvl = el.querySelector("#optFlightInterval");
+    const lf = getLiveFlightsSettings();
+    if (liveChk) liveChk.checked = lf.enabled;
+    if (liveSrc) liveSrc.value = lf.source;
+    if (liveIvl) liveIvl.value = String(lf.intervalMs);
+    liveChk?.addEventListener("change", () => this.onLiveFlightsToggle?.(liveChk.checked));
+    liveSrc?.addEventListener("change", () => this.onFlightSourceChange?.(liveSrc.value));
+    liveIvl?.addEventListener("change", () => this.onFlightIntervalChange?.(Number(liveIvl.value)));
 
     military.addEventListener("change", () => {
       this.layer.setMilitaryVisible(military.checked);
@@ -378,6 +414,24 @@ export class UI {
         this.showFov = fovHud.checked;
       });
     }
+  }
+
+  /** Betterment-4: reflect LiveFlightsLayer status in the Display-options line. */
+  setLiveFlightsStatus(status) {
+    const el = document.getElementById("liveFlightsStatus");
+    if (!el) return;
+    const { state, count, lastUpdated } = status || {};
+    let txt;
+    switch (state) {
+      case "loading": txt = "Live flights: updating…"; break;
+      case "ok":
+        txt = `Live flights: ${count} aircraft · updated ${lastUpdated ? new Date(lastUpdated).toLocaleTimeString() : ""}`;
+        break;
+      case "empty": txt = "Live flights: no aircraft in range"; break;
+      case "error": txt = "Live flights: source unreachable"; break;
+      default: txt = "Live flights: off";
+    }
+    el.textContent = txt;
   }
 
   /**
