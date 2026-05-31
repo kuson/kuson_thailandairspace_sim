@@ -111,6 +111,7 @@ export class LiveFlightsLayer {
     scene.add(this.aircraftGroup, this.labelsGroup, this.trailsGroup);
 
     this.flights = new Map();
+    this.selectedId = null;   // drives card / route-line / follow / radar highlight
     this._enabled = false;
     this._intervalMs = 60000;
     this._proxyBase = "";

@@ -17,6 +17,7 @@ import { installCityBeacons } from "./cities.js";
 import { installProvinceLines } from "./provinces.js";
 import { LiveFlightsLayer } from "./liveFlights.js";
 import { getLiveFlightsSettings, setLiveFlightsSettings } from "./flightSources.js";
+import { FollowController } from "./followController.js";
 import { RigidBody, QuadrotorModel, FixedWingModel } from "./physics.js";
 import { SimMode, SimModeMachine } from "./simMode.js";
 import { simState } from "./simState.js";
@@ -198,6 +199,13 @@ const drone = new Drone(camera, renderer.domElement);
 scene.add(drone.mesh);
 
 const flyTo = new FlyToController(drone);
+// Betterment-4.1: spectator follow-cam for "view this plane".
+const follow = new FollowController(drone, camera);
+window.addEventListener("keydown", (e) => {
+  if (!follow.active) return;
+  if (e.key === "Escape" || (e.key.length === 1 && "wasdqeWASDQE".includes(e.key)) || e.key.startsWith("Arrow")) follow.release();
+});
+renderer.domElement.addEventListener("pointerdown", () => { if (follow.active) follow.release(); });
 const flightHistory = new FlightHistory(drone);
 const layer = new AirspaceLayer();
 
@@ -355,6 +363,7 @@ async function bootstrap() {
     drone,
     camera,
     airspaceLayer: layer,
+    liveFlights,
     tourGuide,
     onFlyTo: startFlyTo,
     onUndo: undoFlight,
@@ -387,6 +396,12 @@ async function bootstrap() {
   ui.onLiveFlightsToggle = (on) => { setLiveFlightsSettings({ enabled: on }); liveFlights.setEnabled(on); };
   ui.onFlightSourceChange = (id) => { setLiveFlightsSettings({ source: id }); liveFlights.setSource(id); };
   ui.onFlightIntervalChange = (ms) => { setLiveFlightsSettings({ intervalMs: ms }); liveFlights.setIntervalMs(ms); };
+  ui.onSelectFlight = (icao) => { liveFlights.selectedId = icao || null; };
+  ui.onFollowFlight = (icao) => {
+    const fl = icao && liveFlights.flights.get(icao);
+    if (fl) { liveFlights.selectedId = icao; follow.setTarget(fl); }
+  };
+  follow.onChange = (fl) => ui.setFollowing?.(fl ? fl.id : null);
   if (lfSettings.enabled) liveFlights.setEnabled(true);
 
   const start = await getStartLocation();
@@ -515,6 +530,10 @@ function loop(t) {
     physAccum = 0;
   }
 
+  // Betterment-4.1: follow-cam owns the camera (runs after drone.update) while
+  // locked onto a live flight; a no-op otherwise.
+  _safe("follow", () => follow.update(dt));
+
   // Betterment-2 P3 (E2): log course/location + discrete state changes, not a
   // periodic "Manual flight" snapshot. Discrete events (preset/mode/pause/RTH/
   // boundary) track in any mode; course/position deltas only count in free
@@ -614,6 +633,6 @@ document.addEventListener("visibilitychange", () => {
 
 window.__sim = {
   scene, camera, drone, layer, ground, flightHistory, tourGuide, ui, simMode,
-  simState, ceilings, renderer, liveFlights,
+  simState, ceilings, renderer, liveFlights, follow,
   physics: { RigidBody, QuadrotorModel, FixedWingModel },
 };
