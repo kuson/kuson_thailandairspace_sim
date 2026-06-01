@@ -1232,3 +1232,32 @@ Plan-mode (2 Explore agents). Operator confirmed: altitude = **FL + feet** aviat
 
 ### Next
 Execute Betterment-5 then -6 per the playbook (browser-verified, atomic commits). Guardrails: persistence keys + **default-on no-regression** baseline diff. Docs staged in working tree, not committed to git.
+
+---
+
+## 2026-06-01 (e) — Betterment-5 + Betterment-6 implemented & browser-verified · STATUS: PHASES COMPLETE
+
+Executed the full B5 + B6 playbook to completion (10 atomic commits) and first landed the previously-uncommitted B4.1 label feature + design docs.
+
+**Pre-work:** `65135e4` B4.1 airplane-label feature (code); `78cc6f3` docs (spec §13/§14 + §3.14/§3.15, playbook, journals (c)+(d), TODO).
+
+**Betterment-5 — airspace de-clutter (`d47014a`→`e83b32c`):**
+- T1 `groupKeyFor` + `AIRSPACE_GROUPS` (airports/terminal/danger/restricted/prohibited = 34/13/71/21/5 = 144).
+- T2 unified `_applyVisibility` + `groupVisible` + `setGroupVisible`; `_isActive` gated; default-on = no regression.
+- T3 `get/setAirspaceGroupSettings` (`kuson.airspacegroups.v1`).
+- T4 group chip bar + All in the Airspace Window; `_refreshAirspaceList` group gate.
+- T5 minimap bake skips hidden groups; `groupVisible` folded into `_bakeSig`.
+
+**Betterment-6 — ground legibility (`4036a98`→`5facfc1`):**
+- T1 `data/airports.json` (14 majors). T2 `src/airports.js` `installAirportBeacons` (port of city beacons — diamond marker, blue halo, `✈ ICAO·IATA` label). T3 `src/rangeRings.js` `installRangeRings` (50/100/200 km · aero NM, follows the drone). T4 `provinces.js` centroid name labels + `updateScales` + group toggle. T5 `src/groundSettings.js` (`kuson.grounddetail.v1`) + `#optAirports/#optRangeRings/#optProvinces` + `main.js` wiring.
+
+**Verification env note:** the Claude preview sandbox couldn't serve this `/Volumes` (external-drive) repo — `getcwd` denied + no `/Volumes` read. Worked around by serving via a Bash `http.server` on `:8080` and driving the operator's connected Chrome (Claude-in-Chrome MCP) against `localhost`.
+
+**Browser-verified (real app @ localhost:8080, 0 console errors):**
+- B5: 144 airspaces; default **144 visible** (no-regression); 6 chips with exact counts (`Airports 34` … `All`); `danger` off → exactly **73** meshes; restore → 144. Clicking the Danger chip (real `change` event) → airspace list = **73 rows** + persisted `{danger:false}`.
+- B6: airports group = **42** objects (14×[marker+halo+label]); provinces group = **78** (lines + 77 labels); both visible by default; range rings default **off** → checkbox toggle → **on** + persisted. All three ground toggles flip `group.visible` via the wired event path.
+- Reload at pristine defaults: 144/144, 6 chips, ground ready, **0 errors**.
+
+**Static verification:** `node --check --input-type=module` clean on all 7 changed/new files; group counts + visibility predicate + persistence round-trips logic-tested in Node; cross-module imports resolved.
+
+**State:** branch `betterment2-20260529`, **not pushed**. Tags `betterment5-complete` / `betterment6-complete` cut. Bash `:8080` server left running for operator review.
