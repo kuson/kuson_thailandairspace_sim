@@ -218,6 +218,31 @@ export const AIRSPACE_GROUPS = [
   { key: "prohibited", label: "Prohibited",     categories: ["Prohibited"] },
 ];
 
+// Persisted group-filter settings (spec §13.4). Mirrors get/setLiveFlightsSettings;
+// defaults derive from AIRSPACE_GROUPS so the key set stays in sync (all on).
+const AIRSPACE_GROUPS_LS_KEY = "kuson.airspacegroups.v1";
+const DEFAULT_GROUP_SETTINGS = Object.fromEntries(AIRSPACE_GROUPS.map((g) => [g.key, true]));
+
+export function getAirspaceGroupSettings() {
+  try {
+    const raw = globalThis.localStorage?.getItem(AIRSPACE_GROUPS_LS_KEY);
+    if (!raw) return { ...DEFAULT_GROUP_SETTINGS };
+    return { ...DEFAULT_GROUP_SETTINGS, ...JSON.parse(raw) };
+  } catch {
+    return { ...DEFAULT_GROUP_SETTINGS };
+  }
+}
+
+export function setAirspaceGroupSettings(patch) {
+  const next = { ...getAirspaceGroupSettings(), ...patch };
+  try {
+    globalThis.localStorage?.setItem(AIRSPACE_GROUPS_LS_KEY, JSON.stringify(next));
+  } catch {
+    /* localStorage missing / quota / private mode — in-memory only */
+  }
+  return next;
+}
+
 function colorFor(a) {
   const branch = branchOf(a);
   if (branch) return BRANCH_COLOR[branch];
