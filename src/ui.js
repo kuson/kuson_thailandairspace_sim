@@ -4,6 +4,7 @@ import {
   lonToTileX, latToTileY, tileXToLon, tileYToLat, geoToWorld,
 } from "./coords.js";
 import { isMilitaryAirspace, groupKeyFor, AIRSPACE_GROUPS, getAirspaceGroupSettings, setAirspaceGroupSettings } from "./airspace.js";
+import { getGroundDetailSettings } from "./groundSettings.js";
 import { elevationAt, isLoaded as terrainLoaded } from "./terrain.js";
 import { SPEED_PRESETS } from "./drone.js";
 import { getLiveFlightsSettings } from "./flightSources.js";
@@ -184,6 +185,8 @@ export class UI {
     this.mapPrimary = false;
     // Notification callback for main.js to resize the WebGL renderer
     this.onMapPrimaryChange = null;
+    // Betterment-6: (key, on) → main flips the ground-detail layer + persists.
+    this.onGroundLayerToggle = null;
 
     this._buildPanel();
     this._buildTourSection();
@@ -340,6 +343,9 @@ export class UI {
           <option value="auto">Auto (alt-adaptive)</option>
         </select>
       </label>
+      <label class="opt"><input type="checkbox" id="optAirports" /> Airport markers</label>
+      <label class="opt"><input type="checkbox" id="optRangeRings" /> Range rings (50/100/200 km)</label>
+      <label class="opt"><input type="checkbox" id="optProvinces" /> Province names</label>
       <label class="opt"><input type="checkbox" id="optLiveFlights" /> Show me live flights</label>
       <label class="opt">
         Flight source
@@ -371,6 +377,19 @@ export class UI {
     groundQ?.addEventListener("change", () => {
       this.onGroundQualityChange?.(groundQ.value);
     });
+
+    // Betterment-6: ground orientation layer toggles (initial state persisted;
+    // main.js owns persistence + flips the matching scene group's visibility).
+    const gd = getGroundDetailSettings();
+    const apChk = el.querySelector("#optAirports");
+    const rrChk = el.querySelector("#optRangeRings");
+    const pvChk = el.querySelector("#optProvinces");
+    if (apChk) apChk.checked = gd.airports;
+    if (rrChk) rrChk.checked = gd.rangeRings;
+    if (pvChk) pvChk.checked = gd.provinces;
+    apChk?.addEventListener("change", () => this.onGroundLayerToggle?.("airports", apChk.checked));
+    rrChk?.addEventListener("change", () => this.onGroundLayerToggle?.("rangeRings", rrChk.checked));
+    pvChk?.addEventListener("change", () => this.onGroundLayerToggle?.("provinces", pvChk.checked));
 
     // Betterment-4: live-flights toggle + source + cadence (persisted settings
     // set the initial control values; handlers call into main.js → the layer).

@@ -15,6 +15,9 @@ import { TourGuide } from "./tourGuide.js";
 import { installSky, updateSky } from "./sky.js";
 import { installCityBeacons } from "./cities.js";
 import { installProvinceLines } from "./provinces.js";
+import { installAirportBeacons } from "./airports.js";
+import { installRangeRings } from "./rangeRings.js";
+import { getGroundDetailSettings, setGroundDetailSettings } from "./groundSettings.js";
 import { LiveFlightsLayer } from "./liveFlights.js";
 import { getLiveFlightsSettings, setLiveFlightsSettings } from "./flightSources.js";
 import { FollowController } from "./followController.js";
@@ -108,10 +111,21 @@ scene.add(ground.group);
 // satellite-style view doesn't read as a wall of labels.
 const cityBeacons = installCityBeacons(scene, { y: 200, topN: 24 });
 
-// Thailand province boundary overlay (Phase 2 P2.T6). Async — provinces
-// just don't appear for the first few hundred ms if the fetch is slow;
-// nothing depends on them being ready synchronously.
-installProvinceLines(scene).catch(err => console.warn("[provinces]", err));
+// Betterment-6: ground orientation layers (airports / range rings / province
+// names), each independently toggleable + persisted (kuson.grounddetail.v1).
+// Defaults: airports + provinces on, range rings off (opt-in).
+const groundDetail = getGroundDetailSettings();
+const rangeRings = installRangeRings(scene);
+rangeRings.group.visible = groundDetail.rangeRings;
+let airportBeacons = null;
+installAirportBeacons(scene, { y: 200, topN: 14 })
+  .then((r) => { airportBeacons = r; r.group.visible = groundDetail.airports; })
+  .catch((err) => console.warn("[airports]", err));
+// Province boundary overlay (Phase 2 P2.T6) + names (Betterment-6 §14.3). Async.
+let provinceLines = null;
+installProvinceLines(scene)
+  .then((r) => { provinceLines = r; r.group.visible = groundDetail.provinces; })
+  .catch((err) => console.warn("[provinces]", err));
 
 // Betterment-4: live ADS-B traffic overlay. Off by default; allocates nothing
 // and hits no network until the operator toggles "Show me live flights".
@@ -404,6 +418,19 @@ async function bootstrap() {
   follow.onChange = (fl) => ui.setFollowing?.(fl ? fl.id : null);
   if (lfSettings.enabled) liveFlights.setEnabled(true);
 
+  // Betterment-6: ground-detail layer toggles — persist + flip the scene group.
+  ui.onGroundLayerToggle = (key, on) => {
+    setGroundDetailSettings({ [key]: on });
+    if (key === "airports") { if (airportBeacons) airportBeacons.group.visible = on; }
+    else if (key === "rangeRings") { rangeRings.group.visible = on; }
+    else if (key === "provinces") { if (provinceLines) provinceLines.group.visible = on; }
+  };
+  window.__sim.ground = {
+    rangeRings,
+    get airports() { return airportBeacons; },
+    get provinces() { return provinceLines; },
+  };
+
   const start = await getStartLocation();
   const w = geoToWorld(start.lat, start.lon);
   drone.teleport(w.x, start.altM ?? 200, w.z, 0, -0.05);
@@ -589,6 +616,9 @@ function loop(t) {
 
   _safe("label-scales", () => layer.updateLabelScales(camera, renderer));
   _safe("city-scales", () => cityBeacons.updateScales(camera, renderer));
+  _safe("airport-scales", () => airportBeacons?.updateScales(camera, renderer));
+  _safe("range-rings", () => rangeRings.update(drone.position, camera, renderer, ui?.unitSystem === "aero"));
+  _safe("province-scales", () => provinceLines?.updateScales(camera, renderer));
   _safe("liveflights", () => liveFlights.update(dt, camera.position));
   _safe("liveflights-labels", () => liveFlights.updateLabelScales(camera, renderer));
 
