@@ -2213,7 +2213,8 @@ export class UI {
     const compiled = this.layer.compiled;
     if (!compiled || compiled.length === 0) return;
     const ids = [...this.layer.highlightedIds].sort();
-    const sig = (this.layer.showMilitary ? "1" : "0") + "|" +
+    const groupSig = AIRSPACE_GROUPS.map((g) => (this.layer.groupVisible[g.key] === false ? "0" : "1")).join("");
+    const sig = (this.layer.showMilitary ? "1" : "0") + "|" + groupSig + "|" +
       this._radarScale.toFixed(2) + "|" + ids.join(",");
     const drifted = !this._minimapBake ||
       Math.hypot(wx - this._bakeCenter.x, wz - this._bakeCenter.z) > 50_000;
@@ -2287,6 +2288,7 @@ export class UI {
     const highlighted = this.layer.highlightedIds;
     for (const c of this.layer.compiled) {
       if (!this.layer.showMilitary && c.military) continue;
+      if (this.layer.groupVisible[groupKeyFor(c.airspace)] === false) continue;
       const cssColor = c.cssColor;
       const on = highlighted.has(c.airspace.id);
       ctx.strokeStyle = on ? cssColor : cssColor + "cc";
