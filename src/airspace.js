@@ -443,6 +443,11 @@ export class AirspaceLayer {
     this.labelsGroup.visible = false;
     this.showHeights = true;
     this.showMilitary = true;
+    // Per functional-group visibility (spec §13). Default all-on → identical
+    // to the pre-Betterment-5 render. Military stays a separate cross-cut.
+    this.groupVisible = {
+      airports: true, terminal: true, danger: true, restricted: true, prohibited: true,
+    };
     this.airspaces = [];
     this.compiled = [];
     this._labelSprites = [];
@@ -496,25 +501,37 @@ export class AirspaceLayer {
       this._compiledById.set(a.id, c);
       this.airspaces.push(a);
     }
-    this._applyMilitaryVisibility();
+    this._applyVisibility();
     return data;
   }
 
   setMilitaryVisible(show) {
     this.showMilitary = show;
-    this._applyMilitaryVisibility();
+    this._applyVisibility();
   }
 
-  _applyMilitaryVisibility() {
+  // Show/hide a functional group (spec §13). Composes with the military
+  // cross-cut and the labels-group master switch.
+  setGroupVisible(key, show) {
+    if (key in this.groupVisible) this.groupVisible[key] = !!show;
+    this._applyVisibility();
+  }
+
+  // Unified per-volume visibility: a volume shows iff its group is on AND
+  // (it's civil OR military is on). Replaces the old military-only pass.
+  _applyVisibility() {
+    const labelsOn = this.labelsGroup.visible;
     for (const c of this.compiled) {
-      if (!c.military) continue;
-      c.mesh.visible = this.showMilitary;
-      c.label.visible = this.showMilitary && this.labelsGroup.visible;
+      const show = this.groupVisible[groupKeyFor(c.airspace)] !== false
+        && (!c.military || this.showMilitary);
+      c.mesh.visible = show;
+      c.label.visible = show && labelsOn;
     }
   }
 
   _isActive(c) {
-    return !c.military || this.showMilitary;
+    return this.groupVisible[groupKeyFor(c.airspace)] !== false
+      && (!c.military || this.showMilitary);
   }
 
   get labelRoot() {
@@ -527,11 +544,8 @@ export class AirspaceLayer {
 
   setLabelsVisible(visible) {
     this.labelsGroup.visible = visible;
-    for (const c of this.compiled) {
-      if (c.military) {
-        c.label.visible = visible && this.showMilitary;
-      }
-    }
+    // Recompute every label from group + military + labels-master state.
+    this._applyVisibility();
   }
 
   setShowHeights(show) {
