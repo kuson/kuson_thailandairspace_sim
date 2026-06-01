@@ -7,7 +7,7 @@ import { isMilitaryAirspace } from "./airspace.js";
 import { elevationAt, isLoaded as terrainLoaded } from "./terrain.js";
 import { SPEED_PRESETS } from "./drone.js";
 import { getLiveFlightsSettings } from "./flightSources.js";
-import { airlineLogo, chipColor, etaFor, fmtEta, enrichRoute, aircraftPhoto } from "./flightEnrich.js";
+import { airlineLogo, chipColor, etaFor, fmtEta, enrichRoute, aircraftPhoto, altColor } from "./flightEnrich.js";
 import { FlightMode, EasyMode } from "./modes.js";
 import { lookupAdmin } from "./geocode.js";
 import { simState } from "./simState.js";
@@ -2269,13 +2269,7 @@ export class UI {
     }
   }
 
-  _altColor(altM) {
-    const ft = (altM || 0) * 3.28084;
-    if (ft < 10000) return "#33d6ff";
-    if (ft < 24000) return "#5dff8a";
-    if (ft < 35000) return "#ffe14a";
-    return "#ff7ad9";
-  }
+  _altColor(altM) { return altColor(altM); }   // shared ramp (flightEnrich.js)
 
   // Live-flight radar blips: alt-coloured heading arrow + V/S caret + flight no.
   // Emergency squawks (7500/7600/7700) flash red. Toggle = #optRadarLiveFlights.

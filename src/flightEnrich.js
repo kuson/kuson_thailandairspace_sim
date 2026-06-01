@@ -148,6 +148,16 @@ export function chipColor(text) {
   return `hsl(${h % 360}, 55%, 42%)`;
 }
 
+// Shared altitude→colour ramp (metres in). One source of truth so radar blips
+// and aircraft labels always agree at a glance. low→high: cyan→green→amber→pink.
+export function altColor(altM) {
+  const ft = (altM || 0) * 3.28084;
+  if (ft < 10000) return "#33d6ff";
+  if (ft < 24000) return "#5dff8a";
+  if (ft < 35000) return "#ffe14a";
+  return "#ff7ad9";
+}
+
 // ---------------- aircraft photo (best-effort) ----------------
 
 const _photoCache = new Map();   // hex → {thumb,link} | null | Promise

@@ -17,7 +17,7 @@ import { geoToWorld } from "./coords.js";
 import { makeTextSprite } from "./airspace.js";
 import { buildLiveAircraftModel } from "./drone.js";
 import { makeSource, bucketForFlight } from "./flightSources.js";
-import { airlineFor, enrichRoute, airlineLogo, chipColor } from "./flightEnrich.js";
+import { airlineFor, enrichRoute, airlineLogo, chipColor, altColor } from "./flightEnrich.js";
 
 const DEG2RAD = Math.PI / 180;
 const MAX_RENDERED = 150;        // hard cap on visible aircraft
@@ -26,6 +26,7 @@ const DEMOTE_RANK = 28;          // … demoted back to a billboard past this (h
 const TRAIL_MAX_MS = 8 * 60 * 1000;
 const TRAIL_MAX_PTS = 120;
 const DESPAWN_POLLS = 3;         // missed polls before a flight fades out
+const DATA_LINE_K = 25;          // nearest this many labels carry the HDG/ALT/GS row
 const SMOOTH_TAU = 0.4;          // seconds — position easing time constant
 const FADE_PER_S = 2.5;          // spawn-in / despawn fade rate
 const TRAIL_COLOR = new THREE.Color(0x00e5ff);
@@ -61,37 +62,102 @@ function _planeIcon() {
   return _iconTex;
 }
 
+// Live-flight data-line formatters. ADS-B carries groundspeed (not airspeed) and
+// altitude in feet; we render aviation-style FL/feet, a 3-digit heading and GS(kt).
+const M_TO_FT = 3.28084, MS_TO_KT = 1.94384, MS_TO_FPM = 196.85;
+function _fmtHeading(deg) {
+  const d = ((Math.round(deg || 0) % 360) + 360) % 360;
+  return "HDG " + String(d).padStart(3, "0");
+}
+function _fmtAltFt(altM, onGround) {
+  if (onGround) return "GND";
+  const ft = (altM || 0) * M_TO_FT;
+  if (ft >= 18000) return "FL" + String(Math.round(ft / 100)).padStart(3, "0");
+  return (Math.round(ft / 25) * 25).toLocaleString("en-US") + " ft";
+}
+function _fmtGs(velMs) { return "GS " + Math.round(((velMs || 0) * MS_TO_KT) / 5) * 5 + " kt"; }
+function _vsGlyph(vertRateMs) {
+  const fpm = (vertRateMs || 0) * MS_TO_FPM;
+  return fpm > 100 ? "▲" : fpm < -100 ? "▼" : "";
+}
+
 // Callsign label with the airline logo (or a coloured IATA chip when the logo
 // isn't CORS-loadable into a canvas). The cached logo <img> is shared per airline.
-function _flightLabel(callsign, airline) {
+// When `data` ({hdgDeg,altM,velMs,vertRateMs,onGround}) is supplied, a second row
+// — HDG · altitude(FL/ft, alt-coloured) · V/S arrow · GS — is drawn under the
+// callsign on a transparent background. Pass null/undefined for callsign-only.
+function _flightLabel(callsign, airline, data) {
   const logo = airline.iata ? airlineLogo(airline.iata) : null;
   const logoReady = !!(logo && logo.complete && logo.naturalWidth > 0);
   const fs = 22, padX = 12, padY = 7, boxH = 30;
+  const topH = padY * 2 + boxH;                 // 44 — single (callsign) row height
+  const fs2 = 18, row2H = 22, rowGap = 4;       // data row metrics
   const meas = document.createElement("canvas").getContext("2d");
   meas.font = `bold ${fs}px ui-monospace, monospace`;
   const tw = Math.ceil(meas.measureText(callsign).width);
   const badgeW = logoReady ? Math.round(boxH * (logo.naturalWidth / logo.naturalHeight)) : (airline.iata ? 36 : 0);
   const gap = badgeW ? 8 : 0;
-  const w = padX * 2 + badgeW + gap + tw, h = padY * 2 + boxH;
-  const c = document.createElement("canvas"); c.width = w; c.height = h;
+  const topW = padX * 2 + badgeW + gap + tw;
+
+  // Build the data row segments (each its own colour) and measure its width.
+  let segs = null, dataW = 0;
+  if (data) {
+    segs = [
+      { t: _fmtHeading(data.hdgDeg), c: "#cfe8ff" },
+      { t: _fmtAltFt(data.altM, data.onGround), c: data.onGround ? "#9aa7b4" : altColor(data.altM) },
+    ];
+    const vs = data.onGround ? "" : _vsGlyph(data.vertRateMs);
+    if (vs) segs.push({ t: vs, c: vs === "▲" ? "#9effa0" : "#ff9e9e", glyph: true });
+    segs.push({ t: _fmtGs(data.velMs), c: "#cfe8ff" });
+    meas.font = `bold ${fs2}px ui-monospace, monospace`;
+    dataW = padX * 2;
+    for (let i = 0; i < segs.length; i++) {
+      if (i > 0) dataW += segs[i].glyph ? 5 : 12;
+      dataW += Math.ceil(meas.measureText(segs[i].t).width);
+    }
+  }
+
+  const w = Math.max(topW, dataW), h = data ? topH + rowGap + row2H : topH;
+  const DPR = Math.min(window.devicePixelRatio || 1, 2);   // crisp text on retina
+  const c = document.createElement("canvas");
+  c.width = Math.round(w * DPR); c.height = Math.round(h * DPR);
   const ctx = c.getContext("2d");
-  ctx.fillStyle = "rgba(8,12,20,0.85)"; ctx.beginPath(); ctx.roundRect(0, 0, w, h, 7); ctx.fill();
-  ctx.strokeStyle = "rgba(102,255,204,0.5)"; ctx.lineWidth = 2; ctx.beginPath(); ctx.roundRect(1, 1, w - 2, h - 2, 6); ctx.stroke();
+  ctx.scale(DPR, DPR);
+
+  // Top row — dark rounded box behind the callsign only, logo/chip + callsign.
+  ctx.fillStyle = "rgba(8,12,20,0.85)"; ctx.beginPath(); ctx.roundRect(0, 0, w, topH, 7); ctx.fill();
+  ctx.strokeStyle = "rgba(102,255,204,0.5)"; ctx.lineWidth = 2; ctx.beginPath(); ctx.roundRect(1, 1, w - 2, topH - 2, 6); ctx.stroke();
   let x = padX;
   if (badgeW) {
-    if (logoReady) { try { ctx.drawImage(logo, x, (h - boxH) / 2, badgeW, boxH); } catch { /* tainted — ignore */ } }
+    if (logoReady) { try { ctx.drawImage(logo, x, (topH - boxH) / 2, badgeW, boxH); } catch { /* tainted — ignore */ } }
     else {
-      ctx.fillStyle = chipColor(airline.icao || airline.iata); ctx.beginPath(); ctx.roundRect(x, (h - boxH) / 2, badgeW, boxH, 4); ctx.fill();
+      ctx.fillStyle = chipColor(airline.icao || airline.iata); ctx.beginPath(); ctx.roundRect(x, (topH - boxH) / 2, badgeW, boxH, 4); ctx.fill();
       ctx.fillStyle = "#fff"; ctx.font = "bold 13px ui-monospace, monospace"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
-      ctx.fillText(airline.iata, x + badgeW / 2, h / 2);
+      ctx.fillText(airline.iata, x + badgeW / 2, topH / 2);
     }
     x += badgeW + gap;
   }
   ctx.fillStyle = "#fff"; ctx.font = `bold ${fs}px ui-monospace, monospace`; ctx.textAlign = "left"; ctx.textBaseline = "middle";
-  ctx.fillText(callsign, x, h / 2 + 1);
+  ctx.fillText(callsign, x, topH / 2 + 1);
+
+  // Data row — transparent background, dark shadow for legibility against sky.
+  if (segs) {
+    const cy = topH + rowGap + row2H / 2;
+    ctx.font = `bold ${fs2}px ui-monospace, monospace`; ctx.textAlign = "left"; ctx.textBaseline = "middle";
+    ctx.shadowColor = "rgba(0,0,0,0.92)"; ctx.shadowBlur = 3; ctx.shadowOffsetY = 1;
+    let dx = padX;
+    for (let i = 0; i < segs.length; i++) {
+      if (i > 0) dx += segs[i].glyph ? 5 : 12;
+      ctx.fillStyle = segs[i].c; ctx.fillText(segs[i].t, dx, cy);
+      dx += Math.ceil(meas.measureText(segs[i].t).width);
+    }
+    ctx.shadowColor = "transparent"; ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
+  }
+
   const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace;
   const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false, depthWrite: false }));
   sp.userData.canvasW = w; sp.userData.canvasH = h; sp.userData.baseScale = 10; sp.renderOrder = 9999;
+  sp.userData.screenH = h * (20 / topH);   // keep the callsign row ~20px on screen
   return sp;
 }
 
@@ -317,9 +383,13 @@ export class LiveFlightsLayer {
     return m;
   }
 
-  _rebuildLabel(f) {
+  _rebuildLabel(f, showData) {
     const old = f.label;
-    const next = _flightLabel(f.callsign || f.id, f.airline);
+    const data = showData ? {
+      hdgDeg: f.fix.headingDeg, altM: f.world.y, velMs: f.fix.velMs,
+      vertRateMs: f.fix.vertRateMs, onGround: f.fix.onGround,
+    } : null;
+    const next = _flightLabel(f.callsign || f.id, f.airline, data);
     next.position.copy(old.position);
     next.visible = old.visible;
     next.material.opacity = old.material.opacity;
@@ -465,15 +535,26 @@ export class LiveFlightsLayer {
           if (f.airline.iata) airlineLogo(f.airline.iata);
         });
       }
+      // Full HDG/ALT/GS data row for the nearest K and always for the selection;
+      // callsign-only beyond that (declutter). Quantise the live values so the
+      // canvas only regenerates when a *displayed* value changes — never per-frame.
+      const showData = i < DATA_LINE_K || f.id === this.selectedId;
       const lg = f.airline.iata ? airlineLogo(f.airline.iata) : null;
-      const sig = `${f.airline.name}|${lg && lg.complete && lg.naturalWidth > 0 ? 1 : 0}`;
-      if (sig !== f._labelSig) { this._rebuildLabel(f); f._labelSig = sig; }
+      const logoReady = lg && lg.complete && lg.naturalWidth > 0 ? 1 : 0;
+      const fx = f.fix;
+      const dsig = !showData ? "none"
+        : (fx.onGround ? "GND"
+           : `${Math.round((fx.headingDeg || 0) / 5)}|${Math.round((f.world.y * M_TO_FT) / 100)}`
+             + `|${Math.round((fx.velMs || 0) * MS_TO_KT / 5)}`
+             + `|${Math.abs(fx.vertRateMs || 0) > 0.5 ? Math.sign(fx.vertRateMs) : 0}`);
+      const sig = `${f.airline.name}|${logoReady}|${dsig}`;
+      if (sig !== f._labelSig) { this._rebuildLabel(f, showData); f._labelSig = sig; }
       f.label.position.set(f.world.x, f.world.y + 220, f.world.z);
       const dist = Math.max(f.dist ?? 1000, 800);
       const worldPerPx = (2 * tanHalf * dist) / hPx;
       const ch = f.label.userData.canvasH || 64;
       const cw = f.label.userData.canvasW || 512;
-      const s = (20 * worldPerPx) / ch;
+      const s = ((f.label.userData.screenH || 20) * worldPerPx) / ch;
       f.label.scale.set(cw * s, ch * s, 1);
       f.label.material.opacity = Math.max(0, 1 - dist / 550_000) * f.fade;
     }
