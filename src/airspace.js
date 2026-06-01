@@ -193,6 +193,31 @@ function categoryKeyFor(a) {
   return a.category;
 }
 
+// Functional grouping for the de-clutter toggles (spec §13). The map is keyed
+// by categoryKeyFor() output and is disjoint + exhaustive over the catalog —
+// the five group counts sum to 144 (Airports 34 · Terminal 13 · Danger 71 ·
+// Restricted 21 · Prohibited 5). Military ownership (branchOf) is orthogonal:
+// the Military toggle filters across every group.
+const GROUP_FOR_CATEGORY = {
+  CTR: "airports", "Class D": "airports",
+  TMA: "terminal",
+  Danger: "danger",
+  Restricted: "restricted",
+  Prohibited: "prohibited",
+};
+
+export function groupKeyFor(a) {
+  return GROUP_FOR_CATEGORY[categoryKeyFor(a)] ?? "other";
+}
+
+export const AIRSPACE_GROUPS = [
+  { key: "airports",   label: "Airports",       categories: ["CTR", "Class D"] },
+  { key: "terminal",   label: "Terminal areas", categories: ["TMA"] },
+  { key: "danger",     label: "Danger areas",   categories: ["Danger"] },
+  { key: "restricted", label: "Restricted",     categories: ["Restricted"] },
+  { key: "prohibited", label: "Prohibited",     categories: ["Prohibited"] },
+];
+
 function colorFor(a) {
   const branch = branchOf(a);
   if (branch) return BRANCH_COLOR[branch];
