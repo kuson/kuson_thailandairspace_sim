@@ -3,7 +3,7 @@ import {
   worldToGeo, formatLatLon, bearingToCompass, M_TO_FT, FT_TO_M, ORIGIN,
   lonToTileX, latToTileY, tileXToLon, tileYToLat, geoToWorld,
 } from "./coords.js";
-import { isMilitaryAirspace } from "./airspace.js";
+import { isMilitaryAirspace, groupKeyFor, AIRSPACE_GROUPS, getAirspaceGroupSettings, setAirspaceGroupSettings } from "./airspace.js";
 import { elevationAt, isLoaded as terrainLoaded } from "./terrain.js";
 import { SPEED_PRESETS } from "./drone.js";
 import { getLiveFlightsSettings } from "./flightSources.js";
@@ -189,6 +189,7 @@ export class UI {
     this._buildTourSection();
     this._buildSpeedControls();
     this._buildDisplayOptions();
+    this._buildAirspaceGroups();
     this._buildInputOptions();
     this._buildAltLimits();
     this._initHistoryCollapse();
@@ -1642,10 +1643,56 @@ export class UI {
     this._refreshAirspaceList();
   }
 
+  // Betterment-5 §13: functional group chips in the Airspace Window. Restores
+  // persisted state to the layer, then renders one chip per group (+ an All
+  // toggle). Counts come from the loaded catalog. Called once UI is built
+  // (after layer.load, so layer.airspaces is populated).
+  _buildAirspaceGroups() {
+    const el = document.getElementById("airspaceGroups");
+    if (!el || !this.layer) return;
+    const saved = getAirspaceGroupSettings();
+    for (const g of AIRSPACE_GROUPS) this.layer.setGroupVisible(g.key, saved[g.key] !== false);
+
+    const counts = {};
+    for (const a of this.layer.airspaces) {
+      const k = groupKeyFor(a);
+      counts[k] = (counts[k] || 0) + 1;
+    }
+    const chip = (key, label, count, on) =>
+      `<label class="asgroup-chip${on ? "" : " off"}" data-group="${key}" title="Toggle ${label}">`
+      + `<input type="checkbox" data-group="${key}"${on ? " checked" : ""} />`
+      + `${label} <span class="cnt">${count}</span></label>`;
+    el.innerHTML =
+      AIRSPACE_GROUPS.map((g) => chip(g.key, g.label, counts[g.key] || 0, saved[g.key] !== false)).join("")
+      + `<button type="button" class="asgroup-chip asgroup-all" id="asgroupAll" title="Show or hide all groups">All</button>`;
+
+    el.querySelectorAll("input[type=checkbox][data-group]").forEach((cb) => {
+      cb.addEventListener("change", () => this._setAirspaceGroup(cb.dataset.group, cb.checked));
+    });
+    el.querySelector("#asgroupAll")?.addEventListener("click", () => {
+      const boxes = [...el.querySelectorAll("input[type=checkbox][data-group]")];
+      const turnOn = !boxes.every((b) => b.checked);   // all on → hide all; otherwise show all
+      for (const b of boxes) {
+        if (b.checked !== turnOn) { b.checked = turnOn; this._setAirspaceGroup(b.dataset.group, turnOn); }
+      }
+    });
+  }
+
+  _setAirspaceGroup(key, on) {
+    this.layer.setGroupVisible(key, on);
+    setAirspaceGroupSettings({ [key]: on });
+    document
+      .querySelector(`#airspaceGroups .asgroup-chip[data-group="${key}"]`)
+      ?.classList.toggle("off", !on);
+    this._bakeSig = null;            // force radar minimap re-bake (B5.T5)
+    this._refreshAirspaceList();
+  }
+
   _refreshAirspaceList() {
     const q = this._listFilter;
     const items = this.layer.airspaces.filter((a) => {
       if (isMilitaryAirspace(a) && !this.layer.showMilitary) return false;
+      if (this.layer.groupVisible[groupKeyFor(a)] === false) return false;
       if (!q) return true;
       const hay = `${a.id} ${a.shortName} ${a.name} ${a.category} ${a.description}`.toLowerCase();
       return hay.includes(q);

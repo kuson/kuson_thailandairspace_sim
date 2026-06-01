@@ -511,6 +511,17 @@
       border: 1px solid var(--panel-border); background: rgba(255,255,255,0.04);
       color: var(--text); font-family: var(--mono); font-size: 11px;
     }
+    /* Airspace group filters (Betterment-5) */
+    #airspaceGroups { display: flex; flex-wrap: wrap; gap: 4px; margin: 4px 0 2px; }
+    #airspaceGroups .asgroup-chip {
+      display: inline-flex; align-items: center; gap: 5px; cursor: pointer; user-select: none;
+      padding: 3px 8px; border-radius: 12px; font-size: 11px; line-height: 1.4;
+      border: 1px solid var(--panel-border); background: rgba(255,255,255,0.05); color: var(--text);
+    }
+    #airspaceGroups .asgroup-chip input { accent-color: var(--accent); margin: 0; }
+    #airspaceGroups .asgroup-chip .cnt { color: var(--muted); font-size: 10px; }
+    #airspaceGroups .asgroup-chip.off { opacity: 0.45; }
+    #airspaceGroups .asgroup-all { font-weight: 600; letter-spacing: 0.3px; }
     #airspaceList .empty-list { font-size: 11px; color: var(--muted); padding: 8px; }
     /* Live flights list + detail card (Betterment-4.1) */
     #liveFlightsList { list-style: none; padding: 0; margin: 4px 0 0; display: flex; flex-direction: column; gap: 3px; max-height: 240px; overflow-y: auto; }
@@ -804,6 +815,7 @@
       <h3 class="collapsible-head" id="droneRulesToggle">Thailand drone rules</h3>
       <div id="droneRules" class="collapsible-body collapsed"></div>
       <h3>Airspaces (click to warp to overview)</h3>
+      <div id="airspaceGroups" class="asgroups"></div>
       <input type="search" id="airspaceFilter" placeholder="Filter airspaces…" autocomplete="off" />
       <ul id="airspaceList"></ul>
     </div>
