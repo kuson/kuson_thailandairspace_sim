@@ -12,6 +12,49 @@ const PROVINCES_URL = "data/provinces.geojson";
 const LINE_COLOR = 0xf0c040;   // vivid amber-gold (Betterment-3: pops on Voyager, was muted 0xc8a050)
 const LINE_OPACITY = 0.7;      // higher-contrast province boundaries (was 0.55)
 const LINE_Y = 1;
+const LABEL_Y = 60;            // province names sit low, beneath city/airport labels
+const PROV_TOPN = 16;          // nearest-N province names shown (declutter)
+
+// Approx centroid (mean of the outer-ring vertices) for name placement.
+function _featureCentroid(g) {
+  let ring = null;
+  if (g.type === "Polygon") ring = g.coordinates[0];
+  else if (g.type === "MultiPolygon") {
+    for (const poly of g.coordinates) {
+      if (!ring || poly[0].length > ring.length) ring = poly[0];   // largest outer ring
+    }
+  }
+  if (!ring || !ring.length) return null;
+  let lon = 0, lat = 0;
+  for (const p of ring) { lon += p[0]; lat += p[1]; }
+  return { lon: lon / ring.length, lat: lat / ring.length };
+}
+
+// Subtle map-style name: muted gold text with a dark shadow, no pill/border —
+// distinct from cyan airspace labels and white city labels, and quieter than both.
+function _provinceLabelSprite(name) {
+  const fs = 20;
+  const c = document.createElement("canvas");
+  const ctx = c.getContext("2d");
+  ctx.font = `600 ${fs}px ui-monospace, monospace`;
+  const w = Math.ceil(ctx.measureText(name).width) + 18;
+  const h = fs + 14;
+  c.width = w; c.height = h;
+  ctx.font = `600 ${fs}px ui-monospace, monospace`;
+  ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  ctx.shadowColor = "rgba(0,0,0,0.85)"; ctx.shadowBlur = 4; ctx.shadowOffsetY = 1;
+  ctx.fillStyle = "#f0d28a";
+  ctx.fillText(name, w / 2, h / 2 + 1);
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  const sp = new THREE.Sprite(new THREE.SpriteMaterial({
+    map: tex, transparent: true, depthTest: false, depthWrite: false, fog: false, opacity: 0.7,
+  }));
+  sp.userData.canvasW = w; sp.userData.canvasH = h;
+  sp.renderOrder = 10;                            // beneath city/airport labels (9999)
+  sp.scale.set(w * 8, h * 8, 1);
+  return sp;
+}
 
 function _ringToSegments(ring, segments) {
   // Each ring is an array of [lon, lat] pairs; the last point equals the first.
@@ -50,6 +93,7 @@ export async function installProvinceLines(scene) {
   }
 
   const segments = [];   // flat array of [x, y, z, x, y, z, ...] pairs
+  const labelData = [];  // { name, lat, lon } per feature
   let featureCount = 0;
   for (const feature of geo.features ?? []) {
     const g = feature.geometry;
@@ -61,6 +105,9 @@ export async function installProvinceLines(scene) {
         for (const ring of poly) _ringToSegments(ring, segments);
       }
     }
+    const name = feature.properties?.name;
+    const cen = _featureCentroid(g);
+    if (name && cen) labelData.push({ name, lat: cen.lat, lon: cen.lon });
     featureCount++;
   }
 
@@ -77,5 +124,40 @@ export async function installProvinceLines(scene) {
   lines.name = "province-line-segments";
   group.add(lines);
 
-  return { group, featureCount, segmentCount: segments.length / 6 };
+  // Province name labels at centroids (Betterment-6 §14.3). Same group as the
+  // lines, so one visibility toggle governs both.
+  const labelEntries = [];
+  for (const ld of labelData) {
+    const w = geoToWorld(ld.lat, ld.lon);
+    const sp = _provinceLabelSprite(ld.name);
+    sp.position.set(w.x, LABEL_Y, w.z);
+    group.add(sp);
+    labelEntries.push(sp);
+  }
+
+  // Keep names ~constant on-screen size; show only the nearest PROV_TOPN and
+  // fade them past ~250 km so the country doesn't read as a wall of gold text.
+  function updateScales(camera, renderer) {
+    if (!group.visible || labelEntries.length === 0) return;
+    const camPos = camera.position;
+    const hPx = renderer.domElement.clientHeight || 720;
+    const vFov = (camera.fov * Math.PI) / 180;
+    const ranked = labelEntries
+      .map((s) => ({ s, d: s.position.distanceTo(camPos) }))
+      .sort((a, b) => a.d - b.d);
+    for (let i = 0; i < ranked.length; i++) {
+      const { s, d } = ranked[i];
+      if (i >= PROV_TOPN) { s.visible = false; continue; }
+      s.visible = true;
+      const dist = Math.max(d, 800);
+      const worldPerPx = (2 * Math.tan(vFov / 2) * dist) / hPx;
+      const cw = s.userData.canvasW, ch = s.userData.canvasH;
+      const sc = (15 * worldPerPx) / ch;
+      s.scale.set(cw * sc, ch * sc, 1);
+      const alpha = dist <= 250_000 ? 0.7 : dist >= 330_000 ? 0 : 0.7 * (1 - (dist - 250_000) / 80_000);
+      s.material.opacity = alpha;
+    }
+  }
+
+  return { group, updateScales, featureCount, segmentCount: segments.length / 6 };
 }
