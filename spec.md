@@ -245,11 +245,17 @@ A single **boolean contract** that gates all altitude / geofence physical enforc
 
 **Betterment-4.1 additions (§12.5–12.7):**
 - **Flights list:** collapsible "Live flights (N)" panel section — nearest ~50 rows (airline logo/chip · callsign · airline · ORIG→DEST · ETA) each with a **View** button → follow-cam; click a row → detail card (precise type/reg, route, computed ETA, live alt/gs/vs, best-effort photo, Follow/Clear). Throttled ~1 Hz, rendered only when expanded.
-- **Realistic attitude:** models apply heading (`true_heading`), **pitch** (vertical-rate vs groundspeed) and **bank** (broadcast `roll`, when present) via a YXZ holder; precise model from ICAO type. Callsign labels carry the **airline logo** (avs.io, cached) + name, with an IATA-chip fallback.
+- **Realistic attitude:** models apply heading (`true_heading`), **pitch** (vertical-rate vs groundspeed) and **bank** (broadcast `roll`, when present) via a YXZ holder; precise model from ICAO type. Callsign labels carry the **airline logo** (avs.io, cached) + name (IATA-chip fallback), plus a transparent-background **data sub-line** — `HDG · altitude (FL/ft, alt-coloured) · ▲/▼ V/S · GS kt` — for the nearest ~25 and the selected flight (see §12.6).
 - **Enrichment (`src/flightEnrich.js`):** route + airline from **adsbdb** (free, CORS-OK) + ICAO-prefix airline fallback table; **computed ETA** (great-circle distance-to-dest ÷ groundspeed — free feeds carry no scheduled times); cached airline-logo; best-effort aircraft photo. All lazy + cached (incl. negatives), only for listed/labelled/selected flights.
 - **Radar blips:** radar option **Live flights** → altitude-coloured heading arrow + V/S caret + flight number per aircraft, selection ring, and a flashing ring for emergency squawks (7500/7600/7700). **Click a blip → select + follow.**
 - **Follow-cam (`src/followController.js`):** locks the camera onto a live flight and tracks its dead-reckoned position; pauses/hides the player while active; released by Esc / movement keys / canvas pointer-down.
 - **Route line:** great-circle origin→dest line for the selected flight (rebuilt only on selection/route change).
+
+### 3.14 Airspace group filters (Betterment-5 §13)
+The 144 airspace volumes fall into five plain-language **groups** — **Airports** (CTR + Class D), **Terminal areas** (TMA), **Danger areas**, **Restricted**, **Prohibited** — each with a master on/off toggle in the Airspace Window, plus an **All on/off**. The existing **Military** (RTAF/RTN/RTA) toggle stays a *cross-cutting* filter that composes with the groups (a Danger zone can be military). Hiding a group drops it from the 3D scene, the airspace list, and the radar minimap together. De-clutter is the goal. State persists (`kuson.airspacegroups.v1`); default all-on renders identically to today. See §13.
+
+### 3.15 Ground orientation layers (Betterment-6 §14)
+Three independent, persisted ground-reference layers make the 3D view self-orienting without dropping to the radar: **airport beacons + labels** (major Thai airfields, `ICAO·IATA`), **range rings** (50/100/200 km, or aero NM, centred on the aircraft), and **province lines + names**. Each is a Display-options checkbox (`#optAirports`, `#optRangeRings`, `#optProvinces`) persisted under `kuson.grounddetail.v1`. See §14.
 
 ## 4. Non-functional requirements
 
@@ -651,7 +657,42 @@ Display-options checkbox + two selects (`#optLiveFlights`, `#optFlightSource`, `
 Lazy, cached metadata, called only for listed/labelled/selected flights (never the whole fleet); all results cached incl. negatives + in-flight de-duped. `enrichRoute(callsign)` → **adsbdb** `flightroute` (airline + origin/dest airports; **no scheduled times**), with an ICAO-prefix airline fallback table when the route is unknown. `etaFor(fix, dest)` computes a live ETA from great-circle distance ÷ groundspeed. `airlineLogo(iata)` returns a cached `<img>` from avs.io (CORS-verified) for drawing into the label canvas; a brand-coloured IATA chip is the fallback. `aircraftPhoto(hex)` is best-effort (public photo APIs are flaky → graceful no-photo). **CORS verified 2026-06-01:** adsbdb ✓, avs.io ✓; planespotters/airport-data flaky.
 
 ### 12.6 Attitude, labels, follow-cam, selection
-`NormalizedFlight` carries `rollDeg/reg/desc/squawk` and prefers `true_heading`. The model holder applies heading + pitch (from V/S vs GS) + bank (from `roll`, when broadcast) in YXZ order. Callsign labels are canvas sprites with the airline logo + name (chip fallback), rebuilt when the airline/logo resolves. `LiveFlightsLayer.selectedId` is the single selection spine (card · route line · radar highlight · follow). `FollowController` (`src/followController.js`) runs after `drone.update` to own the camera while locked onto `flight.world`; pauses+hides the player; released by Esc / movement keys / canvas pointer-down.
+`NormalizedFlight` carries `rollDeg/reg/desc/squawk` and prefers `true_heading`. The model holder applies heading + pitch (from V/S vs GS) + bank (from `roll`, when broadcast) in YXZ order. **Callsign labels are retina-DPR canvas sprites with two rows: a top row (dark rounded box) with the airline logo + name (chip fallback), and — under it on a *transparent* background — a live data row `HDG nnn · <altitude> · ▲/▼ · GS nnn kt`.** Altitude is aviation-style (`FLnnn` ≥ 18,000 ft, `12,500 ft` below, `GND` on ground) and **tinted by the shared `altColor()` ramp** (`src/flightEnrich.js`) so a label and its radar blip always agree; the ▲/▼ is the climb/descent V/S arrow; speed is **groundspeed** (free ADS-B carries no airspeed). The data row shows for the nearest ~25 flights and always for the selected flight (declutter); the rest show the callsign only. Labels rebuild when the airline/logo resolves **or** a quantised displayed value changes (heading ~5°, altitude 100 ft, GS 10 kt, V/S state) — never per-frame. `LiveFlightsLayer.selectedId` is the single selection spine (card · route line · radar highlight · follow). `FollowController` (`src/followController.js`) runs after `drone.update` to own the camera while locked onto `flight.world`; pauses+hides the player; released by Esc / movement keys / canvas pointer-down.
 
 ### 12.7 Flights list, detail card, radar blips, route line
-`UI._refreshLiveFlightsList()` (throttled ~1 Hz, only when the section is expanded) renders the nearest ~50 rows + View buttons; `_renderFlightCard()` shows the selected flight's photo/type/route/ETA/telemetry. `UI._drawLiveFlightBlips()` draws altitude-coloured heading arrows + V/S carets + flight numbers in `drawMinimap`, with a minimap click → nearest-blip select+follow. `LiveFlightsLayer._updateRouteLine()` builds a great-circle `THREE.Line` from origin→dest for the selected flight (rebuilt only on change).
+`UI._refreshLiveFlightsList()` (throttled ~1 Hz, only when the section is expanded) renders the nearest ~50 rows + View buttons; `_renderFlightCard()` shows the selected flight's photo/type/route/ETA/telemetry. `UI._drawLiveFlightBlips()` draws altitude-coloured heading arrows + V/S carets + flight numbers in `drawMinimap`, with a minimap click → nearest-blip select+follow; its altitude colour comes from the shared `altColor()` helper (`src/flightEnrich.js`) — the same ramp the labels use, so blip and label colour agree (a §11 visual-design invariant). `LiveFlightsLayer._updateRouteLine()` builds a great-circle `THREE.Line` from origin→dest for the selected flight (rebuilt only on change).
+
+---
+
+## 13. Airspace de-clutter — functional group toggles (Betterment-5)
+
+Reduce the 144-volume wall of airspace to what the operator wants to see, controlled from the **Airspace Window**. Grouping is **functional** (matches a pilot's mental model), not raw ICAO class. Default state = all groups on = today's render (zero regression).
+
+### 13.1 Grouping (`src/airspace.js`)
+`groupKeyFor(a)` maps each airspace to one of five disjoint, exhaustive groups by its `category`: `airports` (CTR + Class D), `terminal` (TMA), `danger` (Danger), `restricted` (Restricted), `prohibited` (Prohibited). The counts sum to 144 (34 + 13 + 71 + 21 + 5). Exported `AIRSPACE_GROUPS` carries `{key, label, categories}` for the UI. Military ownership (`branchOf` / `isMilitaryAirspace`) is **orthogonal** to grouping — the Military toggle filters *across* all groups.
+
+### 13.2 Visibility (`AirspaceLayer`)
+`groupVisible` (per-group booleans, default all `true`) + `setGroupVisible(key, show)`. A unified `_applyVisibility()` replaces `_applyMilitaryVisibility`: each volume is visible iff `groupVisible[groupKeyFor(a)] && (!military || showMilitary)`; its label additionally tracks `&& labelsGroup.visible`. `_isActive(c)` gains the same group gate, so identify/highlight never fire on a hidden volume. `setMilitaryVisible` routes through `_applyVisibility`. Because every flag defaults on, the initial render is byte-for-byte today's.
+
+### 13.3 Airspace Window UI (`index.html`, `src/ui.js`)
+Above `#airspaceFilter`, a compact **group chip bar** (each chip: label + live count) plus an **All** toggle, styled with the existing `.opt` tokens. `UI._buildAirspaceGroups()` renders the chips, restores persisted state, and on toggle → `layer.setGroupVisible()` → re-bake minimap → `_refreshAirspaceList()`. The list filter in `_refreshAirspaceList()` drops rows whose group is hidden (alongside the existing military filter at `ui.js:1648`), so the list mirrors the scene.
+
+### 13.4 Radar parity & persistence
+The minimap polygon bake draws only visible groups, and `groupVisible` is folded into `_bakeSig` so the radar re-bakes on toggle and always matches the 3D view (a §11 invariant). State persists to **`kuson.airspacegroups.v1`** via `get/setAirspaceGroupSettings` (mirroring `get/setLiveFlightsSettings`), re-applied in `_buildAirspaceGroups()` on load.
+
+---
+
+## 14. Ground legibility — orientation layers (Betterment-6)
+
+Make the 3D view self-orienting — "where am I?" answerable without the radar. Three independent layers, each a persisted Display-options checkbox under **`kuson.grounddetail.v1`** (`{airports, rangeRings, provinces}`), applied on load. Defaults: **airports ON, provinces ON, rangeRings OFF** (rings overlay the map; opt-in).
+
+### 14.1 Airport beacons (`src/airports.js`, `data/airports.json`)
+A curated dataset of major Thai airfields (`{icao, iata, name, lat, lon, prominence}`) rendered by `installAirportBeacons(scene, {y, topN})` → `{group, updateScales}`, mirroring `installCityBeacons` (`src/cities.js`): label (`ICAO·IATA`) + marker + distance-fade, rescaled to a constant on-screen height each frame; wired into `main.js` scene init + the per-frame `updateScales` call site. A distinct marker glyph (e.g. a runway tick) separates airports from city beacons. Toggle `#optAirports`. *No airport dataset existed before Betterment-6 — this is new data.*
+
+### 14.2 Range rings (`installRangeRings`)
+Concentric `LineLoop`s at 50/100/200 km (or 25/50/100 NM under aero units, reusing the radar's unit logic) on the basemap plane (`y ≈ 1`, below labels), re-centred on the aircraft each frame, with faint `makeTextSprite` distance labels. Gives an instant sense of scale/distance the flat 3D view otherwise lacks. Toggle `#optRangeRings`.
+
+### 14.3 Province lines + names (`src/provinces.js`)
+The existing province `LineSegments` overlay becomes toggleable (`group.visible`); province **name** labels are added at per-feature centroids (reusing the city-beacon label + distance-fade pattern, at a low prominence so they sit beneath city/airport labels). One toggle `#optProvinces` governs lines + names. Names come from `data/provinces.geojson` feature properties.
+
+*(Deferred, noted: a "nearest-airport BRG/DIST" HUD readout — a cheap text orientation cue, not in Betterment-6 scope.)*

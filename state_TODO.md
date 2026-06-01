@@ -153,6 +153,20 @@ Operator should walk through `spec.md §6` in a real browser. Until then these a
 - [ ] Sample arc segments for VTD34 / VTD58 / VTD17 instead of straight-line chord between endpoints.
 - [ ] Add a smoke-test rig (Playwright or Puppeteer) covering the verification checklist in §2.
 
+### Betterment-5 — Airspace de-clutter (design locked 2026-06-01 (d); see `20260601_BettermentPlaybook.md` + `spec.md §13`)
+- [ ] **B5.T1** — `groupKeyFor(a)` + `AIRSPACE_GROUPS` in `airspace.js` (counts: 34/13/71/21/5 = 144).
+- [ ] **B5.T2** — `groupVisible` + `setGroupVisible` + unified `_applyVisibility`; extend `_isActive`.
+- [ ] **B5.T3** — `get/setAirspaceGroupSettings` (`kuson.airspacegroups.v1`).
+- [ ] **B5.T4** — Group chip bar + All toggle in the Airspace Window; extend `_refreshAirspaceList` filter.
+- [ ] **B5.T5** — Radar bake draws only visible groups; `groupVisible` in `_bakeSig`.
+
+### Betterment-6 — Ground legibility (design locked 2026-06-01 (d); see playbook + `spec.md §14`)
+- [ ] **B6.T1** — Curated `data/airports.json` (~12–15 majors, `{icao,iata,name,lat,lon,prominence}`).
+- [ ] **B6.T2** — `src/airports.js` `installAirportBeacons` (port of `installCityBeacons`).
+- [ ] **B6.T3** — `installRangeRings` (50/100/200 km · aero NM) following the aircraft.
+- [ ] **B6.T4** — Province name labels at centroids + visibility toggle (`provinces.js`).
+- [ ] **B6.T5** — `#optAirports/#optRangeRings/#optProvinces` toggles + `kuson.grounddetail.v1` persistence + `main.js` wiring.
+
 ### Medium
 - [ ] Per-airspace teleport altitude clamp for very tall volumes.
 - [ ] Indicate which tile failed to load (debug OSM rate-limiting).

@@ -1166,3 +1166,69 @@ ADS-B carries no airline/route/schedule. Probed: **adsbdb** (CORS-OK) gives airl
 ### Session close
 - 6 feature commits + spec/playbook/journal. Not pushed. Tag `betterment4.1-complete` after operator sign-off.
 - Preview server (:8080) left running.
+
+---
+
+## 2026-06-01 (c) — Betterment-4.1: airplane-label HDG/ALT/GS data row + 4 polish wins · STATUS: VERIFIED (uncommitted)
+
+**Operator ask:** add a second line under the live-flight callsign label showing **Heading, Altitude and Airspeed on a transparent background**; reflect in the spec; recommend extras to make it "10x better."
+
+Plan-mode (2 Explore agents). Operator confirmed: altitude = **FL + feet** aviation style; speed labelled **`GS … kt`** (free ADS-B carries groundspeed, not airspeed — surfaced as a correctness note); and **all four** suggested extras, lowest-hanging-fruit first.
+
+### Design constraints found (shaped the impl)
+- **Label rebuilds are signature-gated** (`_labelSig`, only on airline/logo resolve). HDG/ALT/GS change continuously → would thrash a canvas every frame. Solution: fold a **quantised data signature** (heading ~5°, altitude 100 ft, GS 10 kt, V/S state) into the sig → canvas regenerates only when a *displayed* value changes.
+- **Scale math normalises the whole canvas to ~20 px tall on screen** → a 2-row canvas would be squished. Solution: store `userData.screenH = h*(20/44)` per label and size from it; the callsign row keeps its prior apparent size, the data row adds proportionally.
+
+### Changes (branch betterment2-20260529, uncommitted)
+| File | What |
+|---|---|
+| `src/flightEnrich.js` | **Extracted** the radar's altitude→colour ramp into one shared exported `altColor(altM)` — single source of truth for blip + label (Extra #2). |
+| `src/ui.js` | `_altColor()` now delegates to shared `altColor`; import added. |
+| `src/liveFlights.js` | Formatters `_fmtHeading/_fmtAltFt/_fmtGs/_vsGlyph`; `_flightLabel(callsign,airline,data)` grows a 2nd **transparent-bg** row (`HDG · alt(FL/ft, alt-coloured) · ▲/▼ · GS kt`) with text-shadow; **retina DPR** canvas (Extra #3); `userData.screenH`. `_rebuildLabel(f,showData)` passes live data. `updateLabelScales`: quantised data-sig, **declutter** (`DATA_LINE_K=25` nearest + always `selectedId`, Extra #4), scale from `screenH`. |
+| `spec.md` | §12.6 rewritten (2-row label, FL/ft, GS-not-airspeed, declutter, quantised rebuild); §12.7 shared-ramp note; §3.13 attitude bullet extended. |
+
+### Verified in browser (:8080, mock fleet, 1440×900)
+- `node --check` clean on all 3 JS files; **0 console errors** (only pre-existing route-404 *warns* for synthetic mock callsigns — enrichment degrades gracefully).
+- **Declutter exact:** 40 flights → **exactly 25** two-row labels (`canvasH 70`), rest callsign-only (`canvasH 44`, sig `…|none`).
+- **screenH mapping:** 44→20 (1 row), 70→31.8 (2 rows) ✓.
+- **Selection override:** force-selected a far no-data flight (THA100) → next frame gained `canvasH 70`; sig `…|0|99|89|1` matched live values (hdg 0, 9900 ft, 445 kt, climbing).
+- **Visual (labels drawn from their THREE textures onto a checkerboard):** AIQ109 `HDG 063 FL306 ▲ GS 515 kt` (green ▲); CPA107 `HDG 329 FL259 ▼ GS 465 kt` (red ▼); THA108 `HDG 016 FL282 GS 480 kt` (level). Transparent data-row bg confirmed (checkerboard visible through it); altitude tinted; callsign row keeps its dark box.
+
+### Notes
+- Speed is **groundspeed** (no airspeed in free ADS-B) — labelled `GS … kt` per operator.
+- `altColor` now shared → blip and label colour can never drift (a §11 visual-design invariant).
+- Left preview enabled with **mock** source for immediate review; operator can switch to `airplaneslive` or toggle off.
+- Not yet committed — awaiting operator sign-off on the look.
+
+---
+
+## 2026-06-01 (d) — Study: map legibility (airspace de-clutter + ground orientation) · STATUS: DESIGN_LOCKED (implementation pending)
+
+**Operator ask:** study two legibility problems — (1) de-clutter the 144 airspaces via grouped master on/off toggles in the Airspace Window; (2) make the ground detailed enough to know *where you are* without the radar. Then pin to spec + create the playbook, all logged.
+
+**Method:** plan-mode, 3 Explore agents (airspace model/UI · ground+orientation gap · UI control patterns) + targeted reads. **No app code touched.**
+
+### Key findings
+- Airspace visibility seam generalises cleanly: per-airspace mesh in `compiled[]`, `_applyMilitaryVisibility`/`_isActive` gate, list filter already drops hidden military rows (`ui.js:1648`). Civil meshes are currently always-visible → **all-groups-on default = zero regression**.
+- Functional groups map onto the existing `category`: Airports (CTR+Class D)=34, Terminal (TMA)=13, Danger=71, Restricted=21, Prohibited=5 → **Σ 144**. Military (`branchOf`) is orthogonal → stays a cross-cutting toggle.
+- Ground gap vs radar: 3D has Voyager tiles + city beacons + province *lines* + HUD lat/lon, but **no range rings, no airport markers, no scale reference**. **No airport dataset exists anywhere** (only `THAI_CITIES`) — the biggest orientation gap → new `data/airports.json`.
+- Reuse anchors: `installCityBeacons` (cities.js:165), `makeTextSprite` (airspace.js:253), `installProvinceLines` (provinces.js:37), radar bake `_bakeSig` + `_radarScale` (ui.js).
+
+### Operator decisions
+- Grouping = **functional** (Airports/Terminal/Danger/Restricted/Prohibited) + Military cross-cut.
+- Ground levers = **airport beacons+labels · range rings · province lines+names**, each an independent persisted toggle.
+- Delivery = **two phases** (Betterment-5 de-clutter, Betterment-6 ground legibility).
+
+### Produced (design artifacts, no app code)
+- `spec.md` §3.14/§3.15 (functional reqs) + **§13** (Betterment-5) + **§14** (Betterment-6).
+- `20260601_BettermentPlaybook.md` — B5 (5 tasks) + B6 (5 tasks), each with Pass Criteria, target files, reuse anchors, smoke checklists.
+- `state_TODO.md` — Betterment-5 + Betterment-6 phase rows (unchecked).
+- This journal block.
+
+### Verification (artifacts)
+- Group counts sum to 144 ✓.
+- Every toggle id (`#optAirports/#optRangeRings/#optProvinces`, group chips) + persistence key (`kuson.airspacegroups.v1`, `kuson.grounddetail.v1`) appears in **both** spec and playbook ✓.
+- Reuse anchors re-confirmed against source (visibility seam, city beacons, provinces, radar bake / list filter).
+
+### Next
+Execute Betterment-5 then -6 per the playbook (browser-verified, atomic commits). Guardrails: persistence keys + **default-on no-regression** baseline diff. Docs staged in working tree, not committed to git.
