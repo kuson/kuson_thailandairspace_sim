@@ -1,0 +1,23 @@
+{
+  "meta": {
+    "description": "Major Thai airfields for the 3D orientation beacons (Betterment-6 §14.1). Coordinates are aerodrome reference points (WGS84). prominence: 3=primary hub, 2=major regional, 1=regional.",
+    "source": "AIP Thailand / OurAirports (public domain), rounded to ~4 dp",
+    "count": 14
+  },
+  "airports": [
+    { "icao": "VTBS", "iata": "BKK", "name": "Suvarnabhumi",        "lat": 13.6900, "lon": 100.7501, "prominence": 3 },
+    { "icao": "VTBD", "iata": "DMK", "name": "Don Mueang",          "lat": 13.9126, "lon": 100.6068, "prominence": 3 },
+    { "icao": "VTCC", "iata": "CNX", "name": "Chiang Mai",          "lat": 18.7669, "lon": 98.9626,  "prominence": 2 },
+    { "icao": "VTSP", "iata": "HKT", "name": "Phuket",              "lat": 8.1132,  "lon": 98.3169,  "prominence": 2 },
+    { "icao": "VTSS", "iata": "HDY", "name": "Hat Yai",             "lat": 6.9332,  "lon": 100.3925, "prominence": 1 },
+    { "icao": "VTUU", "iata": "UBP", "name": "Ubon Ratchathani",    "lat": 15.2513, "lon": 104.8703, "prominence": 1 },
+    { "icao": "VTUD", "iata": "UTH", "name": "Udon Thani",          "lat": 17.3864, "lon": 102.7883, "prominence": 1 },
+    { "icao": "VTUK", "iata": "KKC", "name": "Khon Kaen",           "lat": 16.4666, "lon": 102.7838, "prominence": 1 },
+    { "icao": "VTCT", "iata": "CEI", "name": "Chiang Rai",          "lat": 19.9523, "lon": 99.8829,  "prominence": 1 },
+    { "icao": "VTSB", "iata": "URT", "name": "Surat Thani",         "lat": 9.1326,  "lon": 99.1356,  "prominence": 1 },
+    { "icao": "VTSG", "iata": "KBV", "name": "Krabi",               "lat": 8.0986,  "lon": 98.9862,  "prominence": 1 },
+    { "icao": "VTSM", "iata": "USM", "name": "Samui",               "lat": 9.5479,  "lon": 100.0623, "prominence": 1 },
+    { "icao": "VTSF", "iata": "NST", "name": "Nakhon Si Thammarat", "lat": 8.5396,  "lon": 99.9447,  "prominence": 1 },
+    { "icao": "VTBU", "iata": "UTP", "name": "U-Tapao",             "lat": 12.6799, "lon": 101.0050, "prominence": 1 }
+  ]
+}
