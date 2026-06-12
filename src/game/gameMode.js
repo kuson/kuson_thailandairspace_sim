@@ -27,7 +27,7 @@ const LEGAL = {
   IDLE:     ["BRIEFING"],
   BRIEFING: ["WAVE", "IDLE"],
   WAVE:     ["DEBRIEF", "IDLE"],
-  DEBRIEF:  ["IDLE"],
+  DEBRIEF:  ["IDLE", "WAVE"],
 };
 
 export class GameMode {
@@ -63,6 +63,10 @@ export class GameMode {
     this._wave  = null;
     /** @type {GameScore|null} */
     this._score = null;
+
+    // Multi-wave session counters (reset on start()).
+    this._waveIndex    = 1;
+    this._sessionTotal = 0;
 
     // DOM cards — built lazily.
     this._briefingCard = null;
@@ -111,6 +115,9 @@ export class GameMode {
   /** Transition IDLE → BRIEFING: show briefing card. */
   start() {
     if (!this._enter("BRIEFING")) return false;
+    // Reset session counters for a fresh run.
+    this._waveIndex    = 1;
+    this._sessionTotal = 0;
     this._showBriefing();
     return true;
   }
@@ -125,6 +132,9 @@ export class GameMode {
     this._hideBriefing();
     this._hideDebrief();
     this._emit("abort", this.state);
+    // Reset session state cleanly.
+    this._waveIndex    = 1;
+    this._sessionTotal = 0;
     this.state = "IDLE";
     this._emit("state", "IDLE");
   }
@@ -305,42 +315,55 @@ export class GameMode {
 
   _beginWave() {
     this._hideBriefing();
+    this._hideDebrief();
     if (!this._enter("WAVE")) return;
     this._score = new GameScore();
     // Resolve difficulty tier from persistence.
     const tierKey    = getGameStats().difficulty ?? "cadet";
     const tier       = _tierFromKey(tierKey);
+    // Per-wave escalation: contacts grow by 1 each wave (cap +3); time shrinks 10% per wave (floor 45 s).
+    const wi       = this._waveIndex;
+    const contacts  = tier.contacts  + Math.min(3, wi - 1);
+    const timeLimitS = Math.max(45, Math.round(tier.timeLimitS * Math.pow(0.9, wi - 1)));
     // Inject score and stat helpers into deps bundle.
     const deps = this;
     deps._score      = this._score;
     deps._statsModule = { getGameStats, setGameStats };
     this._lastTierLabel = tier.label;
-    this._wave = new ScrambleWave(deps, { tier });
+    // Pass explicit per-wave opts so they override tier-derived values.
+    this._wave = new ScrambleWave(deps, { tier, contacts, timeLimitS });
     // Pass stat helpers to the wave after construction (wave reads _statsModule
     // from deps reference which is `this`).
     this._wave._statsModule = { getGameStats, setGameStats };
-    // B8.T3: announce wave start.
-    const n = this._wave._contacts?.length ?? tier.contacts;
-    this.audio?.say(`Scramble, scramble, scramble — ${n} contacts inbound`);
+    // B8.T6: voice — wave > 1 uses numbered announcement; wave 1 uses legacy scramble call.
+    const n = this._wave._contacts?.length ?? contacts;
+    if (wi > 1) {
+      this.audio?.say(`Wave ${wi} — ${n} contacts inbound`);
+    } else {
+      this.audio?.say(`Scramble, scramble, scramble — ${n} contacts inbound`);
+    }
   }
 
   _enterDebrief() {
     const summary = this._wave?.summary() ?? { contacts: [], total: 0, identified: 0, lost: 0 };
     this._wave = null;
     if (!this._enter("DEBRIEF")) return;
+    // Accumulate session running total.
+    this._sessionTotal += summary.total;
     // B8.T3: announce debrief.
     this.audio?.say(`Wave complete — ${summary.total} points`);
 
-    // Persist stats.
-    const stats    = getGameStats();
-    const newWaves = (stats.wavesPlayed ?? 0) + 1;
-    const newBest  = Math.max(stats.bestScore ?? 0, summary.total);
-    // Merge identified counts.
-    const idPatch  = {};
+    // Persist stats — bestScore compares SESSION total; waveReached tracks highest wave index reached.
+    const stats      = getGameStats();
+    const newWaves   = (stats.wavesPlayed ?? 0) + 1;
+    const newBest    = Math.max(stats.bestScore ?? 0, this._sessionTotal);
+    const newReached = Math.max(stats.waveReached ?? 0, this._waveIndex);
+    // Merge identified counts (from this wave only — per-wave contacts in summary).
+    const idPatch = {};
     for (const c of summary.contacts) {
       if (!c.lost) idPatch[c.id] = (stats.airspacesIdentified[c.id] ?? 0) + 1;
     }
-    setGameStats({ wavesPlayed: newWaves, bestScore: newBest, airspacesIdentified: idPatch });
+    setGameStats({ wavesPlayed: newWaves, bestScore: newBest, waveReached: newReached, airspacesIdentified: idPatch });
 
     this._showDebrief(summary, newBest);
   }
@@ -349,10 +372,12 @@ export class GameMode {
 
   _showDebrief(summary, bestScore) {
     if (!this._debriefCard) this._buildDebriefCard();
-    // Update title to include the tier label used in the wave.
+    // Update title: WAVE {n} — {TIER}.
     const titleEl = this._debriefCard.querySelector("#gameDebriefTitle");
-    if (titleEl) titleEl.textContent = `DEBRIEF — ${this._lastTierLabel ?? "CADET"}`;
+    if (titleEl) titleEl.textContent = `WAVE ${this._waveIndex} — ${this._lastTierLabel ?? "CADET"}`;
     this._populateDebrief(summary, bestScore);
+    // Sync button labels to match multi-wave UI.
+    this._refreshDebriefButtons();
     this._debriefCard.removeAttribute("hidden");
     this.audio?.play("chime");
 
@@ -362,7 +387,11 @@ export class GameMode {
         if (e.key === "Enter") {
           e.preventDefault();
           e.stopImmediatePropagation();
-          this._doneDebrief();
+          this._nextWaveDebrief();
+        } else if (e.key === "Escape") {
+          e.preventDefault();
+          e.stopImmediatePropagation();
+          this._endDebrief();
         }
       };
       window.addEventListener("keydown", this._debriefKeyListener, true);
@@ -404,13 +433,22 @@ export class GameMode {
     const btns = document.createElement("div");
     btns.className = "gc-btns";
 
-    const doneBtn = document.createElement("button");
-    doneBtn.type = "button";
-    doneBtn.className = "gc-btn-primary";
-    doneBtn.textContent = "Done (Enter)";
-    doneBtn.addEventListener("click", () => this._doneDebrief());
+    const nextBtn = document.createElement("button");
+    nextBtn.type = "button";
+    nextBtn.className = "gc-btn-primary";
+    nextBtn.id = "gameDebriefNextBtn";
+    nextBtn.textContent = "Next wave (Enter)";
+    nextBtn.addEventListener("click", () => this._nextWaveDebrief());
 
-    btns.appendChild(doneBtn);
+    const endBtn = document.createElement("button");
+    endBtn.type = "button";
+    endBtn.className = "gc-btn-secondary";
+    endBtn.id = "gameDebriefEndBtn";
+    endBtn.textContent = "End (Esc)";
+    endBtn.addEventListener("click", () => this._endDebrief());
+
+    btns.appendChild(nextBtn);
+    btns.appendChild(endBtn);
 
     card.appendChild(title);
     card.appendChild(table);
@@ -453,15 +491,37 @@ export class GameMode {
     const totalLine = document.createElement("div");
     totalLine.className = "gc-total";
     totalLine.textContent = `WAVE SCORE: ${summary.total}`;
+    const sessionLine = document.createElement("div");
+    sessionLine.className = "gc-session";
+    sessionLine.textContent = `SESSION TOTAL: ${this._sessionTotal}`;
     const bestLine = document.createElement("div");
     bestLine.className = "gc-best";
     bestLine.textContent = `BEST: ${bestScore}`;
     footer.appendChild(totalLine);
+    footer.appendChild(sessionLine);
     footer.appendChild(bestLine);
   }
 
-  _doneDebrief() {
+  /** Refresh button label text (called each time debrief is shown). */
+  _refreshDebriefButtons() {
+    const nextBtn = this._debriefCard?.querySelector("#gameDebriefNextBtn");
+    const endBtn  = this._debriefCard?.querySelector("#gameDebriefEndBtn");
+    if (nextBtn) nextBtn.textContent = "Next wave (Enter)";
+    if (endBtn)  endBtn.textContent  = "End (Esc)";
+  }
+
+  /** "Next wave" handler: advance wave index and begin the next wave. */
+  _nextWaveDebrief() {
     this._hideDebrief();
+    this._waveIndex++;
+    this._beginWave();
+  }
+
+  /** "End" handler: return to IDLE and reset session state. */
+  _endDebrief() {
+    this._hideDebrief();
+    this._waveIndex    = 1;
+    this._sessionTotal = 0;
     this._enter("IDLE");
   }
 }

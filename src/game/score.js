@@ -9,6 +9,7 @@ const STATS_KEY = "kuson.game.v1";
 const STATS_DEFAULT = {
   bestScore:            0,
   wavesPlayed:          0,
+  waveReached:          0,
   airspacesIdentified:  {},
   difficulty:           "cadet",
 };
@@ -19,6 +20,7 @@ function _withDefaults(raw) {
   if (raw && typeof raw === "object") {
     if (typeof raw.bestScore           === "number") out.bestScore           = raw.bestScore;
     if (typeof raw.wavesPlayed         === "number") out.wavesPlayed         = raw.wavesPlayed;
+    if (typeof raw.waveReached         === "number") out.waveReached         = raw.waveReached;
     if (typeof raw.difficulty          === "string") out.difficulty          = raw.difficulty;
     if (raw.airspacesIdentified && typeof raw.airspacesIdentified === "object") {
       out.airspacesIdentified = { ...raw.airspacesIdentified };
@@ -50,6 +52,7 @@ export function setGameStats(patch) {
   const next = { ...current };
   if (typeof patch.bestScore   === "number") next.bestScore   = patch.bestScore;
   if (typeof patch.wavesPlayed === "number") next.wavesPlayed = patch.wavesPlayed;
+  if (typeof patch.waveReached === "number") next.waveReached = patch.waveReached;
   if (typeof patch.difficulty  === "string") next.difficulty  = patch.difficulty;
   if (patch.airspacesIdentified && typeof patch.airspacesIdentified === "object") {
     next.airspacesIdentified = {
