@@ -5,6 +5,7 @@ import {
 } from "./coords.js";
 import { isMilitaryAirspace, groupKeyFor, AIRSPACE_GROUPS, getAirspaceGroupSettings, setAirspaceGroupSettings } from "./airspace.js";
 import { getGroundDetailSettings } from "./groundSettings.js";
+import { getDayNightSettings } from "./daynight.js";
 import { elevationAt, isLoaded as terrainLoaded } from "./terrain.js";
 import { SPEED_PRESETS } from "./drone.js";
 import { getLiveFlightsSettings } from "./flightSources.js";
@@ -382,6 +383,15 @@ export class UI {
           <option value="auto">Auto (alt-adaptive)</option>
         </select>
       </label>
+      <label class="opt">
+        Time of day
+        <select id="optTimeOfDay" class="opt-select">
+          <option value="day" selected>Day</option>
+          <option value="dusk">Dusk</option>
+          <option value="night">Night</option>
+          <option value="auto">Auto (Bangkok clock)</option>
+        </select>
+      </label>
       <label class="opt"><input type="checkbox" id="optTerrain" /> Terrain relief</label>
       <label class="opt"><input type="checkbox" id="optAirports" /> Airport markers</label>
       <label class="opt"><input type="checkbox" id="optRangeRings" /> Range rings (50/100/200 km)</label>
@@ -426,6 +436,16 @@ export class UI {
     groundQ?.addEventListener("change", () => {
       this.onGroundQualityChange?.(groundQ.value);
     });
+
+    // B10.T4: time-of-day select — restore persisted mode, wire handler.
+    const timeOfDayQ = el.querySelector("#optTimeOfDay");
+    const _dnS = getDayNightSettings();
+    if (timeOfDayQ) timeOfDayQ.value = _dnS.mode;
+    timeOfDayQ?.addEventListener("change", () => {
+      this.onTimeOfDayChange?.(timeOfDayQ.value);
+    });
+    // Expose setter so main.js can sync UI after bootstrap reads persistence.
+    this.setTimeOfDay = (m) => { if (timeOfDayQ) timeOfDayQ.value = m; };
 
     // Betterment-6: ground orientation layer toggles (initial state persisted;
     // main.js owns persistence + flips the matching scene group's visibility).

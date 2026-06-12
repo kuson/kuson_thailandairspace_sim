@@ -38,6 +38,7 @@ import { alerts, AlertTier } from "./alerts.js";
 import { installStartScreen } from "./startScreen.js";
 import { installAudio } from "./audio.js";
 import { makeShadowBlob } from "./game/shadows.js";
+import { installDayNight, getDayNightSettings, setDayNightSettings } from "./daynight.js";
 
 // B7.T9: build the start-screen overlay immediately (before bootstrap runs).
 // Failure-safe: if construction throws, stub methods are returned and dismissed
@@ -125,6 +126,10 @@ scene.add(sun);
 
 const ground = new DynamicGround({ baseZoom: 9, detailZoom: 11, baseRange: 3, detailRange: 2 });
 scene.add(ground.group);
+
+// B10.T4: day/dusk/night cycle controller — created immediately (right after
+// the ground it tints) so the initial persisted mode applies on frame one.
+const daynight = installDayNight({ scene, skyRig, hemi, sun, groundTiles: ground });
 
 // Thai city beacons (Phase 2 P2.T5). Top 18 by prominence × proximity so a
 // satellite-style view doesn't read as a wall of labels.
@@ -474,6 +479,13 @@ async function bootstrap() {
     ground.updateAround(drone.position.x, drone.position.z);
   };
 
+  // B10.T4: time-of-day mode selector.
+  const _dnInit = getDayNightSettings();
+  ui.setTimeOfDay?.(_dnInit.mode);
+  ui.onTimeOfDayChange = (m) => {
+    daynight.setMode(m);
+  };
+
   ui.onMapPrimaryChange = (on) => {
     mapPrimary = on;
     applyRendererSize();
@@ -725,6 +737,8 @@ function loop(t) {
   // P4.T1: keep the sky dome centred on the camera (no black void when flying
   // far from Bangkok) and fade it to space-black above 60 km.
   _safe("sky-follow", () => updateSky(skyRig, camera.position, drone.position.y));
+  // B10.T4: day/dusk/night cycle — runs AFTER sky-follow so uniform writes win.
+  _safe("daynight", () => daynight.update(dt));
 
   _safe("ground-alt", () => ground.setAltitude(drone.position.y));
   _safe("ground-update", () => ground.updateAround(drone.position.x, drone.position.z));
@@ -816,4 +830,5 @@ window.__sim = {
   physics: { RigidBody, QuadrotorModel, FixedWingModel },
   debugOverlay, game, audio, aim, weapons,
   ufos, crawlers,
+  daynight,
 };
