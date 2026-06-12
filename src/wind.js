@@ -48,9 +48,52 @@ function _noiseSpd(nx, nz, nt) {
   return (a + 0.6 * b) / 1.6;
 }
 
+// Altitude wind profile — speed multiplier knots and veer table.
+// Contract (B10.T7): ×1.0 ≤ 500 m, ×1.5 @ 3 km, ×2.0 @ 6 km, ×2.8 @ 11 km;
+// linear interpolation between segments; clamped at ×2.8 above 11 km.
+// Veer: +15° per 3,000 m for alt > 500 m (dead-band keeps ≤500 m parity).
+const _ALT_KNOTS = [
+  [500,    1.0],
+  [3_000,  1.5],
+  [6_000,  2.0],
+  [11_000, 2.8],
+];
+
+/**
+ * Returns the speed multiplier and veer (degrees clockwise) for a given
+ * altitude in metres. At ≤ 500 m both are exactly their surface values
+ * (×1.0, 0°) to preserve strict surface-parity.
+ */
+function _altProfile(altM) {
+  const alt = Math.max(0, altM);
+
+  // Speed multiplier via piecewise linear interpolation.
+  let mul = 1.0;
+  if (alt <= _ALT_KNOTS[0][0]) {
+    mul = 1.0;
+  } else if (alt >= _ALT_KNOTS[_ALT_KNOTS.length - 1][0]) {
+    mul = _ALT_KNOTS[_ALT_KNOTS.length - 1][1];
+  } else {
+    for (let i = 0; i < _ALT_KNOTS.length - 1; i++) {
+      const [a0, m0] = _ALT_KNOTS[i];
+      const [a1, m1] = _ALT_KNOTS[i + 1];
+      if (alt >= a0 && alt <= a1) {
+        const t = (alt - a0) / (a1 - a0);
+        mul = m0 + t * (m1 - m0);
+        break;
+      }
+    }
+  }
+
+  // Veer: 15° per 3 km, dead-band at ≤ 500 m for strict surface parity.
+  const veerDeg = alt > 500 ? (15 / 3_000) * alt : 0;
+
+  return { mul, veerDeg };
+}
+
 /**
  * Sample the wind field at (position, time).
- * @param {{x:number, z:number}} position World-frame position.
+ * @param {{x:number, y:number, z:number}} position World-frame position (y = altitude m).
  * @param {number} time Sim seconds (monotonic).
  * @param {object} [settings] Override DEFAULT_WIND fields (e.g. for tests).
  * @returns {{
@@ -71,9 +114,17 @@ export function currentWind(position, time, settings) {
   const dirNoise = _noiseDir(nx, nz, nt);
   const spdNoise = _noiseSpd(nx, nz, nt);
 
+  // Surface wind (base layer, identical to pre-B10 at ≤ 500 m).
   const dirRawDeg = s.baseDirDeg + dirNoise * s.variabilityDirDeg;
-  const dirDeg = ((dirRawDeg % 360) + 360) % 360;
-  const speedMs = Math.max(0, s.baseSpeedMs + spdNoise * s.variabilityMs);
+  const surfDirDeg = ((dirRawDeg % 360) + 360) % 360;
+  const surfSpeedMs = Math.max(0, s.baseSpeedMs + spdNoise * s.variabilityMs);
+
+  // Altitude profile: multiplier + veer.
+  const altM = position?.y ?? 0;
+  const { mul, veerDeg } = _altProfile(altM);
+
+  const speedMs = surfSpeedMs * mul;
+  const dirDeg = ((surfDirDeg + veerDeg) % 360 + 360) % 360;
 
   const rad = (dirDeg * Math.PI) / 180;
   return {

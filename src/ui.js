@@ -1045,6 +1045,40 @@ export class UI {
   }
 
   /**
+   * B10.T7: full wind chip string including head/cross components.
+   * Format (not Calm): "↗ 215° 12 kt · X 8L H 9"  (aero)
+   *                 or "↗ 215° 6.2 m/s · X 4.1L H 4.6"  (metric)
+   * Crosswind:  positive sin(θ) → wind comes from RIGHT → 'R'
+   * Headwind:   positive cos(θ) → opposing motion → 'H'; negative → 'T'
+   * At "Calm" (speed < 0.1) returns "Calm" unchanged.
+   * @param {number} dirDeg  Meteorological FROM direction.
+   * @param {number} speedMs Wind speed in m/s.
+   * @param {number} hdgDeg  Drone compass heading (0–360).
+   */
+  fmtWindChip(dirDeg, speedMs, hdgDeg) {
+    const base = this.fmtWind(dirDeg, speedMs);
+    if (base === "Calm") return "Calm";
+
+    // Relative angle: wind-from-direction vs drone heading (both compass).
+    const thetaDeg = ((dirDeg - (hdgDeg ?? 0)) % 360 + 360) % 360;
+    const thetaRad = (thetaDeg * Math.PI) / 180;
+    const headMs = speedMs * Math.cos(thetaRad);   // + = headwind, - = tailwind
+    const crossMs = speedMs * Math.sin(thetaRad);  // + = from right (R), - = from left (L)
+
+    const hLabel = headMs >= 0 ? "H" : "T";
+    const xLabel = crossMs >= 0 ? "R" : "L";
+
+    if (this.unitSystem === "aero") {
+      const xKt = Math.abs(crossMs * 1.94384);
+      const hKt = Math.abs(headMs * 1.94384);
+      return `${base} · X ${xKt.toFixed(0)}${xLabel} ${hLabel} ${hKt.toFixed(0)}`;
+    }
+    const xMs = Math.abs(crossMs);
+    const hMs = Math.abs(headMs);
+    return `${base} · X ${xMs.toFixed(1)}${xLabel} ${hLabel} ${hMs.toFixed(1)}`;
+  }
+
+  /**
    * P3.T7: vertical-speed string for the HUD VS row. Aero = ft/min with
    * a sign prefix (matches FAA VSI convention); metric = m/s. A dead
    * band of ±0.05 m/s reads as "level" so noise around hover doesn't
@@ -2115,8 +2149,9 @@ export class UI {
 
     // P3.T9: wind chip. Drone.physicsStep publishes the latest sample on
     // _lastWind; in Easy Mode / UFO the sample is zeros and we print "Calm".
+    // B10.T7: extend chip with head/cross components vs current drone heading.
     const w = this.drone._lastWind ?? { dirDeg: 0, speedMs: 0 };
-    const windText = this.fmtWind(w.dirDeg, w.speedMs);
+    const windText = this.fmtWindChip(w.dirDeg, w.speedMs, this.drone.headingDeg());
     if (this._hudCache.wind !== windText) {
       this._hudCache.wind = windText;
       if (this._el.wind) this._el.wind.textContent = windText;
