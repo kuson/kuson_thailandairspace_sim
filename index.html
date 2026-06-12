@@ -807,6 +807,161 @@
       text-align: center;
       opacity: 0.7;
     }
+
+    /* ---- Game Objective HUD strip (B7.T8) ---- */
+    #gameObjective {
+      position: fixed;
+      top: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 290;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(10, 14, 21, 0.82);
+      border: 1px solid rgba(102, 255, 204, 0.30);
+      border-radius: 8px;
+      padding: 6px 14px;
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--accent);
+      letter-spacing: 0.05em;
+      white-space: nowrap;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+      pointer-events: auto;
+    }
+    #gameObjective[hidden] { display: none; }
+    #gameObjectiveInfo { flex: 1 1 auto; }
+    #gameAutopilotBtn {
+      background: rgba(102, 255, 204, 0.12);
+      border: 1px solid rgba(102, 255, 204, 0.40);
+      border-radius: 5px;
+      color: var(--accent);
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 0.06em;
+      padding: 3px 8px;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    #gameAutopilotBtn:hover {
+      background: rgba(102, 255, 204, 0.22);
+    }
+
+    /* ---- Game Briefing / Debrief cards (B7.T8) ---- */
+    /* Outer overlay — reuses the same backdrop/flex pattern as #typingModal */
+    #gameBriefing,
+    #gameDebrief {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 310;
+      background: rgba(10, 14, 21, 0.72);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+    }
+    #gameBriefing[hidden],
+    #gameDebrief[hidden] { display: none; }
+
+    /* Inner card — same HUD panel palette as .tc-card */
+    .gc-card {
+      background: var(--panel);
+      border: 1px solid var(--panel-border);
+      border-radius: 12px;
+      box-shadow: var(--shadow);
+      padding: 28px 32px;
+      width: min(480px, calc(100vw - 48px));
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .gc-title {
+      font-family: var(--mono);
+      font-size: 13px;
+      color: var(--accent);
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      border-bottom: 1px solid var(--panel-border);
+      padding-bottom: 10px;
+    }
+    .gc-body {
+      margin: 0;
+      padding: 0 0 0 18px;
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--text);
+      line-height: 1.9;
+      letter-spacing: 0.03em;
+    }
+    /* Debrief table rows */
+    .gc-table {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .gc-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-family: var(--mono);
+      font-size: 12px;
+      padding: 5px 8px;
+      border-radius: 5px;
+      background: rgba(255,255,255,0.04);
+    }
+    .gc-row-ok  { border-left: 3px solid var(--ok); }
+    .gc-row-lost{ border-left: 3px solid var(--danger); }
+    .gc-row-name { color: var(--text); letter-spacing: 0.05em; }
+    .gc-row-pts  { color: var(--muted); font-size: 11px; }
+    .gc-row-lost .gc-row-pts { color: var(--danger); }
+    /* Footer: total + best */
+    .gc-footer {
+      display: flex;
+      justify-content: space-between;
+      font-family: var(--mono);
+      font-size: 12px;
+      border-top: 1px solid var(--panel-border);
+      padding-top: 10px;
+    }
+    .gc-total { color: var(--accent); letter-spacing: 0.05em; }
+    .gc-best  { color: var(--muted); }
+    /* Button row */
+    .gc-btns {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+    }
+    .gc-btn-primary {
+      background: rgba(102, 255, 204, 0.14);
+      border: 1px solid rgba(102, 255, 204, 0.45);
+      border-radius: 6px;
+      color: var(--accent);
+      font-family: var(--mono);
+      font-size: 12px;
+      padding: 6px 16px;
+      cursor: pointer;
+      letter-spacing: 0.04em;
+    }
+    .gc-btn-primary:hover {
+      background: rgba(102, 255, 204, 0.24);
+    }
+    .gc-btn-secondary {
+      background: transparent;
+      border: 1px solid var(--panel-border);
+      border-radius: 6px;
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 12px;
+      padding: 6px 16px;
+      cursor: pointer;
+      letter-spacing: 0.04em;
+    }
+    .gc-btn-secondary:hover {
+      border-color: rgba(255,255,255,0.20);
+      color: var(--text);
+    }
   </style>
 </head>
 <body>

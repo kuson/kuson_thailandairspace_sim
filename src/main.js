@@ -243,7 +243,7 @@ const simMode = new SimModeMachine();
 const atc    = new AtcRadio({ layer, getDronePos: () => drone.position, alerts, AlertTier });
 const ufos   = new UfoLayer(scene, { layer });
 const typing = new TypingChallenge({ drone });
-const game   = new GameMode({ layer, startFlyTo, getDronePos: () => drone.position, atc, ufos, typing });
+const game   = new GameMode({ layer, startFlyTo, getDronePos: () => drone.position, atc, ufos, typing, alerts, AlertTier });
 
 // Betterment-2 P3: build the per-frame context the flight-history event log
 // diffs against. Cheap — airspacesAt is AABB-accelerated.
