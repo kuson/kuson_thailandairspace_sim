@@ -28,6 +28,7 @@ import * as ceilings from "./ceilings.js";
 import { installDebugOverlay } from "./debugOverlay.js";
 import { GameMode } from "./game/gameMode.js";
 import { AtcRadio } from "./game/atc.js";
+import { UfoLayer } from "./game/ufo.js";
 import { alerts, AlertTier } from "./alerts.js";
 
 const scene = new THREE.Scene();
@@ -239,7 +240,8 @@ let _applyingHistory = false;
 const simMode = new SimModeMachine();
 
 const atc  = new AtcRadio({ layer, getDronePos: () => drone.position, alerts, AlertTier });
-const game = new GameMode({ layer, startFlyTo, getDronePos: () => drone.position, atc });
+const ufos = new UfoLayer(scene, { layer });
+const game = new GameMode({ layer, startFlyTo, getDronePos: () => drone.position, atc, ufos });
 
 // Betterment-2 P3: build the per-frame context the flight-history event log
 // diffs against. Cheap — airspacesAt is AABB-accelerated.
@@ -632,6 +634,7 @@ function loop(t) {
   _safe("province-scales", () => provinceLines?.updateScales(camera, renderer));
   _safe("liveflights", () => liveFlights.update(dt, camera.position));
   _safe("liveflights-labels", () => liveFlights.updateLabelScales(camera, renderer));
+  _safe("ufos", () => ufos.update(dt));
   _safe("game", () => game.update(dt));
 
   if (ui) {

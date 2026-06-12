@@ -862,6 +862,7 @@ export function buildLiveAircraftModel(bucket) {
     case "bizjet":     return modelLearjet();
     case "narrowbody": return modelNarrowbody();
     case "heavy":      return modelBoeing777();
+    case "ufo":        return modelUFO();
     case "unknown":
     default:           return modelLearjet();
   }
