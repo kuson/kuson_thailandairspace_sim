@@ -257,6 +257,21 @@ The 144 airspace volumes fall into five plain-language **groups** — **Airports
 ### 3.15 Ground orientation layers (Betterment-6 §14)
 Three independent, persisted ground-reference layers make the 3D view self-orienting without dropping to the radar: **airport beacons + labels** (major Thai airfields, `ICAO·IATA`), **range rings** (50/100/200 km, or aero NM, centred on the aircraft), and **province lines + names**. Each is a Display-options checkbox (`#optAirports`, `#optRangeRings`, `#optProvinces`) persisted under `kuson.grounddetail.v1`. See §14.
 
+### 3.16 Game Mode: Sky Guardian (Betterment-7 §15)
+
+An opt-in arcade layer that exercises airspace literacy; the sim is **inert** in `IDLE` — zero game objects, zero game state — and renders identically to pre-B7 until the player chooses Play from the start screen. All game code activates only after that gate.
+
+- **FSM:** `IDLE → BRIEFING → WAVE → DEBRIEF → IDLE`; `abort()` is legal from any non-`IDLE` state; illegal transitions are logged via `console.error` and refused without throwing (never crash). Game is inert in `IDLE` — hard invariant: with the game never started, the sim renders identically to pre-B7.
+- **ATC radio:** `AlertTier.RADIO` rank 7 (below all safety tiers, above `ADVISORY` rank 8); grammar `"{n} contact(s) — {shortName}, bears {brg}° for {nm} nm, angels {kft}"` (bearing from player, X-east/Z-south-positive convention; nm = horizontal metres ÷ 1852; angels = mid-band kft rounded); auto-retract 10 s; Radio log panel (collapsible, 20 entries, `HH:MM:SS`).
+- **UFO layer:** spawn at airspace centroid, mid-band altitude (`(lowerFt+upperFt)/2` ft); orbit r = 2 km, 45 s period, bob ±60 m; glow sprite tinted by airspace category colour; banish = 0.6 s scale+fade then full dispose (leak-free: geometry counts return to pre-spawn baseline — browser-verified).
+- **Typing challenge:** capture-phase `keydown`/`keyup` suppression while open + `drone.keys.clear()` on open (blur-handler precedent) + `exitPointerLock`; does NOT touch `flightLocked` (tour/fly-to ownership); matching is case-insensitive, diacritics-stripped, whitespace/hyphen-collapsed, accepts `id | shortName | name`; per-glyph feedback uses the same leniency; resolves `{correct, elapsedS, accuracy, wpm (rounded, cap 999), cancelled?, timeout?}`.
+- **SCRAMBLE wave:** 3 distinct random CTR/TMA contacts; per-contact `CALLING → TRAVEL` (in-volume check ≤ 2 Hz, 90 s limit) `→ CHALLENGE` (45 s) `→ RESOLVED`; lost on timeout (streak reset + advisory); `Esc` re-enterable after 1 s; objective HUD strip (target/bearing/nm/countdown ≤ 2 Hz + AUTOPILOT button); autopilot = catalog fly-to then final-approach drop to mid-band altitude INSIDE the volume (overview vantage is ~40 000 ft, above most ceilings — verified VTBD 12 192 m vs ceiling 3 353 m).
+- **Scoring:** base 100 × (1 + speedBonus) × accuracy × 1.1^streak (streak cap 10); speedBonus = 1 − elapsed ÷ limit. Persistence key `kuson.game.v1` `{bestScore, wavesPlayed, airspacesIdentified}` guarded-merge pattern.
+- **Start screen:** full-viewport overlay, real load progress (6 ticks), Explore / Tour (variant `"short"`) / Play buttons, keyboard `1/2/3+Enter`, last choice persisted `kuson.start.v1` (0-based index), failure-safe (construction throw → no-op stub, sim never blocked); error path routes through `fail()`.
+- **Debug overlay:** backtick toggle, `renderer.info` (calls/tris/geoms/textures/programs) + 30-frame FPS; no DOM writes while hidden; ≤ 4 Hz writes while visible.
+
+See §15.
+
 ## 4. Non-functional requirements
 
 | Concern | Decision |
@@ -346,6 +361,14 @@ A reviewer should be able to verify Phase 1 by:
 27. Horizon N/E/S/W labels stay on the compass ring around the aircraft while flying (e.g. warp to Phuket).
 27. **Thailand drone rules** collapsed by default; click heading to expand.
 28. Filter box narrows the airspace list client-side.
+29. **Sky Guardian — game never started (Explore path):** after dismissing the start screen via Explore, the scene renders identically to pre-B7 (0 UFOs, no HUD strip, no game cards, debug overlay hidden).
+30. **ATC radio call:** a SCRAMBLE contact triggers a `RADIO`-tier banner reading `"{n} contact(s) — {shortName}, bears {brg}° for {nm} nm, angels {kft}"`; bearing and nm are hand-checkable against the minimap; banner auto-retracts in 10 s and a log entry appears in the Radio log panel.
+31. **Safety preempts RADIO:** while a `RADIO` banner is displayed, triggering a higher-priority alert (e.g. `DANGER` or `WARNING`) replaces the banner; `RADIO` demotes to chip.
+32. **Typing modal input isolation:** while the typing challenge modal is open, pressing any flight key (W/A/S/D/Q/E/Space) produces no drone movement; immediately after modal closes, all keys work normally.
+33. **UFO banish leak-free:** after a contact is banished, `renderer.info.memory.geometries` returns to the same count as before that UFO was spawned (browser-verified via debug overlay).
+34. **Full wave → debrief:** a 3-contact SCRAMBLE wave completes to DEBRIEF; the debrief card shows per-contact points, wpm, and accuracy; `kuson.game.v1` is updated in `localStorage`.
+35. **Abort from any game state → IDLE:** pressing abort from `BRIEFING`, `WAVE`, or `CHALLENGE` returns FSM to `IDLE` with 0 UFOs, hidden HUD strip, and hidden debrief cards.
+36. **Start screen integrity:** the progress bar advances through all 6 real load ticks; Explore, Tour, and Play each start the correct path; the last-used choice is pre-highlighted on next open (`kuson.start.v1`).
 
 ---
 
@@ -696,3 +719,89 @@ Concentric `LineLoop`s at 50/100/200 km (or 25/50/100 NM under aero units, reusi
 The existing province `LineSegments` overlay becomes toggleable (`group.visible`); province **name** labels are added at per-feature centroids (reusing the city-beacon label + distance-fade pattern, at a low prominence so they sit beneath city/airport labels). One toggle `#optProvinces` governs lines + names. Names come from `data/provinces.geojson` feature properties.
 
 *(Deferred, noted: a "nearest-airport BRG/DIST" HUD readout — a cheap text orientation cue, not in Betterment-6 scope.)*
+
+---
+
+## 15. Sky Guardian — game mode (Betterment-7)
+
+An arcade layer that teaches airspace literacy through timed identification challenges. Fully opt-in; the sim is **inert** in `IDLE` and renders identically to pre-B7 until the player chooses Play. Every game object is created after that gate and disposed on `abort()` or wave end.
+
+### 15.1 FSM (`src/gameMode.js`)
+
+States: `IDLE | BRIEFING | WAVE | DEBRIEF`. Transitions:
+
+| From | Event | To |
+|---|---|---|
+| `IDLE` | `start()` | `BRIEFING` |
+| `BRIEFING` | `beginWave()` | `WAVE` |
+| `WAVE` | all contacts resolved | `DEBRIEF` |
+| `DEBRIEF` | `restart()` | `BRIEFING` |
+| `DEBRIEF` | `quit()` | `IDLE` |
+| any non-`IDLE` | `abort()` | `IDLE` |
+
+Illegal transitions: `console.error` + return; never throw. `abort()` tears down all UFOs, hides HUD strip and debrief cards, clears the scramble loop, and resets streak.
+
+### 15.2 ATC radio (`src/alerts.js`, `src/atcRadio.js`)
+
+`AlertTier.RADIO` is rank 7 — below all safety tiers (`DANGER 1` … `ADVISORY_LOW 6`) and above `ADVISORY` rank 8. The single-banner queue (`alerts` singleton) follows existing precedence rules: higher rank preempts and demotes `RADIO` to a chip. Grammar:
+
+```
+"{n} contact(s) — {shortName}, bears {brg}° for {nm} nm, angels {kft}"
+```
+
+Bearing = player → target on the XZ plane (X-east/Z-south convention), `Math.atan2(dx, -dz)` degrees 0–360; nm = horizontal Euclidean metres ÷ 1852, rounded to 1 dp; angels = `(lowerFt+upperFt)/2 ÷ 1000`, rounded to 1 dp. Auto-retract 10 s. Radio log panel (`#radioLog`): collapsible, capped at 20 entries, each prefixed `HH:MM:SS`.
+
+### 15.3 UFO layer (`src/ufoLayer.js`)
+
+`UfoLayer` owns a `Map<airspaceId, UfoEntity>`. Per entity:
+
+- **Spawn:** position = airspace centroid XZ, `y = (lowerFt + upperFt) / 2 * FT_TO_M`; glow sprite tinted by the airspace's category colour (same `CATEGORY_COLORS` map used by mesh fills).
+- **Orbit:** r = 2 000 m, period = 45 s, bob `±60 m` at 0.5 Hz.
+- **Banish:** 0.6 s tween — scale → 0, opacity → 0 — then `geometry.dispose()` + `material.dispose()` + scene remove. Post-banish `renderer.info.memory.geometries` must equal the pre-spawn count (leak-free invariant, browser-verified).
+
+### 15.4 Typing challenge (`src/typingChallenge.js`)
+
+Modal overlay; input isolation:
+
+- On open: `document.addEventListener('keydown', absorb, true)` + `document.addEventListener('keyup', absorb, true)` (capture phase, `stopPropagation` + `preventDefault`); `drone.keys.clear()` (blur-handler precedent); `exitPointerLock()`. Does NOT touch `flightLocked`.
+- On close/cancel: listeners removed; keys work immediately.
+
+Matching rules (applied to the player's accumulated string vs each candidate string):
+
+1. Lowercase both sides.
+2. Strip diacritics (`String.prototype.normalize('NFD')` + strip combining marks).
+3. Collapse whitespace and hyphens to a single space.
+4. Accept match if normalised input equals normalised `id`, `shortName`, or `name`.
+
+Per-glyph feedback uses the same normalisation so the highlight is consistent with the accept condition. Resolve object: `{correct, elapsedS, accuracy, wpm, cancelled, timeout}` — `wpm` is rounded to nearest integer, capped at 999.
+
+### 15.5 SCRAMBLE wave (`src/scramble.js`)
+
+Wave = 3 contacts drawn without replacement from the CTR/TMA subset of the 144-volume catalog. Per-contact state machine:
+
+```
+CALLING → TRAVEL (90 s, in-volume check ≤ 2 Hz) → CHALLENGE (45 s) → RESOLVED
+```
+
+- **TRAVEL:** autopilot = `CatalogFlyTo` to the target airspace overview, then final-approach drop to mid-band altitude inside the volume (required because overview vantage ~40 000 ft exceeds most CTR/TMA ceilings; verified: VTBD ceiling 3 353 m, overview ~12 192 m). In-volume check fires at ≤ 2 Hz.
+- **CHALLENGE:** typing challenge opens; 45 s countdown. Esc cancels without penalty after 1 s dead zone.
+- **Lost (timeout):** streak resets to 0; advisory banner posted.
+
+Objective HUD strip (`#gameHUD`): shows current target name, bearing (°), distance (nm), countdown (s); updates ≤ 2 Hz; AUTOPILOT button triggers the fly-to sequence.
+
+### 15.6 Scoring
+
+```
+score = floor(100 × (1 + speedBonus) × accuracy × 1.1^min(streak, 10))
+speedBonus = max(0, 1 − elapsedS / limitS)
+```
+
+Persistence key **`kuson.game.v1`** `{bestScore, wavesPlayed, airspacesIdentified}`; guarded-merge pattern (read → merge → write, never blind-overwrite).
+
+### 15.7 Start screen (`src/startScreen.js`)
+
+Full-viewport overlay; mounts before `main.js` creates the Three.js scene so the sim is never blocked. Progress bar advances through **6 real load ticks** emitted by `main.js` (`startScreen.tick(label)`). Buttons: **Explore** (dismiss, vanilla sim), **Tour** (dismiss + `tourGuide.start('short')`), **Play** (dismiss + `gameMode.start()`). Keyboard `1/2/3` + `Enter`. Last choice persisted under **`kuson.start.v1`** (0-based index), pre-highlighted on re-open. Construction failure → no-op stub (sim never blocked); runtime error routes through `fail()`.
+
+### 15.8 Debug overlay (`src/debugOverlay.js`)
+
+Backtick `` ` `` toggles a fixed HUD panel. When **hidden**: zero DOM writes. When **visible**: `renderer.info` snapshot (`drawCalls`, `triangles`, `geometries`, `textures`, `programs`) + 30-frame rolling FPS, written ≤ 4 Hz. Used to verify the UFO banish leak-free invariant and establish the Betterment-7 baselines (start view: 294 calls / 16 352 tris / 262 geoms / 55 textures / 15 programs).

@@ -10,6 +10,26 @@
 
 ---
 
+## 0. Betterment-7 — Sky Guardian foundation (2026-06-12, browser-verified C1–C3)
+
+> Playbook: `20260612_ShebangPlaybook.md`. Journal: 2026-06-12 (a). Branch `betterment7-20260612`.
+
+- [x] **B7.T1 Debug overlay** — backtick toggle, `renderer.info` + FPS; baseline 294 calls / 55 textures / 15 programs recorded.
+- [x] **B7.T2 Label texture dedup** — flight-label refcounted cache keyed on drawn content; airspace half reverted after no-regression review (canvases were already height-fitted — audit premise stale).
+- [x] **B7.T3 Material pool + label-scale early-exit** — **no-op**: already implemented (P2.T7b/P2.T8); June-audit claims stale.
+- [x] **B7.T4 GameMode FSM** — IDLE→BRIEFING→WAVE→DEBRIEF, inert when idle, wired into main loop.
+- [x] **B7.T5 ATC radio** — RADIO tier (rank 7), bearing/nm/angels grammar, radio log panel; safety tiers preempt (verified: ADVISORY chip under RADIO banner).
+- [x] **B7.T6 UFO layer** — spawn/orbit/banish over airspaces; leak-free dispose (geometry count returns to baseline).
+- [x] **B7.T7 Typing challenge** — capture-phase suppression + `drone.keys.clear()`; zero flight-key bleed-through verified; per-glyph case/hyphen-lenient feedback.
+- [x] **B7.T8 SCRAMBLE wave + score** — 3 CTR/TMA contacts, full play-through to debrief; `kuson.game.v1` persists; abort → IDLE with 0 UFOs. Autopilot final-approach fix (`f313a4d`) — overview vantage was above ceilings.
+- [x] **B7.T9 Start screen** — real load progress, Explore/Tour/Play, `kuson.start.v1` last-choice highlight; Explore path renders identically to pre-B7.
+- [x] **B7.T10 Docs** — spec §3.16 + §15 + acceptance rows; journal 2026-06-12 (a).
+- [ ] Volume red-pulse on a lost contact (deferred from B7.T8, see `scramble.js` comment).
+- [ ] Text-fitted airspace label boxes — visual change, B10 polish candidate (see journal T2 note).
+- [ ] Re-publish `tourGuide` on `window.__sim` after bootstrap (has always been `undefined`; only `ui` is re-published).
+
+---
+
 ## 1. Current state (as of 2026-05-30, browser smoke)
 
 ### Browser smoke 2026-05-30 (Cursor IDE browser @ 9598ea0)
@@ -198,6 +218,7 @@ Operator should walk through `spec.md §6` in a real browser. Until then these a
 
 | Date | Operator | Focus | journal.md block |
 |---|---|---|---|
+| 2026-06-12 | Claude Code (Fable 5 orchestrator + Sonnet 4.6 executors) | Betterment-7: Sky Guardian foundation — debug overlay, label dedup, GameMode FSM, ATC radio, UFO layer, typing challenge, SCRAMBLE wave, start screen | 2026-06-12 (a) |
 | 2026-05-21 | Claude Code (Opus 4.7, session 53fdf4b8…) | Telemetry layout + attitude indicator + airplane flight model + P pause + UFO + ground-detail | 2026-05-21 (d) |
 | 2026-05-21 | Claude Code (Opus 4.7, session 53fdf4b8…) | Altitude tape + 3rd-person/aircraft models + tour-identify fix | 2026-05-21 (c) |
 | 2026-05-21 | Claude Code (Opus 4.7, session 53fdf4b8…) | Tour dwell-orbit + UX (U units, M map-primary, +/- zoom, identify distance/sort/transparency) | 2026-05-21 (b) |

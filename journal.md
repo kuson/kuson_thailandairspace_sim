@@ -1261,3 +1261,42 @@ Executed the full B5 + B6 playbook to completion (10 atomic commits) and first l
 **Static verification:** `node --check --input-type=module` clean on all 7 changed/new files; group counts + visibility predicate + persistence round-trips logic-tested in Node; cross-module imports resolved.
 
 **State:** branch `betterment2-20260529`, **not pushed**. Tags `betterment5-complete` / `betterment6-complete` cut. Bash `:8080` server left running for operator review.
+
+---
+
+## 2026-06-12 (a) — Betterment-7: Sky Guardian foundation · STATUS: PHASES COMPLETE
+
+**Session:** B7 Sky Guardian foundation, 9 commits `c6468af`..`7ffa736` on branch `betterment7-20260612` (cut from `betterment2-20260529`). Orchestrator (Fable) + Sonnet-executor pattern per `20260612_ShebangPlaybook.md`; every task browser-verified at checkpoints C1–C3.
+
+**T1 — Debug overlay (`c8aadd0`):** backtick toggle; `renderer.info` panel (calls / tris / geoms / textures / programs) + 30-frame FPS; no DOM writes while hidden; ≤ 4 Hz while visible. Baseline established (start view): **294 calls / 16 352 tris / 262 geoms / 55 textures / 15 programs**.
+
+**T2 — Label texture dedup (`b967b29`):** audit premise partially wrong — airspace label canvases were already height-fitted (512×43 typical, ~11.3 MB total for 144 measured); pow2 right-sizing would have inflated height ~50% and broken `updateLabelScales` (canvasW/H drive on-screen size) → airspace half reverted after no-regression review. Flight-label refcounted texture cache landed (keyed on exact drawn strings + logo readiness + DPR). Text-fitted airspace boxes filed as a visual-polish candidate (changes the rendered box).
+
+**T3 — NO-OP:** `wallMatFor()` already pools patterned materials (browser: 15–16 programs total) and both `updateLabelScales` passes already early-exit on hidden (P2.T7b/P2.T8 era work). June-audit claims stale.
+
+**Infra fix mid-session (`aa1daf0`):** plain `python3 -m http.server` serves no cache headers → old-mtime modules got ~1-day heuristic freshness → reloads served pre-edit code. `scripts/devserver.py` (Cache-Control: no-store) + `launch.json` switch added.
+
+**T4 — GameMode FSM (`84469f8`):** `IDLE → BRIEFING → WAVE → DEBRIEF → IDLE`; `abort()` legal from any non-`IDLE` state; illegal transitions log + refuse; game inert in `IDLE`. Wired into main loop.
+
+**T5 — ATC radio + log panel (`7b08c6c`):** `AlertTier.RADIO` rank 7; grammar `"{n} contact(s) — {shortName}, bears {brg}° for {nm} nm, angels {kft}"`; auto-retract 10 s; Radio log panel (collapsible, 20 entries, `HH:MM:SS`).
+
+**T6 — UFO layer (`2f3a50e`):** spawn at airspace centroid, mid-band altitude; orbit r = 2 km, 45 s period, bob ±60 m; glow sprite tinted by category colour; banish = 0.6 s scale+fade + full dispose. Leak-free verified: geometry count returns to pre-spawn baseline.
+
+**T7 — Typing challenge (`0f9f3bd`):** capture-phase keydown/keyup suppression + `drone.keys.clear()` on open + `exitPointerLock`; does not touch `flightLocked`; matching case-insensitive, diacritics-stripped, whitespace/hyphen-collapsed, accepts `id | shortName | name`; resolves `{correct, elapsedS, accuracy, wpm, cancelled?, timeout?}`.
+
+**T8 — SCRAMBLE wave + score + persistence (`265413a`, `f313a4d`):** 3 distinct CTR/TMA contacts; per-contact `CALLING → TRAVEL → CHALLENGE → RESOLVED`; scoring `base 100 × (1+speedBonus) × accuracy × 1.1^streak` (streak cap 10); `kuson.game.v1` guarded-merge. One real gameplay bug found at C2 and fixed (`f313a4d`): catalog overview vantage (~40 000 ft) is above most CTR/TMA ceilings so autopilot never satisfied the in-volume check — final-approach drop added; WPM rounded and capped at 999.
+
+**T9 — Start screen (`7ffa736`):** full-viewport overlay, real load progress (6 ticks), Explore / Tour (variant `"short"`) / Play buttons, keyboard `1/2/3+Enter`, last choice persisted `kuson.start.v1` (0-based index), failure-safe construction.
+
+**C1–C3 browser verification (real app @ localhost:8080, scripts/devserver.py, no-store):**
+- C1: debug overlay toggle, baseline numbers confirmed.
+- C2: full play-through — wave → all 3 contacts resolved → debrief → `kuson.game.v1` persisted; abort from `WAVE` → IDLE, 0 UFOs, hidden strip; UFO banish geometry count returns to baseline.
+- C3: start screen progress ticks; Explore / Tour / Play each route correctly; choice persisted.
+
+**Known / deferred:**
+- Volume red-pulse on contact lost — deferred in `scramble.js` comment.
+- `window.__sim.tourGuide` has always been `undefined` (assigned in bootstrap after module-bottom capture — only `ui` is re-published; pre-existing).
+- Mock-source route enrichment 404 spam — pre-existing.
+- Background preview tabs clamp `setTimeout` ≥ 1 s and suspend rAF — drive updates manually; pump `UfoLayer.update` for banish animations.
+
+**End HEAD:** `7ffa736` (pre-docs commit; this journal block is in the T10 docs commit that immediately follows).
