@@ -86,6 +86,7 @@ export class UI {
   constructor({ drone, camera, airspaceLayer, liveFlights, tourGuide, onFlyTo, onUndo, onRedo, onReset }) {
     this.drone = drone;
     this.liveFlights = liveFlights;
+    this._gameBlipProvider = null;  // B9.T5: set via setGameBlipProvider()
     this.camera = camera;
     this.layer = airspaceLayer;
     this.tourGuide = tourGuide;
@@ -2465,6 +2466,35 @@ export class UI {
 
   _altColor(altM) { return altColor(altM); }   // shared ramp (flightEnrich.js)
 
+  /**
+   * B9.T5: register a game blip provider.
+   * @param {(()=>{ x:number, z:number }[])|null} fn  Called each radar draw; returns array of world positions, or null/empty.
+   */
+  setGameBlipProvider(fn) { this._gameBlipProvider = fn ?? null; }
+
+  /** B9.T5: draw game-entity blips (red triangles) from the registered provider. */
+  _drawGameBlips(ctx, cx, cy, wx, wz, SCALE) {
+    if (!this._gameBlipProvider) return;
+    const blips = this._gameBlipProvider();
+    if (!blips || blips.length === 0) return;
+    const W = this.minimap.width, H = this.minimap.height;
+    ctx.fillStyle = "#ff3333";
+    for (const b of blips) {
+      const bx = cx + (b.x - wx) / SCALE;
+      const by = cy + (b.z - wz) / SCALE;
+      if (bx < -8 || bx > W + 8 || by < -8 || by > H + 8) continue;
+      ctx.save();
+      ctx.translate(bx, by);
+      ctx.beginPath();
+      ctx.moveTo(0, -4);
+      ctx.lineTo(3.5, 3.5);
+      ctx.lineTo(-3.5, 3.5);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+  }
+
   // Live-flight radar blips: alt-coloured heading arrow + V/S caret + flight no.
   // Emergency squawks (7500/7600/7700) flash red. Toggle = #optRadarLiveFlights.
   _drawLiveFlightBlips(ctx, cx, cy, wx, wz, SCALE) {
@@ -2561,6 +2591,8 @@ export class UI {
 
     // Betterment-4.1: live-flight blips (toggle in radar options).
     this._drawLiveFlightBlips(ctx, cx, cy, wx, wz, SCALE);
+    // B9.T5: game entity blips (ground crawlers, etc.) via registered provider.
+    this._drawGameBlips(ctx, cx, cy, wx, wz, SCALE);
 
     const p = this.drone.position;
     const dx = cx + (p.x - wx) / SCALE;

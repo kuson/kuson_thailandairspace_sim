@@ -29,6 +29,7 @@ import { installDebugOverlay } from "./debugOverlay.js";
 import { GameMode } from "./game/gameMode.js";
 import { AtcRadio } from "./game/atc.js";
 import { UfoLayer } from "./game/ufo.js";
+import { CrawlerLayer } from "./game/crawlers.js";
 import { TypingChallenge } from "./game/typing.js";
 import { Tutorial } from "./game/tutorial.js";
 import { AimMode } from "./game/aim.js";
@@ -253,7 +254,8 @@ const audio = installAudio({ alerts });
 const simMode = new SimModeMachine();
 
 const atc    = new AtcRadio({ layer, getDronePos: () => drone.position, alerts, AlertTier, audio });
-const ufos   = new UfoLayer(scene, { layer, audio });
+const ufos     = new UfoLayer(scene, { layer, audio });
+const crawlers = new CrawlerLayer(scene, { audio });
 const typing = new TypingChallenge({ drone, audio });
 const tutorial = new Tutorial({ scene, camera, drone, layer, typing, audio });
 const game   = new GameMode({ layer, startFlyTo, getDronePos: () => drone.position, atc, ufos, typing, alerts, AlertTier, audio, tutorial });
@@ -715,6 +717,7 @@ function loop(t) {
   _safe("liveflights", () => liveFlights.update(dt, camera.position));
   _safe("liveflights-labels", () => liveFlights.updateLabelScales(camera, renderer));
   _safe("ufos", () => ufos.update(dt));
+  _safe("crawlers", () => crawlers.update(dt));
   _safe("audio", () => audio.update(dt, droneStateForAudio()));
   _safe("game", () => game.update(dt));
   _safe("aim", () => aim.update(dt));
@@ -765,4 +768,5 @@ window.__sim = {
   simState, ceilings, renderer, liveFlights, follow,
   physics: { RigidBody, QuadrotorModel, FixedWingModel },
   debugOverlay, game, audio, aim,
+  ufos, crawlers,
 };
