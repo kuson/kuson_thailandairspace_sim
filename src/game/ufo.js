@@ -262,7 +262,7 @@ export class UfoLayer {
   getCombatEntities() {
     const out = [];
     for (const u of this.ufos.values()) {
-      if (u.combat) {
+      if (u.combat && u.state !== "DESTROY" && u.state !== "BANISH") {
         out.push({
           id:       u.id,
           position: u.holder.position,
