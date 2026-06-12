@@ -35,7 +35,13 @@ const _glowTex = (() => {
 // Vertex shader scales by the `aSize` attribute; fragment samples the glow
 // texture modulated by a warm amber tint and the material opacity uniform.
 // ---------------------------------------------------------------------------
+// The renderer runs logarithmicDepthBuffer (main.js) — every built-in
+// material writes log depth, so a custom ShaderMaterial MUST include the
+// logdepthbuf chunks or its conventional depth always fails the depth test
+// and the points silently vanish (orchestrator-debugged in the C2 harness).
 const _vertexShader = /* glsl */`
+#include <common>
+#include <logdepthbuf_pars_vertex>
 attribute float aSize;
 uniform float uScale;
 varying float vAlpha;
@@ -47,15 +53,19 @@ void main() {
   gl_PointSize = min(aSize * (uScale / -mvPos.z), 64.0);
   vAlpha = 1.0;
   gl_Position = projectionMatrix * mvPos;
+  #include <logdepthbuf_vertex>
 }
 `;
 
 const _fragmentShader = /* glsl */`
+#include <common>
+#include <logdepthbuf_pars_fragment>
 uniform sampler2D uTex;
 uniform float uOpacity;
 uniform vec3  uColor;
 varying float vAlpha;
 void main() {
+  #include <logdepthbuf_fragment>
   vec4 t = texture2D(uTex, gl_PointCoord);
   gl_FragColor = vec4(uColor * t.rgb, t.a * uOpacity * vAlpha);
 }
