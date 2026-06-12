@@ -25,6 +25,7 @@ import { RigidBody, QuadrotorModel, FixedWingModel } from "./physics.js";
 import { SimMode, SimModeMachine } from "./simMode.js";
 import { simState } from "./simState.js";
 import * as ceilings from "./ceilings.js";
+import { installDebugOverlay } from "./debugOverlay.js";
 
 const scene = new THREE.Scene();
 // Shared sun direction — the Sky shader, the sun-disc sprite, and the
@@ -67,6 +68,7 @@ document.getElementById("app").appendChild(renderer.domElement);
 // strings that can drift out of sync with the viewport on later resize.
 renderer.domElement.style.width = "100%";
 renderer.domElement.style.height = "100%";
+const debugOverlay = installDebugOverlay(renderer);
 
 // Renderer / camera sizing. In map-primary mode the 3D scene shrinks to a
 // fixed inset (matched to the CSS box for #app in index.html); otherwise it
@@ -627,6 +629,7 @@ function loop(t) {
     _safe("minimap", () => ui.drawMinimap());
   }
   _safe("render", () => renderer.render(scene, camera));
+  _safe("debug-overlay", () => debugOverlay.update());
   rafId = requestAnimationFrame(loop);
 }
 
@@ -665,4 +668,5 @@ window.__sim = {
   scene, camera, drone, layer, ground, flightHistory, tourGuide, ui, simMode,
   simState, ceilings, renderer, liveFlights, follow,
   physics: { RigidBody, QuadrotorModel, FixedWingModel },
+  debugOverlay,
 };
