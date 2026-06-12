@@ -13,6 +13,7 @@ const STATS_DEFAULT = {
   airspacesIdentified:  {},
   difficulty:           "cadet",
   tutorialDone:         false,
+  mode:                 "scramble",  // B9.T6: "scramble" | "intercept"
 };
 
 function _withDefaults(raw) {
@@ -24,6 +25,7 @@ function _withDefaults(raw) {
     if (typeof raw.waveReached         === "number") out.waveReached         = raw.waveReached;
     if (typeof raw.difficulty          === "string")  out.difficulty          = raw.difficulty;
     if (typeof raw.tutorialDone        === "boolean") out.tutorialDone        = raw.tutorialDone;
+    if (typeof raw.mode                === "string")  out.mode                = raw.mode;
     if (raw.airspacesIdentified && typeof raw.airspacesIdentified === "object") {
       out.airspacesIdentified = { ...raw.airspacesIdentified };
     }
@@ -57,6 +59,7 @@ export function setGameStats(patch) {
   if (typeof patch.waveReached === "number") next.waveReached = patch.waveReached;
   if (typeof patch.difficulty    === "string")  next.difficulty    = patch.difficulty;
   if (typeof patch.tutorialDone  === "boolean") next.tutorialDone  = patch.tutorialDone;
+  if (typeof patch.mode          === "string")  next.mode          = patch.mode;
   if (patch.airspacesIdentified && typeof patch.airspacesIdentified === "object") {
     next.airspacesIdentified = {
       ...current.airspacesIdentified,

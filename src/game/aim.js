@@ -82,6 +82,12 @@ export class AimMode {
     this._fireCbs.push(cb);
   }
 
+  /** Remove a previously registered fire callback. */
+  offFire(cb) {
+    const i = this._fireCbs.indexOf(cb);
+    if (i >= 0) this._fireCbs.splice(i, 1);
+  }
+
   /**
    * Enable aim mode: show reticle, start FOV easing toward 58°, attach input.
    * Idempotent — safe to call when already active.

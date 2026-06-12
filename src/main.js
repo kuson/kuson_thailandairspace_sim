@@ -33,6 +33,7 @@ import { CrawlerLayer } from "./game/crawlers.js";
 import { TypingChallenge } from "./game/typing.js";
 import { Tutorial } from "./game/tutorial.js";
 import { AimMode } from "./game/aim.js";
+import { Weapons } from "./game/weapons.js";
 import { alerts, AlertTier } from "./alerts.js";
 import { installStartScreen } from "./startScreen.js";
 import { installAudio } from "./audio.js";
@@ -258,8 +259,15 @@ const ufos     = new UfoLayer(scene, { layer, audio });
 const crawlers = new CrawlerLayer(scene, { audio });
 const typing = new TypingChallenge({ drone, audio });
 const tutorial = new Tutorial({ scene, camera, drone, layer, typing, audio });
-const game   = new GameMode({ layer, startFlyTo, getDronePos: () => drone.position, atc, ufos, typing, alerts, AlertTier, audio, tutorial });
 const aim    = new AimMode({ camera, drone });
+// B9.T6: Weapons singleton — provider starts as stub; InterceptWave swaps it.
+const weapons  = new Weapons({ scene, camera, audio, getTargets: () => [] });
+const game   = new GameMode({
+  layer, startFlyTo, getDronePos: () => drone.position,
+  atc, ufos, crawlers, typing, alerts, AlertTier, audio, tutorial,
+  weapons, aim,
+  getUi: () => window.__sim.ui,
+});
 
 // Betterment-2 P3: build the per-frame context the flight-history event log
 // diffs against. Cheap — airspacesAt is AABB-accelerated.
@@ -721,6 +729,7 @@ function loop(t) {
   _safe("audio", () => audio.update(dt, droneStateForAudio()));
   _safe("game", () => game.update(dt));
   _safe("aim", () => aim.update(dt));
+  _safe("weapons", () => weapons.update(dt));
   _safe("tutorial", () => tutorial.update(dt));
 
   if (ui) {
@@ -767,6 +776,6 @@ window.__sim = {
   scene, camera, drone, layer, ground, flightHistory, tourGuide, ui, simMode,
   simState, ceilings, renderer, liveFlights, follow,
   physics: { RigidBody, QuadrotorModel, FixedWingModel },
-  debugOverlay, game, audio, aim,
+  debugOverlay, game, audio, aim, weapons,
   ufos, crawlers,
 };
