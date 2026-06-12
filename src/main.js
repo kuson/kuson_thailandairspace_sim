@@ -887,5 +887,5 @@ window.__sim = {
   physics: { RigidBody, QuadrotorModel, FixedWingModel },
   debugOverlay, game, audio, aim, weapons,
   ufos, crawlers,
-  daynight, cityLights,
+  daynight, cityLights, gLimitWatch,
 };
