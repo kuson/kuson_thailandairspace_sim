@@ -253,7 +253,7 @@ const audio = installAudio({ alerts });
 const simMode = new SimModeMachine();
 
 const atc    = new AtcRadio({ layer, getDronePos: () => drone.position, alerts, AlertTier, audio });
-const ufos   = new UfoLayer(scene, { layer });
+const ufos   = new UfoLayer(scene, { layer, audio });
 const typing = new TypingChallenge({ drone, audio });
 const tutorial = new Tutorial({ scene, camera, drone, layer, typing, audio });
 const game   = new GameMode({ layer, startFlyTo, getDronePos: () => drone.position, atc, ufos, typing, alerts, AlertTier, audio, tutorial });
