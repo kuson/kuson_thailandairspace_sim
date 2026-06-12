@@ -31,6 +31,12 @@ import { AtcRadio } from "./game/atc.js";
 import { UfoLayer } from "./game/ufo.js";
 import { TypingChallenge } from "./game/typing.js";
 import { alerts, AlertTier } from "./alerts.js";
+import { installStartScreen } from "./startScreen.js";
+
+// B7.T9: build the start-screen overlay immediately (before bootstrap runs).
+// Failure-safe: if construction throws, stub methods are returned and dismissed
+// is true so nothing blocks the sim.
+const startScreen = installStartScreen();
 
 const scene = new THREE.Scene();
 // Shared sun direction — the Sky shader, the sun-disc sprite, and the
@@ -346,6 +352,7 @@ flightHistory.onChange = (state) => ui?.updateHistoryButtons?.(state);
 
 async function bootstrap() {
   await layer.load("./data/airspaces.json");
+  startScreen.tick("Loading airspaces…");
   scene.add(layer.group);
   scene.add(layer.labelRoot);
   scene.add(layer.identifyLabelsGroup);
@@ -359,6 +366,7 @@ async function bootstrap() {
   // geofence ceiling reads as if ground were at MSL — same behaviour the
   // sim had before T4 landed, just with one degraded frame at startup.
   loadTerrain("./data/terrain.bin", "./data/terrain.json")
+    .then(() => startScreen.tick("Loading terrain…"))
     .catch((err) => console.warn("[terrain] load failed:", err));
 
   tourGuide = new TourGuide({
@@ -384,6 +392,7 @@ async function bootstrap() {
     },
   });
   await tourGuide.load();
+  startScreen.tick("Loading tour data…");
 
   ui = new UI({
     drone,
@@ -399,6 +408,7 @@ async function bootstrap() {
   // Re-publish ui on __sim now that it exists — the top-level assignment
   // captured it as undefined because bootstrap() is async.
   window.__sim.ui = ui;
+  startScreen.tick("Building UI…");
 
   // B7.T5: wire ATC radio log → UI panel.
   atc.onMessage((e) => ui?.appendRadioLog(e));
@@ -447,6 +457,7 @@ async function bootstrap() {
   };
 
   const start = await getStartLocation();
+  startScreen.tick("Locating start position…");
   const w = geoToWorld(start.lat, start.lon);
   drone.teleport(w.x, start.altM ?? 200, w.z, 0, -0.05);
   drone.setSpeedPreset("100x");
@@ -465,8 +476,14 @@ async function bootstrap() {
   flightHistory.record(HISTORY_EVENT_TYPES.START, drone.snapshot(), {
     label: start.source === "gps" ? "GPS start" : "Bangkok start",
   });
+  startScreen.tick("Ready!");
 
-  document.getElementById("loading").style.display = "none";
+  // B7.T9: hand off to the start-screen for mode selection.
+  startScreen.ready({
+    onExplore: () => {},
+    onTour:    () => { tourGuide.start("short"); },
+    onPlay:    () => { game.start(); },
+  });
 }
 
 // P6.T3: on touch-only devices (no fine pointer) the sim is unusable —
@@ -478,10 +495,13 @@ let simStarted = false;
 function startSim() {
   if (simStarted) return;
   simStarted = true;
+  // B7.T9: hide the old #loading div immediately — the start-screen overlay
+  // replaces it.  The div stays in the DOM as a no-op fallback.
+  const _loadingEl = document.getElementById("loading");
+  if (_loadingEl) _loadingEl.style.display = "none";
   bootstrap().catch((err) => {
     console.error(err);
-    const el = document.getElementById("loading");
-    if (el) el.textContent = "Failed to load airspace data: " + err.message;
+    startScreen.fail("Failed to load: " + err.message);
   });
   lastT = performance.now();
   rafId = requestAnimationFrame(loop);
