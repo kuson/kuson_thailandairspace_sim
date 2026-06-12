@@ -279,7 +279,106 @@ Rules: engine chain rebuilt ONLY on (flightMode|presetId) change; per-frame work
 - **Commit:** `docs: spec INTERCEPT + B9 journal/TODO`
 
 **Checkpoints:** C1 after T3 (fire path: spawn static combat UFO, hitscan hits/misses by math, tracer+spark pools cycle, heat locks out, tones fire). C2 after T6 (full wave win/loss + SCRAMBLE regression). C3 after T7 (above).
-- **B10 — World beauty:** terrain relief from `data/terrain.bin` displacement, day/night + night city lights, water shader, wind-by-altitude + crosswind HUD, G-limits. *Model: Fable designs the terrain-displacement approach (one task), sonnet executes the rest.*
+## Phase Betterment-10 — World Beauty (expanded 2026-06-12, Fable)
+
+**Goal (Pass Criterion for the phase):** Thailand stops being flat. Ground tiles rise from the baked SRTM grid (`data/terrain.bin`) and the drone can no longer clip through a mountain; a day/dusk/night cycle drives sky, fog, lights, and tile tint, with city/airport lights blooming after dark; the sea shimmers; wind strengthens and veers with altitude with a crosswind readout on the HUD; airplane presets enforce per-type G-limits with buffet and an overstress warning. **Defaults = pixel parity:** time-of-day default DAY, water/terrain/lights each toggleable — with terrain OFF and DAY selected the sim renders pixel-identical to pre-B10 (verify with the §B10.0 A/B method). FPS ≥ baseline within the measured tri budget (terrain adds geometry — record overlay numbers before/after; segment knobs are the tuning lever).
+
+**Persistence:** `kuson.daynight.v1` `{mode: "day"|"dusk"|"night"|"auto"}` (default `day`); `kuson.grounddetail.v1` gains `{terrain: true, water: true, cityLights: true}`. Wind/G changes ride existing physics settings paths (locate before extending — wind settings already live on `drone._windSettings` / `src/wind.js`).
+
+**Model routing (operator decision):** hard parts are implemented by **Fable inline in the main orchestrator session** (T2 terrain displacement, T6 water shader — both touch tile lifecycle/shader-program subtleties where Sonnet failed-twice cost exceeds the savings). Everything else dispatches to **Sonnet 4.6** executors per §0.1, orchestrator reviews each diff. Checkpoints C1–C3 are orchestrator browser work as always.
+
+### §B10.0 Harness + design notes (binding — B9 session lessons + Fable designs)
+
+**Harness (verified during B9 — supersedes older notes):**
+- rAF **never ran at all** in the B9 preview session — `preview_screenshot` did NOT wake it (stricter than the B7/B8 note). Drive everything manually: `__sim` handles + explicit `renderer.render(scene, camera)` frames. `renderer.info` reads the last manual frame.
+- `window.__sim.ground` is overwritten at bootstrap (main.js:464) with `{rangeRings, airports, provinces}`, hiding the DynamicGround instance — **manual tile updates are impossible until B10.T1 fixes the handle**. T1 is therefore first and blocking.
+- Pixel-baseline A/B method: `git checkout <pre-B10 SHA>` (detached), reload, dismiss start screen via Explore **click**, render N manual frames, screenshot + `renderer.info`; then same procedure on B10 HEAD. Identical numbers/visuals = parity. (B9 reference under this procedure: 390 calls / 20 584 tris.)
+- Typing modal: window-dispatched synthetic keys are swallowed by its capture listener — set `typing._input.value` then dispatch Enter `KeyboardEvent` **on the input element**.
+- `airspacesAt` converts ft→m (`FT_TO_M`) — mid-band of an 8 000 ft ceiling is 1 219 m, not 4 000.
+- Console buffer persists across reloads — judge by entry-count delta (B9 left it pinned at 96, all pre-B9 harness noise).
+- Sonnet executor dies mid-task → run `git status` immediately, finish the remainder inline (B8 ×2 precedent).
+
+**Terrain displacement design (Fable-authored — binding for T2/T3):**
+- **CPU displacement at tile build time**, not GPU. Rationale: `elevationAt(lat, lon)` (terrain.js:59, bilinear over the 30″ grid) is already the single source of truth for crawlers, shadow blobs, and AGL — the visual mesh must agree with it exactly or entities float/clip. CPU displacement is one-time per tile (tile churn is already async + throttled), zero per-frame cost, no shader maintenance.
+- In `_buildMesh` (ground.js:104): `new THREE.PlaneGeometry(width, height, SEGS, SEGS)` (was 1×1), `rotateX(-π/2)` as today; then per-vertex: world = vertex local + mesh center → `worldToGeo(wx, wz)` → `pos.setY(i, elevationAt(lat, lon))`. Shared tile edges sample identical world coords → bilinear continuity → **no cracks** between same-zoom neighbours. Keep `meshY` 0 / 0.4 detail layering + polygonOffset exactly as-is.
+- `SEGS_DETAIL = 24` (z11 tile ≈ 19.6 km → ~815 m/quad, matches the 30″ ≈ 925 m grid), `SEGS_BASE = 24` (z9 ≈ 78 km → 3.2 km/quad, background relief). Budget estimate: detail 5×5 + base 7×7 tiles → ~85 k added tris worst case. **Gate at C1:** if the manual-frame cost rises > +2 ms vs the pre-B10 baseline, drop `SEGS_BASE` to 16 and re-measure (record both numbers in the journal either way).
+- Write a per-vertex attribute `aSea` (1.0 where `elev ≤ 0.5` m, else 0.0) during the same loop — T6 consumes it. Call `computeVertexNormals()` once per tile (cheap, future-proofs lighting).
+- **Terrain-ready race:** tiles build at boot, `loadTerrain` resolves async (`elevationAt` returns 0 before that → flat tiles). DynamicGround gets `onTerrainReady()` — main.js calls it after the existing terrain load promise (the start-screen progress already awaits it); it drops + rebuilds all live tiles once. Tiles built after readiness displace at build.
+- **Toggle:** `kuson.grounddetail.v1.terrain` (default ON). OFF ⇒ `SEGS = 1`, no displacement loop — byte-identical geometry to pre-B10. Toggling rebuilds tiles (drop cache once, same path as `onTerrainReady`).
+- Minimap bake, radar, fallback plane: untouched (all flat-2D or below tiles).
+
+**Day/night ramp table (Fable-authored — binding for T4; DAY = today's exact values, guaranteeing default parity):**
+| param | DAY (t 0.35–0.65) | DUSK peak (t 0.75) | NIGHT (t 0.85–0.15) |
+|---|---|---|---|
+| fog color | `0xa6cdee` (main.js:58) | `0xd9a07a` | `0x0a1020` |
+| hemi sky / ground / intensity | `0xc6d8f0` / `0x394a3a` / 1.0 (main.js:120) | same hues / 0.55 | `0x223048` / `0x0a0f0a` / 0.12 |
+| sun color / intensity | `0xfff2d8` / 1.1 (main.js:122) | `0xffb070` / 0.5 | — / 0.0 |
+| tile tint (scalar `mat.color`) | `0xffffff` | `0xd8c8b8` | `0x4a5566` |
+| sky-dome uniforms (sky.js:50–108) | today's | horizon `0xff9e5e`, top `0x2a3a6e` | horizon `0x0d1626`, top `0x05080f` |
+- `t ∈ [0,1)`: 0 = midnight, 0.5 = noon. Presets: day t=0.5, dusk t=0.75, night t=0.0; **auto** = Asia/Bangkok wall clock (`hours/24`). Smoothstep between bands; sun azimuth swings east→west across the day (simple circular path — no ephemeris).
+- Tiles stay `MeshBasicMaterial` — night darkening is the **scalar tint** above (one shared `Color` lerped per frame, assigned to each live tile material's `.color`; tile count ≤ 74). No Lambert switch, no relighting risk, exact DAY parity.
+- Module exposes `getNightFactor()` (0 at day, 1 at night) — T5 consumes it.
+
+### B10.T1 — `__sim` handles + harness enablers — model: sonnet
+- main.js: the bootstrap line 464 `window.__sim.ground = { rangeRings, airports, provinces }` collides with the module-level `__sim.ground = DynamicGround`. Grep ALL consumers of `__sim.ground` first; rename the bootstrap object to `window.__sim.groundLayers` and leave `__sim.ground` as the DynamicGround instance. Also re-publish `window.__sim.tourGuide` after bootstrap assigns it (long-standing TODO §0 row — it has always been `undefined`).
+- **Pass:** in browser console, `__sim.ground.updateAround` is callable and `__sim.tourGuide` is defined; no consumer broke (grep evidence in report). `node --check` clean.
+- **Commit:** `fix(sim): expose DynamicGround + tourGuide on __sim (debug handles)`
+
+### B10.T2 — Terrain relief displacement (`src/ground.js`, `src/main.js`) — model: **fable, orchestrator-inline**
+- Implement the binding design above: segmented tiles, per-vertex `elevationAt` displacement, `aSea` attribute, normals, `onTerrainReady` rebuild-once, `terrain` toggle (Display options checkbox "Terrain relief", `kuson.grounddetail.v1.terrain`, default ON), OFF ⇒ pre-B10-identical geometry.
+- ground.js imports `worldToGeo`/`elevationAt` (terrain.js loads its grid independently — no circular import; verify).
+- **Pass (orchestrator at C1):** northern Thailand (warp Chiang Mai / Doi Inthanon ~18.59 N 98.49 E) shows visible relief with no tile-seam cracks; Bangkok flatlands visually ≈ unchanged; toggle OFF → A/B parity with pre-B10; overlay tri/call/frame-ms numbers recorded before/after (gate above).
+- **Commit:** `feat(terrain): displace ground tiles from baked elevation grid`
+
+### B10.T3 — World objects onto terrain + drone terrain clamp — model: sonnet
+- Lift static ground objects to the surface at install time (one-time `elevationAt` calls): city beacons (`src/cities.js` `installCityBeacons`, ~165), airport beacons (`src/airports.js` `installAirportBeacons`), each marker/halo/label `y = elevationAt(lat,lon) + existing offset`. Range rings (`src/rangeRings.js`): ring y = drone's cached ground elevation + 0.5, sampled ≤ 2 Hz (crawler pattern). Province LINES stay flat — measure visual damage at C1 and file a TODO row if objectionable (long polylines = heavier task, deferred).
+- Drone terrain clamp: floor is no longer y ≥ ~0 — find the existing ground/floor clamp in `src/drone.js` (grep the y-floor in `physicsStep`/`update`) and clamp `y ≥ elevationAt(lat,lon) + 1.5` in ALL modes, with the elevation sampled ≤ 2 Hz and cached (no per-frame `worldToGeo` trig). Teleport/fly-to/RTH paths must not spawn underground (clamp on arrival too).
+- **Pass:** beacons sit on hillsides not inside them; flying level at a mountain face stops at the surface instead of clipping through (orchestrator drives at Doi Inthanon); HUD AGL reads ~0 when resting on a hill.
+- **Commit:** `feat(terrain): ground objects on relief + drone terrain clamp`
+- **CHECKPOINT C1 (orchestrator):** relief + seams + parity A/B + tri/frame-ms gate + clamp + beacons. Record all overlay numbers in the journal.
+
+### B10.T4 — Day/dusk/night cycle (`src/daynight.js` new, main.js, sky.js read) — model: sonnet (binding ramp table in §B10.0)
+- `installDayNight({ scene, skyRig, hemi, sun, groundTiles })` → `{ update(dt), setMode(m), getNightFactor() }` implementing the §B10.0 table: smoothstep band blending, sun azimuth path, fog/hemi/sun/sky uniform/tile-tint lerps. Per-frame work = lerp + assignments only (no allocation; reuse `THREE.Color` scratch instances module-level).
+- main.js: expose hemi/sun (currently local, lines ~117–122) to the module; `_safe("daynight", …)` in the loop; `window.__sim.daynight`. Settings UI: "Time of day" select (Day/Dusk/Night/Auto) in Display options, persisted `kuson.daynight.v1`, default `day`.
+- DAY values must be byte-equal to today's constants — copy them from main.js/sky.js, do not retype approximations.
+- **Pass:** mode select flips the world convincingly day↔dusk↔night and persists; DAY = A/B parity; `getNightFactor()` 0/≈0.6/1 at day/dusk/night; auto tracks the Bangkok clock (assert mapping in console, not by waiting).
+- **Commit:** `feat(sky): day/dusk/night cycle — sky, fog, lights, tile tint`
+
+### B10.T5 — Night city + airport lights — model: sonnet
+- ONE `THREE.Points` (additive, depthWrite false, shared radial glow texture — reuse the `_glowTex` pattern, ufo.js:14) with a vertex per `THAI_CITIES` entry (cities.js) + per airport (data/airports.json), positioned at `elevationAt + 30`, size by city prominence / airport fixed; built once at install (static — no per-frame updates beyond opacity).
+- Visibility: material opacity = `daynight.getNightFactor()` × 0.9, `visible = factor > 0.05`. Toggle `kuson.grounddetail.v1.cityLights` (Display options "City lights", default ON).
+- **Pass:** night mode shows warm points at Bangkok/Chiang Mai/airports that fade through dusk and vanish by day; toggle OFF removes them; geometry/texture counts stable across mode flips (no rebuild per flip).
+- **Commit:** `feat(sky): night city + airport lights`
+
+### B10.T6 — Water shimmer on sea tiles (`src/ground.js` shader inject, `src/main.js` clock) — model: **fable, orchestrator-inline**
+- `onBeforeCompile` on the tile `MeshBasicMaterial` (precedent: B8.T9 fresnel): consume the `aSea` vertex attribute from T2; on sea fragments mix the tile texel toward deep blue and add two moving sine-band brightness modulations (amplitude ≤ 0.05, periods ~80 m and ~210 m, scrolled by a shared `uTime`) — subtle Gulf-of-Thailand shimmer, not waves. Land fragments mathematically untouched.
+- **Program-cache discipline (the B8.T9 lesson):** set `customProgramCacheKey()` to a constant string for all tiles → exactly ONE extra shader program; share ONE `uTime`/`uWaterOn` uniforms object module-wide, ticked once per frame from the loop. Overlay program-count delta must be ≤ +2.
+- Toggle `kuson.grounddetail.v1.water` (Display options "Water shimmer", default ON); `uWaterOn = 0` ⇒ output mathematically identical to pre-B10 (uniform gate, no recompile — `uGlowOn` precedent).
+- **Pass (orchestrator at C2):** shimmer visible over the Gulf (warp Bangkok→south coast / Phuket VTSP); inland tiles byte-identical; toggle OFF → parity; program count delta ≤ +2; `uTime` advances only while tab renders (no timer dependence — loop-driven).
+- **Commit:** `feat(water): animated sea shimmer on coastal tiles (toggleable)`
+- **CHECKPOINT C2 (orchestrator):** day/dusk/night flips + persistence, city lights at night, water shimmer + toggles, DAY/off-state A/B parity, program/texture counts.
+
+### B10.T7 — Wind-by-altitude + crosswind HUD (`src/wind.js`, `src/drone.js` read, `src/ui.js`) — model: sonnet
+- `src/wind.js` (`currentWind` line 62, spatial-temporal noise field, P3.T9): add an altitude profile — multiplier on speed: ×1.0 ≤ 500 m, ×1.5 @ 3 km, ×2.0 @ 6 km, ×2.8 @ 11 km (linear between knots, clamp above) — and direction veer +15° per 3 km altitude (clockwise). Pure function extension: `currentWind(position, time, settings)` already receives position.y — no call-site changes. Keep `DEFAULT_WIND` surface behavior identical at ≤ 500 m (existing-feel parity).
+- HUD crosswind: drone already publishes `_lastWind` (ui.js:2084–2090 wind chip; radar crab vector 2619). Extend the chip with head/cross components vs current heading: e.g. `"↗ 215° 12 kt · X 8L H 9"` (X = crosswind kt + L/R, H/T = head/tail) — compute in `fmtWind`'s caller from `_lastWind` + `drone.headingDeg()`; cache-guarded DOM write as today.
+- **Pass:** REPL — profile multipliers/veer at 0/3/6/11 km exact; browser — wind chip shows components and changes sign L/R when heading flips 180°; ≤ 500 m behavior unchanged vs pre-B10 (same chip text for same seed/state).
+- **Commit:** `feat(wind): altitude wind profile + crosswind HUD readout`
+
+### B10.T8 — G-limits (`src/physics.js`, `src/drone.js`, `src/ui.js`, `src/audio.js`) — model: sonnet, escalation-watch (physics integration)
+- Load factor in the fixed-wing model (physics.js — bank/pitch-rate/airspeed fields per B8.T2 notes at 292/385): `n = 1/cos(bank)` for the coordinated-turn term + pitch-rate term `q·V/g` (q = pitch rate rad/s, V = airspeedMs); publish `drone._loadFactor` each physics step (realistic airplane modes only; easy/hover/UFO ⇒ 1.0).
+- Per-preset limits: C172 **+3.8 / −1.5**, Learjet **+4.4 / −1.8**, B777 **+2.5 / −1.0** (table on the preset defs — find where Vs lives, physics.js:210–220, and put limits beside it).
+- Exceedance: |n| > 0.9 × limit → buffet (reuse `drone._buffetT` camera-shake path, B8.T2 — intensity scales with proximity to limit) + one-shot warning tone (`audio.play("gLimit")` — descending two-tone, add via the tone-lib pattern, audio.js `_TONES` map ~603). |n| > limit for > 1.5 s cumulative → `alerts.publish` ADVISORY "AIRFRAME OVERSTRESS — n={n}" (auto-retract; no damage model — B10 scope stops at the warning).
+- HUD: `G n.n` readout appended to the MODE row (or its own pro-panel row beside WIND — match the existing row idiom, hidden in minimal HUD per B8.T8 rules); cache-guarded writes.
+- **Pass:** REPL — n math at 60° bank = 2.0 exact, pitch-rate term sign correct; browser — steep bank in Learjet realistic mode raises G readout, buffet starts near limit, overstress advisory fires after sustained exceedance and retracts; easy mode shows G 1.0 inert; stall horn (B8) unaffected.
+- **Commit:** `feat(physics): per-preset G-limits with buffet + overstress warning`
+- **CHECKPOINT C3 (orchestrator):** full regression — B5/B6 toggles, B7 SCRAMBLE smoke, B8 audio/tutorial/HUD, B9 INTERCEPT one-wave smoke + abort; terrain/water/daynight/cityLights toggles each OFF→parity; wind ≤ 500 m parity; final overlay + frame-ms numbers vs C1 baseline in journal.
+
+### B10.T9 — Docs — model: sonnet
+- spec **§3.18 "World"** (terrain displacement design + toggles, day/night model + ramp table reference, water shader gate, wind profile, G-limit table) + §6 acceptance rows (~8: terrain toggle parity; no seam cracks; drone terrain clamp; DAY default parity; night lights gated by factor; water OFF parity + program delta ≤ +2; crosswind sign flips with heading; overstress advisory fires/retracts). Journal block next slot with C1–C3 evidence + all measurements; `state_TODO.md` §0d; push.
+- **Commit:** `docs: spec §3.18 world beauty + B10 journal/TODO`
+
+**Checkpoints:** C1 after T3 (terrain block: relief, seams, parity, tri/frame gate, clamp). C2 after T6 (day/night + lights + water, all toggles, program counts). C3 after T8 (wind + G + full B5–B9 regression).
+**Sequencing is strict:** T1 → T2 → T3 → T4 → T5 → T6 → T7 → T8 → T9 (T5 needs T4's `getNightFactor`; T6 needs T2's `aSea`; T3 needs T2's relief to verify the clamp).
 
 ---
 
