@@ -12,6 +12,7 @@ const STATS_DEFAULT = {
   waveReached:          0,
   airspacesIdentified:  {},
   difficulty:           "cadet",
+  tutorialDone:         false,
 };
 
 function _withDefaults(raw) {
@@ -21,7 +22,8 @@ function _withDefaults(raw) {
     if (typeof raw.bestScore           === "number") out.bestScore           = raw.bestScore;
     if (typeof raw.wavesPlayed         === "number") out.wavesPlayed         = raw.wavesPlayed;
     if (typeof raw.waveReached         === "number") out.waveReached         = raw.waveReached;
-    if (typeof raw.difficulty          === "string") out.difficulty          = raw.difficulty;
+    if (typeof raw.difficulty          === "string")  out.difficulty          = raw.difficulty;
+    if (typeof raw.tutorialDone        === "boolean") out.tutorialDone        = raw.tutorialDone;
     if (raw.airspacesIdentified && typeof raw.airspacesIdentified === "object") {
       out.airspacesIdentified = { ...raw.airspacesIdentified };
     }
@@ -53,7 +55,8 @@ export function setGameStats(patch) {
   if (typeof patch.bestScore   === "number") next.bestScore   = patch.bestScore;
   if (typeof patch.wavesPlayed === "number") next.wavesPlayed = patch.wavesPlayed;
   if (typeof patch.waveReached === "number") next.waveReached = patch.waveReached;
-  if (typeof patch.difficulty  === "string") next.difficulty  = patch.difficulty;
+  if (typeof patch.difficulty    === "string")  next.difficulty    = patch.difficulty;
+  if (typeof patch.tutorialDone  === "boolean") next.tutorialDone  = patch.tutorialDone;
   if (patch.airspacesIdentified && typeof patch.airspacesIdentified === "object") {
     next.airspacesIdentified = {
       ...current.airspacesIdentified,

@@ -32,6 +32,19 @@
       color: var(--text); font-family: var(--mono); font-size: 14px; z-index: 100;
     }
 
+    /* ---- Tutorial instruction card (B8.T7) ---- */
+    /* Top-center, compact, non-blocking; below typingModal (300). */
+    .tut-card {
+      position: fixed; top: 64px; left: 50%; transform: translateX(-50%);
+      z-index: 290; pointer-events: none;
+      background: rgba(8, 14, 24, 0.88);
+      border: 1px solid rgba(102, 255, 204, 0.55); border-radius: 8px;
+      padding: 10px 18px; text-align: center;
+      font-family: ui-monospace, monospace; color: #d9fff2;
+    }
+    .tut-card-text { font-size: 14px; font-weight: 700; letter-spacing: 0.06em; }
+    .tut-card-hint { font-size: 10px; color: rgba(217, 255, 242, 0.55); margin-top: 4px; }
+
     /* ---- Start Screen (B7.T9) ---- */
     /* z-index 400: above typingModal (300), ground-detail panel (310), and all HUD layers */
     #startScreen {

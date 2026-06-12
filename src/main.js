@@ -30,6 +30,7 @@ import { GameMode } from "./game/gameMode.js";
 import { AtcRadio } from "./game/atc.js";
 import { UfoLayer } from "./game/ufo.js";
 import { TypingChallenge } from "./game/typing.js";
+import { Tutorial } from "./game/tutorial.js";
 import { alerts, AlertTier } from "./alerts.js";
 import { installStartScreen } from "./startScreen.js";
 import { installAudio } from "./audio.js";
@@ -253,7 +254,8 @@ const simMode = new SimModeMachine();
 const atc    = new AtcRadio({ layer, getDronePos: () => drone.position, alerts, AlertTier, audio });
 const ufos   = new UfoLayer(scene, { layer });
 const typing = new TypingChallenge({ drone, audio });
-const game   = new GameMode({ layer, startFlyTo, getDronePos: () => drone.position, atc, ufos, typing, alerts, AlertTier, audio });
+const tutorial = new Tutorial({ scene, camera, drone, layer, typing, audio });
+const game   = new GameMode({ layer, startFlyTo, getDronePos: () => drone.position, atc, ufos, typing, alerts, AlertTier, audio, tutorial });
 
 // Betterment-2 P3: build the per-frame context the flight-history event log
 // diffs against. Cheap — airspacesAt is AABB-accelerated.
@@ -708,6 +710,7 @@ function loop(t) {
   _safe("ufos", () => ufos.update(dt));
   _safe("audio", () => audio.update(dt, droneStateForAudio()));
   _safe("game", () => game.update(dt));
+  _safe("tutorial", () => tutorial.update(dt));
 
   if (ui) {
     _safe("hud", () => ui.updateHUD(dt));

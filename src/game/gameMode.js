@@ -14,6 +14,7 @@
 //   typing      — TypingChallenge instance (optional; wired in B7.T7).
 //   alerts      — AlertQueue singleton (optional; wired in B7.T8).
 //   AlertTier   — frozen tier object (optional; wired in B7.T8).
+//   tutorial    — Tutorial instance (optional; wired in B8.T7).
 
 import { ScrambleWave, DIFFICULTY_TIERS } from "./scramble.js";
 import { GameScore, getGameStats, setGameStats } from "./score.js";
@@ -42,9 +43,10 @@ export class GameMode {
    *   alerts?: object,
    *   AlertTier?: object,
    *   audio?: object,
+   *   tutorial?: object,
    * }} deps
    */
-  constructor({ layer, startFlyTo, getDronePos, atc, ufos, typing, alerts, AlertTier, audio }) {
+  constructor({ layer, startFlyTo, getDronePos, atc, ufos, typing, alerts, AlertTier, audio, tutorial }) {
     this.layer       = layer;
     this.startFlyTo  = startFlyTo;
     this.getDronePos = getDronePos;
@@ -55,6 +57,8 @@ export class GameMode {
     this._alerts     = alerts     ?? null;
     this._alertTier  = AlertTier  ?? null;
     this.audio       = audio      ?? null;
+    /** @type {import("./tutorial.js").Tutorial|null} */
+    this.tutorial    = tutorial   ?? null;
 
     this.state       = "IDLE";
     this._listeners  = new Map(); // event -> Set<cb>
@@ -213,10 +217,35 @@ export class GameMode {
           e.preventDefault();
           e.stopImmediatePropagation();
           this._selectTier("ace");
+        } else if (e.key === "t" || e.key === "T") {
+          // B8.T7 — tutorial offer (only rendered for fresh players).
+          if (this._tutorialOffer && !this._tutorialOffer.hasAttribute("hidden")) {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            this._startTutorial();
+          }
         }
       };
       window.addEventListener("keydown", this._briefingKeyListener, true);
     }
+    // B8.T7 — show the first-time tutorial offer only for fresh players.
+    if (this._tutorialOffer) {
+      const st = getGameStats();
+      if (!st.tutorialDone && st.wavesPlayed === 0 && this.tutorial) {
+        this._tutorialOffer.removeAttribute("hidden");
+      } else {
+        this._tutorialOffer.setAttribute("hidden", "");
+      }
+    }
+  }
+
+  _startTutorial() {
+    this._hideBriefing();
+    if (!this._enter("IDLE")) {
+      this.state = "IDLE";
+      this._emit("state", "IDLE");
+    }
+    this.tutorial?.start();
   }
 
   _hideBriefing() {
@@ -275,6 +304,16 @@ export class GameMode {
       body.appendChild(li);
     });
 
+    // B8.T7 — first-time tutorial offer (visibility managed in _showBriefing).
+    const tutOffer = document.createElement("button");
+    tutOffer.type = "button";
+    tutOffer.id = "gameTutorialOffer";
+    tutOffer.className = "gc-btn-secondary";
+    tutOffer.textContent = "First time? → 60-second tutorial (T)";
+    tutOffer.setAttribute("hidden", "");
+    tutOffer.addEventListener("click", () => this._startTutorial());
+    this._tutorialOffer = tutOffer;
+
     const btns = document.createElement("div");
     btns.className = "gc-btns";
 
@@ -296,6 +335,7 @@ export class GameMode {
     card.appendChild(title);
     card.appendChild(tierRow);
     card.appendChild(body);
+    card.appendChild(tutOffer);
     card.appendChild(btns);
     overlay.appendChild(card);
     document.body.appendChild(overlay);
