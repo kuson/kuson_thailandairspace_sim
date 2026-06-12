@@ -50,6 +50,25 @@
 
 ---
 
+## 0c. Betterment-9 — INTERCEPT combat mode (2026-06-12, browser-verified C1–C3)
+
+> Playbook: `20260612_ShebangPlaybook.md §B9`. Journal: 2026-06-12 (c). Branch `betterment7-20260612`.
+
+- [x] **B9.T1 Trail system** — preallocated 120-pt `Float32Array` buffers; in-place writes + `setDrawRange`; `frustumCulled = false`; trim caps n ≤ 120. Baseline: 346 calls / 19 218 tris at 200 m; per-group culling SKIPPED (measured threshold ~450 not exceeded). (`3f25b79`)
+- [x] **B9.T2 Aim system** — FOV 70 → 58° ease ≤ 150 ms; rate per-instance from `origFov` (orchestrator fix: was 6.67°/s); fire gated to `drone.locked`; `F` autofire; listener-leak-safe. (`a597bef`)
+- [x] **B9.T3 Weapons hit math** — `raySphereT` analytical quadratic (unit-dir; behind-camera reject; inside-sphere exit-point); nearest-first 4 000 m; module-scratch Vector3; 4-spark shield burst; ember-tint sparks; `play("fire")` per-shot. **C1 verified:** hit/miss/nearest-first/beyond-range correct; overheat at shot 13 (cap 100), recovery ≤ 1.6 s; 10 shots cycle 8-tracer pool; FOV ease and reticle show/hide; fire gated locked-only; dispose clean. Pixel-baseline pre/post-B9 identical (390 calls / 20 584 tris). (`cef1eab`)
+- [x] **B9.T4 UFO combat AI** — `{combat, shielded, orbitRadius}` opts; SCRAMBLE spawn byte-identical; EVADE speed behaviour-based (not radius-coupled); ORBIT capped 180 m/s; ORBIT-resume angle reseed. Browser: shield glow ×1.6; shielded hit no-op; unshielded hp 2 + EVADE; 3rd hit → explode + geometry baseline restored. (`30c20ca`)
+- [x] **B9.T5 Crawler layer** — 6 crawlers ring-spawned 10 000 m, 15 m/s convergence, terrain-follow ≤ 2 Hz, reach-base ≤ 500 m + despawn, hp 2 destroy path; shared module geometry + materials; radar blips via `setGameBlipProvider`. (`de1592c`)
+- [x] **B9.T6 INTERCEPT wiring** — mode row SCRAMBLE|INTERCEPT (ArrowLeft/ArrowRight), `kuson.game.v1.mode` persisted; defended CTR from `airports.json`; raiders = shielded UFOs 8 km orbit + crawlers 10 km ring. `atc.call` positional→object args fix; `aim.offFire` per-wave leak fix. **C2 verified:** WIN score 875 exact; BASE OVERRUN at integrity 0 (no NaN); UFO spawn-at-origin fix (`b36850a`); dying-UFO targeting fix (`b89f081`); abort mid-fight clean; SCRAMBLE regression clean; `bestScore` 875 preserved across mode switch. (`22c270a`, `b36850a`, `b89f081`)
+- [x] **B9.T7 Shadow blobs** — ONE shared 128² `CanvasTexture` + flat `PlaneGeometry`; per-blob cloned material; `k = 1 − clamp((agl−200)/1800,0,1)`; player 8 m / UFO 60 m / crawler 35 m; `shadowGroundY` forced-init fix; hidden-until-first-update fix. **C3 verified:** 14 entity blobs at correct terrain heights 162–175 m; idle 1.69 ms/frame vs 7.89 ms/frame combat (under 16.6 ms budget); draw calls 273 in-fight vs 335 idle; pre/post parity 390 calls / 20 584 tris; B5 toggle exact restore (335→205→335); console errors pinned at 96 (all pre-B9, zero attributable to B9). (`b14f160`)
+- [x] **B9.T8 Docs** — spec §3.16 INTERCEPT subsection + §6 acceptance rows 45–52; journal 2026-06-12 (c); TODO §0c.
+- [ ] Shadow blobs for live-traffic (ADS-B layer) aircraft — deferred, cost.
+- [ ] Wave-1 CADET INTERCEPT mathematically unlosable (3×20 + 3×10 = 90 < 100) — acceptable ramp, noted only.
+- [ ] Player shadow blob not verifiable in suspended-rAF harness — code-reviewed; verify in a live session.
+- [ ] `__sim.ground` bootstrap overwrite hides `DynamicGround` (pre-existing; blocks manual ground updates in harness).
+
+---
+
 ## 1. Current state (as of 2026-05-30, browser smoke)
 
 ### Browser smoke 2026-05-30 (Cursor IDE browser @ 9598ea0)
