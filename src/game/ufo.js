@@ -180,6 +180,14 @@ export class UfoLayer {
       glow.material.opacity = entity.baseGlowOpacity * SHIELD_GLOW_MUL;
     }
 
+    // Place the holder on its orbit immediately — position must never depend
+    // on the first update() tick (a behavior transition can precede it).
+    holder.position.set(
+      entity.center.x + entity.radius * Math.cos(entity.angle),
+      entity.baseY,
+      entity.center.z + entity.radius * Math.sin(entity.angle),
+    );
+
     this.ufos.set(id, entity);
     return id;
   }
