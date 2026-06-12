@@ -14,6 +14,8 @@
 // NOTE: alerts and AlertTier are not stored on GameMode directly; ScrambleWave
 // receives them via the extra `alerts` / `AlertTier` keys on the deps spread.
 
+import { FT_TO_M } from "../coords.js";
+
 const CONTACT_PHASE = {
   CALLING:    "CALLING",
   ANNOUNCED:  "ANNOUNCED",
@@ -152,7 +154,22 @@ export class ScrambleWave {
     btn.textContent = "AUTOPILOT";
     btn.addEventListener("click", () => {
       const c = this._currentContact();
-      if (c) this._flyTo(c.id, { pushHistory: false });
+      if (!c) return;
+      // The catalog vantage frames the volume from ~40k ft — ABOVE most
+      // ceilings, so arrival alone would never satisfy the in-volume check.
+      // After the cinematic, drop to the contact's mid-band altitude inside
+      // the volume ("final approach").
+      this._flyTo(c.id, {
+        pushHistory: false,
+        onComplete: () => {
+          if (this._disposed) return;
+          const comp = this._layer.compiled.find((x) => x.airspace.id === c.id);
+          if (!comp) return;
+          const a = comp.airspace;
+          const pos = this._dronePos();
+          pos.set(comp.centroid.x, ((a.lowerFt + a.upperFt) / 2) * FT_TO_M, comp.centroid.z);
+        },
+      });
     });
     el.appendChild(btn);
 

@@ -232,10 +232,10 @@ export class TypingChallenge {
     return 1 - this._wrongKeystrokes / Math.max(1, this._totalKeystrokes);
   }
 
-  /** @param {number} elapsedS @returns {number} WPM */
+  /** @param {number} elapsedS @returns {number} WPM (rounded, capped at 999) */
   _wpm(elapsedS) {
     const minutes = Math.max(elapsedS, 0.001) / 60;
-    return (this._input.value.length / 5) / minutes;
+    return Math.min(999, Math.round((this._input.value.length / 5) / minutes));
   }
 
   /** Called on each input event: update keystroke counters + glyph feedback. */
