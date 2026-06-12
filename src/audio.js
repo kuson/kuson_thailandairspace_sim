@@ -559,6 +559,25 @@ export function installAudio({ alerts }) {
     }
   }
 
+  function _playGLimit() {
+    // B10.T8: G-limit warning — descending two-tone (880 → 660 Hz),
+    // 180 ms each, sine. Urgent but distinct from the stall horn band.
+    const t = ctx.currentTime;
+    const freqs = [880, 660];
+    for (let i = 0; i < 2; i++) {
+      const osc = ctx.createOscillator();
+      const g   = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(freqs[i], t);
+      osc.connect(g);
+      g.connect(sfxBus);
+      const start = t + i * 0.200;
+      _env(g, start, 0.008, 0.25, 0.170);
+      osc.start(start);
+      osc.stop(start + 0.185);
+    }
+  }
+
   function _playExplode() {
     // Noise burst with lowpass sweep 6k→80 Hz over 600 ms + 60 Hz sine thump.
     const t      = ctx.currentTime;
@@ -605,6 +624,8 @@ export function installAudio({ alerts }) {
     shieldPing:    _playShieldPing,
     overheat:      _playOverheat,
     explode:       _playExplode,
+    // B10.T8: G-limit proximity warning
+    gLimit:        _playGLimit,
   };
 
   // -------------------------------------------------------------------------

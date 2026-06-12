@@ -972,6 +972,10 @@ export class Drone {
     // Used in _syncCamera to add a camera-only pitch jitter.
     this._buffetT = 0;
 
+    // B10.T8: total load factor n. Written by the fixed-wing step each
+    // physics substep; 1.0 in every other mode (easy/hover/UFO/quadrotor).
+    this._loadFactor = 1.0;
+
     // P3.T6: gamepad / input pipeline. Settings are loaded once from
     // localStorage and re-read by reloadInputSettings() when the UI panel
     // writes through. _padState is refreshed each physicsStep so the
@@ -1334,6 +1338,9 @@ export class Drone {
     this._padState = pollGamepad(this._inputSettings);
 
     let realistic = false;
+    // B10.T8: default n = 1.0; the airplane branch overwrites it from the
+    // fixed-wing model's published loadFactor.
+    this._loadFactor = 1.0;
     switch (this.flightMode) {
       case FlightMode.AIRPLANE:
         this._updateAirplane(dt);
@@ -1774,9 +1781,21 @@ export class Drone {
     this._targetRoll = out.roll;   // keep snapshot/restore in sync
     this.currentSpeed = out.airspeed;
 
+    // B10.T8: publish total load factor (turn + pitch-rate terms).
+    this._loadFactor = out.loadFactor;
+
     // B8.T2: accumulate buffet timer while in pre-stall band (airspeed < 1.1·Vs).
+    // B10.T8: ALSO buffet on G-limit proximity (|n| > 0.9 × per-preset limit);
+    // accumulation speeds up as |n| approaches the limit so the camera jitter
+    // (driven by _buffetT at ~1102) reads progressively rougher.
+    const n = out.loadFactor;
+    const gLim = n >= 0 ? (this._fixedwing.gLimitPos ?? Infinity)
+                        : -(this._fixedwing.gLimitNeg ?? -Infinity);
+    const gFrac = Math.abs(n) / gLim;   // 1.0 = at the limit
     if (out.airspeed < 1.1 * this._fixedwing.Vs) {
       this._buffetT += dt;
+    } else if (gFrac > 0.9) {
+      this._buffetT += dt * Math.min(3, 1 + (gFrac - 0.9) * 20);
     } else {
       this._buffetT = 0;
     }

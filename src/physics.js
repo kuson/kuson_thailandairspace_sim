@@ -210,16 +210,19 @@ export const FW_PRESETS = {
     Vs: 23.5, Vne: 80, clMax: 1.4, cd0: 0.027, kInduced: 0.013,
     wingAreaM2: 16.2, mass: 1100, thrustMax: 2200, cruiseMs: 62.8,
     spoolTimeS: 3,         // P3.T8: small piston, fast power response
+    gLimitPos: 3.8, gLimitNeg: -1.5,  // B10.T8: FAR 23 utility category
   },
   learjet: {
     Vs: 47, Vne: 195, clMax: 1.6, cd0: 0.020, kInduced: 0.013,
     wingAreaM2: 23.5, mass: 8300, thrustMax: 35000, cruiseMs: 236,
     spoolTimeS: 5,         // P3.T8: small jet, moderate spool
+    gLimitPos: 4.4, gLimitNeg: -1.8,  // B10.T8: FAR 25 business jet
   },
   b777: {
     Vs: 71, Vne: 280, clMax: 1.8, cd0: 0.018, kInduced: 0.013,
     wingAreaM2: 428, mass: 250000, thrustMax: 880000, cruiseMs: 256,
     spoolTimeS: 8,         // P3.T8: heavy turbofan, slow spool
+    gLimitPos: 2.5, gLimitNeg: -1.0,  // B10.T8: FAR 25 transport category
   },
 };
 
@@ -231,6 +234,7 @@ export class FixedWingModel {
 
     this.airspeedMs = this.cruiseMs;
     this.pitchRad = 0;
+    this._prevPitchRad = 0;   // B10.T8: previous-step pitch for q = Δpitch/dt
     this.bankRad = 0;
     this._targetBank = 0;
     this.targetThrottle = this._cruiseThrottle();
@@ -268,6 +272,7 @@ export class FixedWingModel {
     Object.assign(this, cfg);
     this.airspeedMs = cfg.cruiseMs;
     this.pitchRad = 0;
+    this._prevPitchRad = 0;   // B10.T8: reset pitch-rate tracker on preset switch
     this.bankRad = 0;
     this._targetBank = 0;
     this.targetThrottle = this._cruiseThrottle();
@@ -289,7 +294,8 @@ export class FixedWingModel {
    *   position: THREE.Vector3 // mutated in place
    * }} input
    * @returns {{pitch:number, roll:number, yawDelta:number,
-   *            airspeed:number, throttle:number, stalled:boolean}}
+   *            airspeed:number, throttle:number, stalled:boolean,
+   *            loadFactor:number}}
    */
   step(dt, input) {
     const G = 9.81;
@@ -349,8 +355,16 @@ export class FixedWingModel {
 
     // ---- Aero forces ----
     const v = Math.max(this.airspeedMs, 0.1);
-    const loadFactor = 1 / Math.cos(this.bankRad);          // n
-    const cd = this.cd0 + this.kInduced * loadFactor * loadFactor;
+    // B10.T8: total load factor = coordinated-turn term + pitch-rate term.
+    // q = (pitchRad - _prevPitchRad) / dt  [rad/s]; pull-up (nose-up
+    // Δpitch > 0) gives positive q → positive n contribution, correct.
+    // The drag model keeps the PRE-B10 turn-only term — the q term is
+    // published for the G-limit system, not fed back into aero forces.
+    const turnN = 1 / Math.cos(this.bankRad);
+    const q = dt > 1e-6 ? (this.pitchRad - this._prevPitchRad) / dt : 0;
+    this._prevPitchRad = this.pitchRad;
+    const loadFactor = turnN + q * v / G;  // n total (published)
+    const cd = this.cd0 + this.kInduced * turnN * turnN;
     const drag = 0.5 * RHO * v * v * cd * this.wingAreaM2;
     const thrust = this.throttle * this.thrustMax;
 
@@ -383,6 +397,7 @@ export class FixedWingModel {
       airspeed: this.airspeedMs,
       throttle: this.throttle,
       stalled: this.stalled,
+      loadFactor,  // B10.T8: total n = turn term + pitch-rate term
     };
   }
 }

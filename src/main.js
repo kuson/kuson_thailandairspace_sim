@@ -657,6 +657,47 @@ function droneStateForAudio() {
   };
 }
 
+// B10.T8: G-limit watcher — one-shot warning tone entering the 0.9-band
+// (hysteresis re-arm below 0.85) and an ADVISORY after >1.5 s of cumulative
+// exceedance within an episode (auto-retracts when |n| drops back inside).
+// Lives here (not drone.js) because alerts + audio wiring is main's job —
+// same seam as droneStateForAudio above.
+const _gWatch = { warned: false, overT: 0, published: false };
+function gLimitWatch(dt) {
+  const fw = drone._fixedwing;
+  const n = drone._loadFactor ?? 1.0;
+  const inAirplane = drone.flightMode === FlightMode.AIRPLANE && fw;
+  const lim = !inAirplane ? Infinity
+            : n >= 0 ? (fw.gLimitPos ?? Infinity)
+                     : -(fw.gLimitNeg ?? -Infinity);
+  const frac = Math.abs(n) / lim;
+
+  if (frac > 0.9 && !_gWatch.warned) {
+    _gWatch.warned = true;
+    audio.play("gLimit");
+  } else if (frac < 0.85 && _gWatch.warned) {
+    _gWatch.warned = false;
+  }
+
+  if (frac > 1.0) {
+    _gWatch.overT += dt;
+    if (_gWatch.overT > 1.5) {
+      alerts.publish({
+        key: "glimit",
+        tier: AlertTier.ADVISORY,
+        message: `AIRFRAME OVERSTRESS — n=${n.toFixed(1)}`,
+      });
+      _gWatch.published = true;
+    }
+  } else {
+    _gWatch.overT = 0;
+    if (_gWatch.published) {
+      alerts.retract("glimit");
+      _gWatch.published = false;
+    }
+  }
+}
+
 function _safe(label, fn) {
   try { return fn(); }
   catch (err) { console.error(`[loop:${label}]`, err); return undefined; }
@@ -712,6 +753,9 @@ function loop(t) {
       physAccum -= PHYS_DT;
     }
     _safe("drone-update", () => drone.update(dt));
+    // B10.T8: G-limit warning watcher — reads the loadFactor the physics
+    // step just published.
+    _safe("glimit", () => gLimitWatch(dt));
   } else {
     // While flyTo / tour drive the drone directly, drop any pending physics
     // time so we don't replay it when control returns.

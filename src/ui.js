@@ -152,6 +152,7 @@ export class UI {
       speed: this.hud?.querySelector("#speed") ?? null,
       vsi: this.hud?.querySelector("#vsi") ?? null,
       wind: this.hud?.querySelector("#wind") ?? null,
+      gval: this.hud?.querySelector("#gval") ?? null,
       battery: this.hud?.querySelector("#batteryChip") ?? null,
       signal: this.hud?.querySelector("#signalChip") ?? null,
       signalText: this.hud?.querySelector("#signalText") ?? null,
@@ -2155,6 +2156,14 @@ export class UI {
     if (this._hudCache.wind !== windText) {
       this._hudCache.wind = windText;
       if (this._el.wind) this._el.wind.textContent = windText;
+    }
+
+    // B10.T8: load-factor readout. 1.0 inert outside realistic airplane
+    // modes (drone._loadFactor defaults to 1.0 there).
+    const gText = `G ${(this.drone._loadFactor ?? 1).toFixed(1)}`;
+    if (this._hudCache.gval !== gText) {
+      this._hudCache.gval = gText;
+      if (this._el.gval) this._el.gval.textContent = gText;
     }
 
     // P4.T1: battery chip. Color band follows BatterySystem.state, dimmed
