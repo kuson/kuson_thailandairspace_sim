@@ -1300,3 +1300,36 @@ Executed the full B5 + B6 playbook to completion (10 atomic commits) and first l
 - Background preview tabs clamp `setTimeout` ≥ 1 s and suspend rAF — drive updates manually; pump `UfoLayer.update` for banish animations.
 
 **End HEAD:** `7ffa736` (pre-docs commit; this journal block is in the T10 docs commit that immediately follows).
+
+---
+
+## 2026-06-12 (b) — Betterment-8: Sound + full SCRAMBLE · STATUS: PHASES COMPLETE
+
+**Session:** B8 full implementation, 10 tasks T1–T10 per the expanded playbook §B8 (`6c81157`). Orchestrator (Fable) + Sonnet-executor pattern; three checkpoints browser-verified: C1 post-T4 (audio), C2 post-T7 (gameplay), C3 post-T9 (regression). Branch `betterment7-20260612` (B8 commits follow directly from B7 HEAD `7ffa736`).
+
+**T1 — Audio core (`64a0662`):** lazy `AudioContext` (unlock on start-screen activation + any gesture; suspend/resume with `visibilitychange`); `masterGain` → `engineBus` + `sfxBus` graph; `kuson.audio.v1` `{volume, muted, voice}` persistence; alert tones by tier (SAFETY triple-beep / RADIO squelch chirp / ADVISORY ping) fired on new-key publication.
+
+**T2 — Engine loop + stall horn + buffet (`5c377b1`):** engine chains rebuilt only on `(mode | presetId)` change. Prop: saw 55→110 Hz by throttle + sub-octave sine → lowpass 900 Hz. Jet: noise → bandpass 600→2400 Hz + 60 Hz rumble. Hover/UFO: triangle 140 Hz + LFO. Stall horn: square 800 Hz gated 4 Hz when airspeed < 1.1 × Vs; buffet camera jitter ±0.15° at 9 Hz in same band — physics feedback, independent of mute.
+
+**T3 — ATC speech-synthesis voice + ducking (`f709cf5`):** `speechSynthesis` (rate 1.05, pitch 0.9, en-GB → en-US → en); cancel-before-speak; squelch chirp + end click as bookends; engine duck ×0.4 with 150 ms ramps. Radio text always written to log regardless of voice setting.
+
+**T4 — Game SFX wiring (`df325de`):** tick (throttled 40 ms gate on typing keystrokes); lockSweep (modal open); banish (UFO dispose); lost (contact timeout); chime (wave/tutorial complete). All injected deps, null-safe. **C1 verified:** prop 55→110 Hz tracked throttle via `__sim.audio` debug getters; horn ON at 24 m/s (Vs ≈ 23.5, 1.1 × Vs ≈ 25.9), OFF at 40 m/s; kind switching hover/prop/jet; `_lastSay` received the ATC radio message; tick + lockSweep fired in typing modal; settings `{volume: 0.4, muted}` persisted to `kuson.audio.v1`.
+
+**T5 — Difficulty tiers (`1bfc6c7`):** CADET (3 contacts / 90 s travel / 45 s challenge / autopilot / any answer / ×1), PILOT (4 / 75 / 35 / no autopilot / short form / ×1.5), ACE (5 / 60 / 30 / no autopilot / id only / ×2). Selector on BRIEFING screen, keys 1/2/3, persisted `kuson.game.v1.difficulty`.
+
+**T6 — Multi-wave progression (`8a5c49e`):** Next-wave from DEBRIEF; contacts +1 per wave (uncapped); `timeLimit × 0.9^n` floor 45 s; SESSION TOTAL accumulates; `bestScore` = lifetime session total; `waveReached` persisted. DEBRIEF → WAVE added to FSM guard table.
+
+**T7 — Tutorial (`6593991`, amend):** six steps — hold-W ≥ 1 s → mouse-look ≥ 0.5 rad → 3 torus rings at < 150 m → Identify (mode on + non-empty pick ≤ 2 Hz) → practice typing Bangkok CTR → done; offered on BRIEFING for fresh players (T key), `kuson.game.v1.tutorialDone` flag. Rings fully disposed on every exit path. **Mid-task bug:** `_spawnRings` called `_disposeRings` (which nulls the ring group) then tried to use the group → null crash; fixed by re-creating the group before use (amend to `6593991`). **Executor death (T7):** Sonnet executor died mid-task; orchestrator completed the briefing-offer wiring + main wiring + CSS inline. **C2 verified:** ACE wave — 5 contacts / 60 s / no autopilot / typing target = id; shortName rejected (modal re-opened after 1 s), id accepted → 400 pts (×2 mult exact, instant-solve baseline); full wave debrief "WAVE 1 — ACE" streak-compounded scores 400/440/484/532/586 = 2442; Next-wave → 6 contacts / 54 s; `waveReached` persisted. Tutorial end-to-end: all 6 steps, rings popped with chime, practice solve, `tutorialDone` persisted. (Earlier orchestrator eval reported T-key failure — start-screen capture listener was still armed from the previous run; not a code bug.)
+
+**T8 — Progressive HUD + quick warp chips (`42cb80f`):** `kuson.hud.v1` `{pro}`; `pro` defaults `true` when any `kuson./thairspace.` key exists (returning players), `false` on fresh profiles. Minimal hides VS/WIND/BAT/LINK/NEXT/sim-speed/history/CAAT/toggles/alt-tape; keeps LAT-LON/ALT/HDG/SPD/MODE/minimap/alerts/panel. Quick warp chips: Bangkok (VTBD-CTR) / Chiang Mai (VTCC) / Phuket (VTSP) / U-Tapao (VTBU-CTR) — reuse catalog fly-to path.
+
+**T9 — Fresnel edge-glow (`20946e2`, amend):** `pow(1−|N·V|, 3) × 0.35` rim tinted by category vertex colour; shared `uGlowOn` uniform — OFF is mathematically pre-B8-identical (no recompile). Persistence key `kuson.grounddetail.v1.volumeGlow`, default on. **Mid-task WebGL compile failure:** shader used `objectNormal` which is undeclared in `MeshBasicMaterial` (no `beginnormal_vertex` chunk); fixed to read raw `normal` attribute directly (amend to `20946e2`). **Executor death (T9):** Sonnet executor died before commit; orchestrator staged + committed inline. **C3 verified:** fresnel rim visible and toggleable; `uGlowOn = 0` yields no visual rim, program count unchanged; audio regression clean.
+
+**Commits (run `git log --oneline` for exact SHAs):** `64a0662` audio core · `5c377b1` engine+horn+buffet · `f709cf5` ATC voice · `df325de` game SFX · `1bfc6c7` difficulty tiers · `8a5c49e` wave progression · `6593991` tutorial · `42cb80f` HUD+chips · `20946e2` fresnel glow · this docs commit (T10).
+
+**Known / deferred:**
+- Wrong-answer submit currently penalty-free (streak intact on failed submit) — candidate polish for a future pass.
+- Engine sound for live-traffic aircraft (ADS-B layer) — not in scope for B8.
+- Recorded voice-over pack to replace `speechSynthesis` — deferred.
+
+**End HEAD:** `20946e2` (pre-docs commit; the docs commit — spec §3.17 + journal block (b) + TODO B8 — follows immediately on the same branch).

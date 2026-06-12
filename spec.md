@@ -269,8 +269,55 @@ An opt-in arcade layer that exercises airspace literacy; the sim is **inert** in
 - **Scoring:** base 100 × (1 + speedBonus) × accuracy × 1.1^streak (streak cap 10); speedBonus = 1 − elapsed ÷ limit. Persistence key `kuson.game.v1` `{bestScore, wavesPlayed, airspacesIdentified}` guarded-merge pattern.
 - **Start screen:** full-viewport overlay, real load progress (6 ticks), Explore / Tour (variant `"short"`) / Play buttons, keyboard `1/2/3+Enter`, last choice persisted `kuson.start.v1` (0-based index), failure-safe (construction throw → no-op stub, sim never blocked); error path routes through `fail()`.
 - **Debug overlay:** backtick toggle, `renderer.info` (calls/tris/geoms/textures/programs) + 30-frame FPS; no DOM writes while hidden; ≤ 4 Hz writes while visible.
+- **Wrong-answer re-entry:** a failed submit does not reset the streak; the modal stays open and re-accepts input after 1 s (same window as `Esc`-cancel re-entry).
+- **Progressive HUD:** persistence key `kuson.hud.v1` `{pro}`; `pro` defaults `true` when any `kuson./thairspace.` key already exists in `localStorage` (returning players see full HUD), `false` on fresh profiles (minimal first impression). Minimal mode hides VS / WIND / BAT / LINK / NEXT / sim-speed / history / CAAT / layer toggles / alt-tape; retains LAT-LON / ALT / HDG / SPD / MODE / minimap / alerts / identify panel.
+- **Quick warp chips:** Bangkok (VTBD-CTR) / Chiang Mai (VTCC) / Phuket (VTSP) / U-Tapao (VTBU-CTR) chips in the start screen and HUD; each reuses the catalog fly-to path (same as list-row warp).
+
+#### Difficulty tiers
+
+| Tier | Contacts | Travel limit | Challenge limit | Autopilot | Answer target | Multiplier |
+|---|---|---|---|---|---|---|
+| CADET | 3 | 90 s | 45 s | yes | any (id / shortName / name) | ×1 |
+| PILOT | 4 | 75 s | 35 s | no | short form (id / shortName) | ×1.5 |
+| ACE | 5 | 60 s | 30 s | no | id only (typing target) | ×2 |
+
+Selector on the BRIEFING screen; keyboard `1` / `2` / `3`; persisted `kuson.game.v1.difficulty`. Default CADET for new players.
+
+#### Wave progression
+
+Next-wave is offered from the DEBRIEF screen. Each successive wave: contacts +1 (no cap), `timeLimit × 0.9^n` (floor 45 s). SESSION TOTAL accumulates across waves; `bestScore` = lifetime session total; `waveReached` persisted to `kuson.game.v1`. FSM guard: DEBRIEF → WAVE added to the allowed-transition table.
+
+#### Tutorial
+
+Six-step interactive walkthrough: (1) hold `W` ≥ 1 s — engine-on confirmation; (2) mouse-look ≥ 0.5 rad — camera freedom confirmed; (3) three torus rings pop at random airspace locations — fly through each at < 150 m; (4) activate Identify mode, non-empty pick at ≤ 2 Hz; (5) practice typing `Bangkok CTR` in the typing challenge modal; (6) done — `tutorialDone` flag written and chime plays. Offered on the BRIEFING screen for players with no `kuson.game.v1.tutorialDone` key (`T` key shortcut). Rings are fully disposed on every exit path (tutorial complete, abort, or timeout) — null-group crash fixed (commit `6593991`).
 
 See §15.
+
+### 3.17 Audio (Betterment-8)
+
+All sound is **procedural Web Audio — zero asset files**. A lazy `AudioContext` is created on start-screen activation or any user gesture and suspended/resumed with the `visibilitychange` event.
+
+**Signal graph:** `AudioContext` → `masterGain` (keyed `kuson.audio.v1` `{volume, muted, voice}`) → `engineBus` + `sfxBus`. Engine chains are rebuilt only when `(mode | presetId)` changes; per-frame work is `AudioParam` ramps only (no graph surgery on the hot path).
+
+**Engine sounds by preset:**
+- **Prop:** sawtooth oscillator 55 → 110 Hz tracked by throttle + sub-octave sine → `BiquadFilterNode` lowpass 900 Hz.
+- **Jet:** looped noise source → bandpass 600 → 2400 Hz + 60 Hz rumble sine.
+- **Hover / UFO:** triangle oscillator 140 Hz + slow LFO.
+
+**Stall horn:** square-wave oscillator 800 Hz, gated at 4 Hz, fires when airplane airspeed < 1.1 × Vs. Buffet camera jitter (±0.15° at 9 Hz) triggers in the same band as the horn — it is a physics-feedback signal, independent of the mute state, and does not require audio unlock.
+
+**Alert tones by tier:**
+- `SAFETY` — triple-beep (three 880 Hz sine pulses, 80 ms each, 100 ms apart).
+- `RADIO` — squelch chirp (frequency sweep 1200 → 800 Hz, 60 ms) on every new-key publication.
+- `ADVISORY` — single ping (1047 Hz sine, 120 ms fade-out).
+
+**Game SFX (injected deps, null-safe):** `tick` (throttled 40 ms gate, fired on each keystroke in the typing modal); `lockSweep` (ascending sweep on modal open); `banish` (descending sweep on UFO disposal); `lost` (minor-third drop on contact timeout); `chime` (bright arpeggio on wave/tutorial complete).
+
+**ATC voice:** `speechSynthesis` API; `rate 1.05`, `pitch 0.9`; voice preference order `en-GB → en-US → en` (first available). Cancel-before-speak prevents queue build-up. Each ATC call is bookended by a squelch chirp (entry) and a soft click (exit). While speech is active, `engineBus` gain is ducked to ×0.4 with 150 ms ramps (in and out). **Radio text is always written to the log regardless of the voice setting** — voice off means no speech, never means no log entry.
+
+**Sound settings UI:** Volume slider + Mute checkbox + Voice toggle live in the Display options panel (same panel as ground-detail layer toggles). Settings persist under `kuson.audio.v1`.
+
+**Volume glow:** a fresnel rim shader — `pow(1 − |N·V|, 3) × 0.35` tinted by airspace-category vertex colour — is applied to all airspace volumes via a shared `uGlowOn` uniform. Toggling `uGlowOn = 0` makes the render **mathematically identical to pre-B8** (no recompile, no material swap). Persistence key `kuson.grounddetail.v1.volumeGlow`, default on. Toggled from Display options.
 
 ## 4. Non-functional requirements
 
@@ -369,6 +416,14 @@ A reviewer should be able to verify Phase 1 by:
 34. **Full wave → debrief:** a 3-contact SCRAMBLE wave completes to DEBRIEF; the debrief card shows per-contact points, wpm, and accuracy; `kuson.game.v1` is updated in `localStorage`.
 35. **Abort from any game state → IDLE:** pressing abort from `BRIEFING`, `WAVE`, or `CHALLENGE` returns FSM to `IDLE` with 0 UFOs, hidden HUD strip, and hidden debrief cards.
 36. **Start screen integrity:** the progress bar advances through all 6 real load ticks; Explore, Tour, and Play each start the correct path; the last-used choice is pre-highlighted on next open (`kuson.start.v1`).
+37. **Engine pitch tracks throttle:** prop oscillator sweeps 55 → 110 Hz as throttle rises; assertable in browser via `window.__sim.audio` debug getters (e.g. `__sim.audio.engineOscFreq`).
+38. **Stall horn gates correctly:** horn is ON when airplane airspeed < 1.1 × Vs (browser-verified: ON at 24 m/s with Vs ≈ 23.5 m/s, 1.1 × Vs ≈ 25.9 m/s; OFF at 40 m/s); buffet camera jitter active in the same band regardless of mute state.
+39. **Muted run:** `masterGain.gain.value === 0`; settings `{muted: true}` persist to `kuson.audio.v1` and survive a page reload.
+40. **ATC call — voice + log:** with voice ON a `speechSynthesis` utterance fires; with voice OFF no utterance fires; in both cases the radio log entry is written and the squelch chirp sounds (chirp is on `sfxBus`, independent of voice).
+41. **ACE difficulty — id-only + ×2 multiplier:** on an ACE wave, submitting the `shortName` is rejected (modal re-opens after 1 s); submitting the `id` is accepted and scores 400 pts (base 100 × ×2 multiplier × 1.0 accuracy × 1.1^0 — browser-verified on an instant solve with no streak).
+42. **Debrief Next-wave escalates:** pressing Next-wave from DEBRIEF increments contact count and applies `timeLimit × 0.9`; at ACE wave 2 the wave has 6 contacts and 54 s travel limit (browser-verified: debrief header reads "WAVE 1 — ACE"; next wave header reads "WAVE 2 — ACE" with 6 contacts in the HUD strip).
+43. **Tutorial completable end-to-end:** all 6 steps advance in order; three torus rings spawn and are fully disposed after step 3 (no leaked geometry — `renderer.info.memory.geometries` returns to pre-tutorial baseline); chime plays on completion; `kuson.game.v1.tutorialDone` is written to `localStorage` (browser-verified).
+44. **Volume-glow OFF is pre-B8-identical:** unchecking Volume glow in Display options sets `uGlowOn = 0` on the shared uniform; no recompile occurs; `renderer.info.programs` count is unchanged; the visual output is mathematically identical to a pre-B8 build (no rim colour).
 
 ---
 

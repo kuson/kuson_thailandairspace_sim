@@ -30,6 +30,26 @@
 
 ---
 
+## 0b. Betterment-8 — Sound + full SCRAMBLE (2026-06-12, browser-verified C1–C3)
+
+> Playbook: `20260612_ShebangPlaybook.md §B8` (expanded at `6c81157`). Journal: 2026-06-12 (b). Branch `betterment7-20260612`.
+
+- [x] **B8.T1 Audio core** — lazy `AudioContext`; `masterGain` → `engineBus` + `sfxBus`; alert tones by tier (SAFETY triple-beep / RADIO squelch chirp / ADVISORY ping); `kuson.audio.v1` persistence; Volume slider + Mute + Voice toggles in Display options. (`64a0662`)
+- [x] **B8.T2 Engine loop + stall horn + buffet** — prop (saw 55→110 Hz / sub-octave / lowpass 900 Hz), jet (noise → bandpass 600→2400 Hz + 60 Hz rumble), hover/UFO (triangle 140 Hz + LFO); chains rebuilt on mode/preset change only. Stall horn: square 800 Hz gated 4 Hz at airspeed < 1.1 × Vs; buffet jitter ±0.15° @ 9 Hz, mute-independent. (`5c377b1`)
+- [x] **B8.T3 ATC speech-synthesis voice + ducking** — `speechSynthesis` rate 1.05 / pitch 0.9 / en-GB→en-US→en; cancel-before-speak; squelch chirp + end click; engine duck ×0.4 / 150 ms ramps. Radio log always written regardless of voice setting. (`f709cf5`)
+- [x] **B8.T4 Game SFX wiring** — tick (40 ms gate) / lockSweep / banish / lost / chime; all injected deps, null-safe. **C1 verified:** prop Hz tracked throttle via debug getters; horn ON/OFF at correct Vs thresholds; kind switching correct; log entry written; tick+lockSweep fired; settings persisted. (`df325de`)
+- [x] **B8.T5 Difficulty tiers** — CADET (3/90 s/45 s/autopilot/any/×1), PILOT (4/75/35/no AP/short/×1.5), ACE (5/60/30/no AP/id only/×2); selector on BRIEFING, keys 1/2/3, persisted `kuson.game.v1.difficulty`. (`1bfc6c7`)
+- [x] **B8.T6 Multi-wave progression** — Next-wave from DEBRIEF; contacts +1/wave; `timeLimit × 0.9^n` floor 45 s; SESSION TOTAL + `bestScore` + `waveReached` persisted; DEBRIEF → WAVE added to FSM guard. (`8a5c49e`)
+- [x] **B8.T7 Tutorial** — 6 steps (hold-W / mouse-look / 3 rings / identify / type Bangkok CTR / done); T-key offer on BRIEFING for fresh players; `tutorialDone` persisted. Null-group crash on ring re-spawn fixed (amend to `6593991`). **Executor death mid-T7** — orchestrator completed briefing wiring + main.js + CSS inline. **C2 verified:** ACE wave 5 contacts/60 s, shortName rejected then id accepted (400 pts ×2 exact), full debrief 2442 pts streak-compounded, Next-wave → 6 contacts/54 s, `waveReached` persisted; tutorial all 6 steps, rings disposed, `tutorialDone` written. (`6593991`)
+- [x] **B8.T8 Progressive HUD + quick warp chips** — `kuson.hud.v1 {pro}`; `pro` = true for returning players, false for fresh; minimal hides VS/WIND/BAT/LINK/NEXT/sim-speed/history/CAAT/toggles/alt-tape. Chips: Bangkok/Chiang Mai/Phuket/U-Tapao via catalog fly-to path. (`42cb80f`)
+- [x] **B8.T9 Fresnel edge-glow** — `pow(1−|N·V|,3)×0.35` rim tinted by category vertex colour; shared `uGlowOn` uniform; OFF = pre-B8-identical (no recompile). Persistence `kuson.grounddetail.v1.volumeGlow`, default on. WebGL compile failure fixed (used raw `normal` attribute, not `objectNormal`). **Executor death mid-T9** — orchestrator staged + committed inline. **C3 verified:** rim visible and togglable, program count unchanged, audio regression clean. (`20946e2`)
+- [x] **B8.T10 Docs** — spec §3.16 extensions (difficulty / wave / tutorial / wrong-answer / progressive HUD / warp chips / volume glow) + spec §3.17 Audio + §6 acceptance rows 37–44; journal 2026-06-12 (b); TODO §0b.
+- [ ] Wrong-answer submit penalty (currently streak-intact on fail) — candidate polish for a future pass.
+- [ ] Engine sound for live-traffic aircraft (ADS-B layer) — deferred from B8.
+- [ ] Recorded voice-over pack to replace `speechSynthesis` — deferred from B8.
+
+---
+
 ## 1. Current state (as of 2026-05-30, browser smoke)
 
 ### Browser smoke 2026-05-30 (Cursor IDE browser @ 9598ea0)
@@ -218,6 +238,7 @@ Operator should walk through `spec.md §6` in a real browser. Until then these a
 
 | Date | Operator | Focus | journal.md block |
 |---|---|---|---|
+| 2026-06-12 | Claude Code (Fable 5 orchestrator + Sonnet 4.6 executors) | Betterment-8: Sound + full SCRAMBLE — audio graph, engine/horn/buffet, ATC voice, game SFX, difficulty tiers, wave progression, tutorial, progressive HUD, warp chips, fresnel glow | 2026-06-12 (b) |
 | 2026-06-12 | Claude Code (Fable 5 orchestrator + Sonnet 4.6 executors) | Betterment-7: Sky Guardian foundation — debug overlay, label dedup, GameMode FSM, ATC radio, UFO layer, typing challenge, SCRAMBLE wave, start screen | 2026-06-12 (a) |
 | 2026-05-21 | Claude Code (Opus 4.7, session 53fdf4b8…) | Telemetry layout + attitude indicator + airplane flight model + P pause + UFO + ground-detail | 2026-05-21 (d) |
 | 2026-05-21 | Claude Code (Opus 4.7, session 53fdf4b8…) | Altitude tape + 3rd-person/aircraft models + tour-identify fix | 2026-05-21 (c) |
