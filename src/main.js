@@ -26,6 +26,7 @@ import { SimMode, SimModeMachine } from "./simMode.js";
 import { simState } from "./simState.js";
 import * as ceilings from "./ceilings.js";
 import { installDebugOverlay } from "./debugOverlay.js";
+import { GameMode } from "./game/gameMode.js";
 
 const scene = new THREE.Scene();
 // Shared sun direction — the Sky shader, the sun-disc sprite, and the
@@ -234,6 +235,8 @@ let _applyingHistory = false;
 // controller signals (see loop). Replaces the flyTo/tour/paused/replay
 // flag-AND tangle the loop used to juggle.
 const simMode = new SimModeMachine();
+
+const game = new GameMode({ layer, startFlyTo, getDronePos: () => drone.position });
 
 // Betterment-2 P3: build the per-frame context the flight-history event log
 // diffs against. Cheap — airspacesAt is AABB-accelerated.
@@ -623,6 +626,7 @@ function loop(t) {
   _safe("province-scales", () => provinceLines?.updateScales(camera, renderer));
   _safe("liveflights", () => liveFlights.update(dt, camera.position));
   _safe("liveflights-labels", () => liveFlights.updateLabelScales(camera, renderer));
+  _safe("game", () => game.update(dt));
 
   if (ui) {
     _safe("hud", () => ui.updateHUD(dt));
@@ -668,5 +672,5 @@ window.__sim = {
   scene, camera, drone, layer, ground, flightHistory, tourGuide, ui, simMode,
   simState, ceilings, renderer, liveFlights, follow,
   physics: { RigidBody, QuadrotorModel, FixedWingModel },
-  debugOverlay,
+  debugOverlay, game,
 };
