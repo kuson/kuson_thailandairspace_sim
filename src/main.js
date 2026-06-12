@@ -146,6 +146,8 @@ const groundDetail = getGroundDetailSettings();
 // B10.T2: restore terrain-relief state before any tile builds (bootstrap
 // triggers the first updateAround, so a plain property write is safe here).
 ground.terrainEnabled = groundDetail.terrain;
+// B10.T6: restore water-shimmer gate (shared uniform — instant, no rebuild).
+ground.setWaterEnabled(groundDetail.water);
 const rangeRings = installRangeRings(scene);
 rangeRings.group.visible = groundDetail.rangeRings;
 let airportBeacons = null;
@@ -525,6 +527,7 @@ async function bootstrap() {
     else if (key === "volumeGlow") { setVolumeGlow(on); }
     else if (key === "terrain") { ground.setTerrainEnabled(on); }
     else if (key === "cityLights") { cityLights.setEnabled(on); }
+    else if (key === "water") { ground.setWaterEnabled(on); }
   };
   // Restore glow state from persistence on load.
   setVolumeGlow(groundDetail.volumeGlow);
@@ -747,6 +750,8 @@ function loop(t) {
   _safe("daynight", () => daynight.update(dt));
   // B10.T5: city lights opacity — reads nightFactor that daynight just wrote.
   _safe("citylights", () => cityLights.update());
+  // B10.T6: water clock — shimmer scrolls only while the loop renders.
+  _safe("water", () => ground.tickWater(dt));
 
   _safe("ground-alt", () => ground.setAltitude(drone.position.y));
   _safe("ground-update", () => ground.updateAround(drone.position.x, drone.position.z));

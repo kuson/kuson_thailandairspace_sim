@@ -5,7 +5,7 @@
 // rings off (rings overlay the map → opt-in), volumeGlow on.
 const LS_KEY = "kuson.grounddetail.v1";
 
-export const DEFAULT_GROUND_DETAIL = { airports: true, rangeRings: false, provinces: true, volumeGlow: true, terrain: true, cityLights: true };
+export const DEFAULT_GROUND_DETAIL = { airports: true, rangeRings: false, provinces: true, volumeGlow: true, terrain: true, cityLights: true, water: true };
 
 export function getGroundDetailSettings() {
   try {

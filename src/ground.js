@@ -37,6 +37,53 @@ const MINIMAP_TILE_CACHE_MAX = 256;
 const SEGS_DETAIL = 24;
 const SEGS_BASE = 24;
 
+// B10.T6 water shimmer — ONE uniforms object shared by every tile material
+// (uTime ticked once per frame from the main loop via tickWater; uWaterOn is
+// the runtime gate — toggling never recompiles, the uGlowOn precedent).
+const WATER_UNIFORMS = {
+  uTime:    { value: 0 },
+  uWaterOn: { value: 1 },
+};
+
+// Fragment chunk: on sea fragments (aSea=1 from the T2 displacement loop) mix
+// the texel toward deep Gulf blue and add two crossing sine-band brightness
+// modulations (combined amplitude ≤ 0.05, periods ~80 m and ~210 m, scrolled
+// by uTime). Land fragments (vSea=0) and uWaterOn=0 take the early-out —
+// output mathematically identical to pre-B10.
+const WATER_FRAG_CODE = `
+{
+  float sea = vSea * uWaterOn;
+  if (sea > 0.001) {
+    vec3 deep = vec3(0.012, 0.10, 0.26);
+    diffuseColor.rgb = mix(diffuseColor.rgb, deep, 0.45 * sea);
+    float b1 = sin(dot(vWaterWorld.xz, vec2(0.55, 0.83)) * 0.0785 + uTime * 0.9);
+    float b2 = sin(dot(vWaterWorld.xz, vec2(0.91, -0.41)) * 0.0299 - uTime * 0.45);
+    diffuseColor.rgb *= 1.0 + (b1 * 0.03 + b2 * 0.02) * sea;
+  }
+}`;
+
+// onBeforeCompile injector for tile materials. customProgramCacheKey is a
+// CONSTANT string for all tiles (B8.T9 lesson) → exactly one extra shader
+// program per map-state instead of one per material.
+function applyWaterShader(mat) {
+  mat.onBeforeCompile = (shader) => {
+    shader.uniforms.uTime = WATER_UNIFORMS.uTime;
+    shader.uniforms.uWaterOn = WATER_UNIFORMS.uWaterOn;
+    shader.vertexShader = shader.vertexShader
+      .replace("#include <common>",
+        "#include <common>\nattribute float aSea;\nvarying float vSea;\nvarying vec3 vWaterWorld;")
+      .replace("#include <begin_vertex>",
+        "#include <begin_vertex>\n\tvSea = aSea;\n\tvWaterWorld = (modelMatrix * vec4(position, 1.0)).xyz;");
+    shader.fragmentShader = shader.fragmentShader
+      .replace("#include <common>",
+        "#include <common>\nvarying float vSea;\nvarying vec3 vWaterWorld;\nuniform float uTime;\nuniform float uWaterOn;")
+      .replace("#include <map_fragment>",
+        "#include <map_fragment>\n" + WATER_FRAG_CODE);
+  };
+  mat.customProgramCacheKey = () => "groundtile-water1";
+  return mat;
+}
+
 export class DynamicGround {
   /**
    * @param {object} opts
@@ -162,6 +209,9 @@ export class DynamicGround {
       polygonOffsetFactor: isDetail ? -2 : 0,
       polygonOffsetUnits: isDetail ? -2 : 0,
     });
+    // B10.T6: sea-shimmer inject (gated by uWaterOn + the aSea attribute;
+    // tiles without aSea — terrain OFF — read attribute default 0 = land).
+    applyWaterShader(mat);
     const mesh = new THREE.Mesh(geo, mat);
     const meshY = isDetail ? 0.4 : 0;
     mesh.position.set(cx, meshY, cz);
@@ -211,6 +261,20 @@ export class DynamicGround {
     if (on === this.terrainEnabled) return;
     this.terrainEnabled = on;
     this._rebuildTiles();
+  }
+
+  /**
+   * B10.T6: advance the shared water clock — called once per frame from the
+   * main loop, so the shimmer scrolls only while the tab actually renders.
+   */
+  tickWater(dt) {
+    WATER_UNIFORMS.uTime.value += dt;
+  }
+
+  /** B10.T6: water shimmer toggle (kuson.grounddetail.v1.water). Uniform
+   *  gate only — no rebuild, no recompile (uGlowOn precedent). */
+  setWaterEnabled(on) {
+    WATER_UNIFORMS.uWaterOn.value = on ? 1 : 0;
   }
 
   _rebuildTiles() {

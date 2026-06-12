@@ -394,6 +394,7 @@ export class UI {
       </label>
       <label class="opt"><input type="checkbox" id="optTerrain" /> Terrain relief</label>
       <label class="opt"><input type="checkbox" id="optCityLights" /> City lights</label>
+      <label class="opt"><input type="checkbox" id="optWater" /> Water shimmer</label>
       <label class="opt"><input type="checkbox" id="optAirports" /> Airport markers</label>
       <label class="opt"><input type="checkbox" id="optRangeRings" /> Range rings (50/100/200 km)</label>
       <label class="opt"><input type="checkbox" id="optProvinces" /> Province names</label>
@@ -459,18 +460,21 @@ export class UI {
     const vgChk = el.querySelector("#optVolumeGlow");
     const tnChk = el.querySelector("#optTerrain");
     const clChk = el.querySelector("#optCityLights");
+    const wtChk = el.querySelector("#optWater");
     if (apChk) apChk.checked = gd.airports;
     if (rrChk) rrChk.checked = gd.rangeRings;
     if (pvChk) pvChk.checked = gd.provinces;
     if (vgChk) vgChk.checked = gd.volumeGlow;
     if (tnChk) tnChk.checked = gd.terrain;
     if (clChk) clChk.checked = gd.cityLights;
+    if (wtChk) wtChk.checked = gd.water;
     apChk?.addEventListener("change", () => this.onGroundLayerToggle?.("airports", apChk.checked));
     rrChk?.addEventListener("change", () => this.onGroundLayerToggle?.("rangeRings", rrChk.checked));
     pvChk?.addEventListener("change", () => this.onGroundLayerToggle?.("provinces", pvChk.checked));
     vgChk?.addEventListener("change", () => this.onGroundLayerToggle?.("volumeGlow", vgChk.checked));
     tnChk?.addEventListener("change", () => this.onGroundLayerToggle?.("terrain", tnChk.checked));
     clChk?.addEventListener("change", () => this.onGroundLayerToggle?.("cityLights", clChk.checked));
+    wtChk?.addEventListener("change", () => this.onGroundLayerToggle?.("water", wtChk.checked));
 
     // Betterment-4: live-flights toggle + source + cadence (persisted settings
     // set the initial control values; handlers call into main.js → the layer).
