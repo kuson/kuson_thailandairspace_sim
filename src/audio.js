@@ -491,6 +491,105 @@ export function installAudio({ alerts }) {
     ns.stop(t + 0.030);
   }
 
+  // ── B9.T3 weapon tones ────────────────────────────────────────────────────
+
+  function _playFire() {
+    // 40 ms filtered noise snap — gun shot.
+    const t    = ctx.currentTime;
+    const ns   = ctx.createBufferSource();
+    const nsG  = ctx.createGain();
+    const hp   = ctx.createBiquadFilter();
+    hp.type = "highpass";
+    hp.frequency.setValueAtTime(800, t);
+    ns.buffer = _noiseBuffer;
+    ns.connect(hp);
+    hp.connect(nsG);
+    nsG.connect(sfxBus);
+    _env(nsG, t, 0.001, 0.5, 0.035);
+    ns.start(t);
+    ns.stop(t + 0.040);
+  }
+
+  function _playSpark() {
+    // 2.5 kHz ping with fast decay — metallic spark impact.
+    const t   = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const g   = ctx.createGain();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(2500, t);
+    osc.frequency.exponentialRampToValueAtTime(1800, t + 0.080);
+    osc.connect(g);
+    g.connect(sfxBus);
+    _env(g, t, 0.001, 0.22, 0.075);
+    osc.start(t);
+    osc.stop(t + 0.085);
+  }
+
+  function _playShieldPing() {
+    // Hollow 1.2 kHz ring — two oscillators slightly detuned for a 'hollow' chorus.
+    const t = ctx.currentTime;
+    for (let i = 0; i < 2; i++) {
+      const osc = ctx.createOscillator();
+      const g   = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(1200 + i * 8, t); // slight detune
+      osc.connect(g);
+      g.connect(sfxBus);
+      _env(g, t, 0.003, 0.18, 0.200);
+      osc.start(t);
+      osc.stop(t + 0.210);
+    }
+  }
+
+  function _playOverheat() {
+    // Descending buzz: square wave stepping down 400→200 Hz in three 150 ms chunks.
+    const t = ctx.currentTime;
+    const freqs = [400, 280, 200];
+    for (let i = 0; i < 3; i++) {
+      const osc = ctx.createOscillator();
+      const g   = ctx.createGain();
+      osc.type = "square";
+      osc.frequency.setValueAtTime(freqs[i], t);
+      osc.connect(g);
+      g.connect(sfxBus);
+      const start = t + i * 0.150;
+      _env(g, start, 0.005, 0.2, 0.130);
+      osc.start(start);
+      osc.stop(start + 0.140);
+    }
+  }
+
+  function _playExplode() {
+    // Noise burst with lowpass sweep 6k→80 Hz over 600 ms + 60 Hz sine thump.
+    const t      = ctx.currentTime;
+    const ns     = ctx.createBufferSource();
+    const lp     = ctx.createBiquadFilter();
+    const noiseG = ctx.createGain();
+    ns.buffer = _noiseBuffer;
+    ns.loop   = true;
+    lp.type   = "lowpass";
+    lp.frequency.setValueAtTime(6000, t);
+    lp.frequency.exponentialRampToValueAtTime(80, t + 0.600);
+    ns.connect(lp);
+    lp.connect(noiseG);
+    noiseG.connect(sfxBus);
+    _env(noiseG, t, 0.005, 0.6, 0.580);
+    ns.start(t);
+    ns.stop(t + 0.620);
+
+    // Low thump
+    const thump  = ctx.createOscillator();
+    const thumpG = ctx.createGain();
+    thump.type = "sine";
+    thump.frequency.setValueAtTime(60, t);
+    thump.frequency.exponentialRampToValueAtTime(30, t + 0.250);
+    thump.connect(thumpG);
+    thumpG.connect(sfxBus);
+    _env(thumpG, t, 0.003, 0.55, 0.240);
+    thump.start(t);
+    thump.stop(t + 0.260);
+  }
+
   const _TONES = {
     alertSafety:   _playAlertSafety,
     alertRadio:    _playAlertRadio,
@@ -500,6 +599,12 @@ export function installAudio({ alerts }) {
     banish:        _playBanish,
     lost:          _playLost,
     chime:         _playChime,
+    // B9.T3 weapon tones
+    fire:          _playFire,
+    spark:         _playSpark,
+    shieldPing:    _playShieldPing,
+    overheat:      _playOverheat,
+    explode:       _playExplode,
   };
 
   // -------------------------------------------------------------------------

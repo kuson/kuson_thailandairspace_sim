@@ -1031,6 +1031,40 @@
         0  7px 4px 1px rgba(180,220,255,0.45);
     }
 
+    /* B9.T3: heat bar — thin vertical bar to the right of the reticle */
+    #heatBar {
+      position: fixed;
+      left: calc(50% + 28px);
+      top: calc(50% - 40px);
+      width: 6px;
+      height: 80px;
+      background: rgba(255,255,255,0.10);
+      border: 1px solid rgba(255,255,255,0.25);
+      border-radius: 3px;
+      pointer-events: none;
+      z-index: 55;
+      overflow: hidden;
+      display: none;
+    }
+    #heatBarFill {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 0%;
+      background: linear-gradient(to top, #ff6622, #ffdd44);
+      border-radius: 2px;
+      transition: background 0.15s;
+    }
+    #heatBar.overheat #heatBarFill {
+      background: #ff2222;
+      animation: heatPulse 0.25s ease-in-out infinite alternate;
+    }
+    @keyframes heatPulse {
+      from { opacity: 0.6; }
+      to   { opacity: 1.0; }
+    }
+
     /* Inner card — same HUD panel palette as .tc-card */
     .gc-card {
       background: var(--panel);
