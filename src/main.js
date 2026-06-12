@@ -32,6 +32,7 @@ import { UfoLayer } from "./game/ufo.js";
 import { TypingChallenge } from "./game/typing.js";
 import { alerts, AlertTier } from "./alerts.js";
 import { installStartScreen } from "./startScreen.js";
+import { installAudio } from "./audio.js";
 
 // B7.T9: build the start-screen overlay immediately (before bootstrap runs).
 // Failure-safe: if construction throws, stub methods are returned and dismissed
@@ -240,6 +241,9 @@ let ui;
 let tourGuide;
 let catalogHighlightId = null;
 let _applyingHistory = false;
+
+// B8.T1: audio core — created before bootstrap so startScreen buttons can unlock it.
+const audio = installAudio({ alerts });
 
 // P5.T7: authoritative top-level mode, derived each frame from the live
 // controller signals (see loop). Replaces the flyTo/tour/paused/replay
@@ -478,11 +482,14 @@ async function bootstrap() {
   });
   startScreen.tick("Ready!");
 
+  // B8.T1: bind audio to UI (Sound settings block).
+  ui.bindAudio(audio);
+
   // B7.T9: hand off to the start-screen for mode selection.
   startScreen.ready({
-    onExplore: () => {},
-    onTour:    () => { tourGuide.start("short"); },
-    onPlay:    () => { game.start(); },
+    onExplore: () => { audio.unlock(); },
+    onTour:    () => { audio.unlock(); tourGuide.start("short"); },
+    onPlay:    () => { audio.unlock(); game.start(); },
   });
 }
 
@@ -657,6 +664,7 @@ function loop(t) {
   _safe("liveflights", () => liveFlights.update(dt, camera.position));
   _safe("liveflights-labels", () => liveFlights.updateLabelScales(camera, renderer));
   _safe("ufos", () => ufos.update(dt));
+  _safe("audio", () => audio.update(dt, null));
   _safe("game", () => game.update(dt));
 
   if (ui) {
@@ -703,5 +711,5 @@ window.__sim = {
   scene, camera, drone, layer, ground, flightHistory, tourGuide, ui, simMode,
   simState, ceilings, renderer, liveFlights, follow,
   physics: { RigidBody, QuadrotorModel, FixedWingModel },
-  debugOverlay, game,
+  debugOverlay, game, audio,
 };

@@ -17,6 +17,7 @@ import { AltitudeAdvisor } from "./altitudeAdvisor.js";
 import { getCeilings, setCeiling, resetCeilings } from "./ceilings.js";
 import { MinimapTileCache } from "./ground.js";
 import { getInputSettings, setInputSettings, DEFAULT_INPUT_SETTINGS } from "./input.js";
+import { getAudioSettings, setAudioSettings } from "./audio.js";
 
 // Betterment-2 P3.T3: glyph per history event type for the collapsible list.
 const HISTORY_GLYPHS = {
@@ -369,6 +370,14 @@ export class UI {
         </select>
       </label>
       <div id="liveFlightsStatus" class="opt" style="opacity:.75;font-size:11px">Live flights: off</div>
+      <div class="opt" style="margin-top:6px;font-size:11px;opacity:.6;text-transform:uppercase;letter-spacing:.06em">Sound</div>
+      <label class="opt">
+        Volume
+        <input type="range" id="optAudioVolume" min="0" max="100" step="1" style="width:80px" />
+        <output id="optAudioVolumeOut" style="font-size:11px;color:var(--muted);min-width:2.5em;text-align:right"></output>
+      </label>
+      <label class="opt"><input type="checkbox" id="optAudioMute" /> Mute</label>
+      <label class="opt"><input type="checkbox" id="optAudioVoice" /> Voice (ATC)</label>
     `;
     const military = el.querySelector("#optMilitary");
     const labels = el.querySelector("#optLabels");
@@ -442,6 +451,42 @@ export class UI {
       lfRadar.checked = !!this.showRadarFlights;
       lfRadar.addEventListener("change", () => { this.showRadarFlights = lfRadar.checked; });
     }
+  }
+
+  /**
+   * B8.T1: bind the audio handle so the Sound settings block can drive it.
+   * Called from main.js after UI is built. Safe to call before or after
+   * _buildDisplayOptions — it looks up the controls by id.
+   */
+  bindAudio(audio) {
+    this._audio = audio;
+    const s    = getAudioSettings();
+    const volEl  = document.getElementById("optAudioVolume");
+    const volOut = document.getElementById("optAudioVolumeOut");
+    const muteEl = document.getElementById("optAudioMute");
+    const voiceEl= document.getElementById("optAudioVoice");
+    if (!volEl) return; // displayOptions not yet in DOM — no-op
+
+    // Restore persisted values.
+    volEl.value      = String(Math.round(s.volume * 100));
+    if (volOut) volOut.value = `${Math.round(s.volume * 100)}%`;
+    muteEl.checked   = s.muted;
+    voiceEl.checked  = s.voice;
+
+    volEl.addEventListener("input", () => {
+      const v = Number(volEl.value) / 100;
+      if (volOut) volOut.value = `${Math.round(v * 100)}%`;
+      audio.setVolume(v);
+      setAudioSettings({ volume: v });
+    });
+    muteEl.addEventListener("change", () => {
+      audio.setMuted(muteEl.checked);
+      setAudioSettings({ muted: muteEl.checked });
+    });
+    voiceEl.addEventListener("change", () => {
+      audio.setVoiceEnabled(voiceEl.checked);
+      setAudioSettings({ voice: voiceEl.checked });
+    });
   }
 
   /** Betterment-4: reflect LiveFlightsLayer status in the Display-options line. */
