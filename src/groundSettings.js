@@ -1,10 +1,11 @@
 // groundSettings.js — persistence for the Betterment-6 ground orientation
-// layers (airport beacons, range rings, province names). One object under
-// kuson.grounddetail.v1; mirrors get/setLiveFlightsSettings. Defaults:
-// airports + provinces on, range rings off (rings overlay the map → opt-in).
+// layers (airport beacons, range rings, province names) and B8.T9 volume
+// glow. One object under kuson.grounddetail.v1; mirrors
+// get/setLiveFlightsSettings. Defaults: airports + provinces on, range
+// rings off (rings overlay the map → opt-in), volumeGlow on.
 const LS_KEY = "kuson.grounddetail.v1";
 
-export const DEFAULT_GROUND_DETAIL = { airports: true, rangeRings: false, provinces: true };
+export const DEFAULT_GROUND_DETAIL = { airports: true, rangeRings: false, provinces: true, volumeGlow: true };
 
 export function getGroundDetailSettings() {
   try {

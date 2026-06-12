@@ -29,6 +29,119 @@ const HIGHLIGHT_OPACITY = 0.18;
 // is white + vertexColors:true and gets shared across every airspace.
 const WALL_OPACITY_NORMAL = 0.18;
 const WALL_OPACITY_HIGHLIGHT = 0.42;
+
+// B8.T9 — Fresnel edge-glow: one shared uniform object referenced by every
+// wall material's compiled shader. Toggling .value requires no recompile.
+const SHARED_GLOW_UNIFORM = { value: 1.0 };   // 1.0 = on, 0.0 = off
+
+/** Turn the fresnel rim-glow on or off for all airspace volume walls. */
+export function setVolumeGlow(on) {
+  SHARED_GLOW_UNIFORM.value = on ? 1.0 : 0.0;
+}
+
+// B8.T9 — Shared GLSL chunk injections.
+// Vertex: pass view-space normal + view direction to the fragment shader.
+// Inserted after #include <begin_vertex> (after `transformed` is available).
+const GLOW_VERT_DEFS = "varying vec3 vWallNormal; varying vec3 vWallView;";
+const GLOW_VERT_CODE =
+  // `normal` (the raw attribute) rather than `objectNormal`: MeshBasicMaterial
+  // never includes <beginnormal_vertex>, so objectNormal is undeclared there
+  // (browser-verified compile failure). The attribute is always in the prolog.
+  "\tvWallNormal = normalize(normalMatrix * normal);" +
+  "\n\tvWallView   = -(modelViewMatrix * vec4(transformed, 1.0)).xyz;";
+// Fragment: fresnel rim term added after color_fragment, right before
+// dithering_fragment so the glow can still be dithered.
+// uGlowOn multiplies the entire added term: OFF → math identical to pre-B8.
+const GLOW_FRAG_DEFS =
+  "varying vec3 vWallNormal; varying vec3 vWallView; uniform float uGlowOn;";
+const GLOW_FRAG_CODE =
+  "{\n" +
+  "  float fresnel = pow(1.0 - abs(dot(normalize(vWallNormal), normalize(vWallView))), 3.0) * 0.35;\n" +
+  "  gl_FragColor.rgb += gl_FragColor.rgb * fresnel * uGlowOn;\n" +
+  "}";
+
+/**
+ * applyWallShader — unified onBeforeCompile helper for all wall materials.
+ * opts.pattern (int|0): inject procedural hatch/dots pattern chunk.
+ * opts.glow    (bool):  inject fresnel rim chunk.
+ * Also wires uGlowOn to the shared module-level uniform.
+ * CRITICAL: sets customProgramCacheKey so Three's cache doesn't collapse
+ * different variants onto one program. The glow uniform toggle needs NO
+ * separate programs — it's a runtime value, not a compile-time branch.
+ */
+function applyWallShader(mat, { pattern = 0, glow = true } = {}) {
+  mat.onBeforeCompile = (shader) => {
+    // --- glow uniforms (always injected so uGlowOn is always defined) ---
+    shader.uniforms.uGlowOn = SHARED_GLOW_UNIFORM;
+
+    // --- pattern uniforms ---
+    if (pattern) {
+      shader.uniforms.uPatKind     = { value: pattern };
+      shader.uniforms.uPatPeriod   = { value: WALL_PAT_PERIOD };
+      shader.uniforms.uPatStrength = { value: WALL_PAT_STRENGTH };
+    }
+
+    // ---- vertex shader ----
+    shader.vertexShader = shader.vertexShader
+      .replace("#include <common>",
+        "#include <common>\n" +
+        (pattern ? "varying vec3 vWallWorld;\n" : "") +
+        GLOW_VERT_DEFS)
+      .replace("#include <begin_vertex>",
+        "#include <begin_vertex>\n" +
+        (pattern ? "\tvWallWorld = (modelMatrix * vec4(position, 1.0)).xyz;\n" : "") +
+        GLOW_VERT_CODE);
+
+    // ---- fragment shader ----
+    // Build the declarations string.
+    const fragDefs =
+      (pattern
+        ? "varying vec3 vWallWorld;\nuniform float uPatKind;\nuniform float uPatPeriod;\nuniform float uPatStrength;\n"
+        : "") +
+      GLOW_FRAG_DEFS;
+
+    shader.fragmentShader = shader.fragmentShader
+      .replace("#include <common>", "#include <common>\n" + fragDefs);
+
+    // Insert fresnel glow BEFORE dithering so it's subject to dithering.
+    const glowInsert = "\n" + GLOW_FRAG_CODE + "\n";
+
+    if (pattern) {
+      // Pattern chunk replaces dithering_fragment; glow goes inside it.
+      shader.fragmentShader = shader.fragmentShader
+        .replace("#include <dithering_fragment>",
+          `#include <dithering_fragment>
+        {
+          float p = uPatPeriod;
+          float vv = vWallWorld.y;
+          float uu = vWallWorld.x + vWallWorld.z;
+          float mark;
+          if (uPatKind > 1.5) {
+            vec2 g = vec2(fract(uu / p), fract(vv / p)) - 0.5;
+            mark = 1.0 - smoothstep(0.16, 0.26, length(g));
+          } else {
+            float d = vv + uu * 0.7;
+            float tri = abs(fract(d / p) - 0.5) * 2.0;
+            mark = 1.0 - smoothstep(0.58, 0.74, tri);
+          }
+          gl_FragColor.rgb *= mix(1.0, 1.0 - uPatStrength, mark);
+          gl_FragColor.a = mix(gl_FragColor.a, min(1.0, gl_FragColor.a * 3.0), mark);
+        }` + glowInsert);
+    } else {
+      // No pattern: insert glow before dithering_fragment.
+      shader.fragmentShader = shader.fragmentShader
+        .replace("#include <dithering_fragment>",
+          glowInsert + "#include <dithering_fragment>");
+    }
+  };
+
+  // CRITICAL: three's default program cache key ignores onBeforeCompile, so
+  // without this the hatch/dots/plain/glow materials would collide on one
+  // program. The glow uniform is a runtime value — no extra program needed.
+  mat.customProgramCacheKey = () => `wallshader-pat${pattern}-glow${glow ? 1 : 0}`;
+  return mat;
+}
+
 const WALL_MAT_NORMAL = new THREE.MeshBasicMaterial({
   color: 0xffffff,
   vertexColors: true,
@@ -38,6 +151,8 @@ const WALL_MAT_NORMAL = new THREE.MeshBasicMaterial({
   depthWrite: false,
   depthTest: true,
 });
+applyWallShader(WALL_MAT_NORMAL, { pattern: 0, glow: true });
+
 const WALL_MAT_HIGHLIGHT = new THREE.MeshBasicMaterial({
   color: 0xffffff,
   vertexColors: true,
@@ -47,6 +162,7 @@ const WALL_MAT_HIGHLIGHT = new THREE.MeshBasicMaterial({
   depthWrite: false,
   depthTest: true,
 });
+applyWallShader(WALL_MAT_HIGHLIGHT, { pattern: 0, glow: true });
 
 // P6.T2 (3-D walls): colorblind-safe patterns on the two "restricted-ish"
 // categories — diagonal hatch on Prohibited, a dot grid on Restricted —
@@ -66,44 +182,6 @@ const WALL_PAT_PERIOD = 450;        // metres between hatch lines / dot cells
 const WALL_PAT_STRENGTH = 0.5;      // how much darker the marks render
 const WALL_MAT_POOL = new Map();
 
-function _injectWallPattern(mat, kind) {
-  mat.onBeforeCompile = (shader) => {
-    shader.uniforms.uPatKind = { value: kind };
-    shader.uniforms.uPatPeriod = { value: WALL_PAT_PERIOD };
-    shader.uniforms.uPatStrength = { value: WALL_PAT_STRENGTH };
-    shader.vertexShader = shader.vertexShader
-      .replace("#include <common>",
-        "#include <common>\nvarying vec3 vWallWorld;")
-      .replace("#include <begin_vertex>",
-        "#include <begin_vertex>\n\tvWallWorld = (modelMatrix * vec4(position, 1.0)).xyz;");
-    shader.fragmentShader = shader.fragmentShader
-      .replace("#include <common>",
-        "#include <common>\nvarying vec3 vWallWorld;\nuniform float uPatKind;\nuniform float uPatPeriod;\nuniform float uPatStrength;")
-      .replace("#include <dithering_fragment>",
-        `#include <dithering_fragment>
-        {
-          float p = uPatPeriod;
-          float vv = vWallWorld.y;
-          float uu = vWallWorld.x + vWallWorld.z;
-          float mark;
-          if (uPatKind > 1.5) {
-            vec2 g = vec2(fract(uu / p), fract(vv / p)) - 0.5;
-            mark = 1.0 - smoothstep(0.16, 0.26, length(g));
-          } else {
-            float d = vv + uu * 0.7;
-            float tri = abs(fract(d / p) - 0.5) * 2.0;
-            mark = 1.0 - smoothstep(0.58, 0.74, tri);
-          }
-          gl_FragColor.rgb *= mix(1.0, 1.0 - uPatStrength, mark);
-          gl_FragColor.a = mix(gl_FragColor.a, min(1.0, gl_FragColor.a * 3.0), mark);
-        }`);
-  };
-  // CRITICAL: three's default program cache key ignores onBeforeCompile, so
-  // without this the hatch/dots/plain materials would collide on one program.
-  mat.customProgramCacheKey = () => "wallpat-" + kind;
-  return mat;
-}
-
 function wallMatFor(categoryKey, highlight) {
   const kind = WALL_PATTERN_KIND[categoryKey];
   if (!kind) return highlight ? WALL_MAT_HIGHLIGHT : WALL_MAT_NORMAL;
@@ -119,7 +197,7 @@ function wallMatFor(categoryKey, highlight) {
     depthWrite: false,
     depthTest: true,
   });
-  _injectWallPattern(m, kind);
+  applyWallShader(m, { pattern: kind, glow: true });
   WALL_MAT_POOL.set(key, m);
   return m;
 }

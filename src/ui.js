@@ -384,6 +384,7 @@ export class UI {
       <label class="opt"><input type="checkbox" id="optAirports" /> Airport markers</label>
       <label class="opt"><input type="checkbox" id="optRangeRings" /> Range rings (50/100/200 km)</label>
       <label class="opt"><input type="checkbox" id="optProvinces" /> Province names</label>
+      <label class="opt"><input type="checkbox" id="optVolumeGlow" /> Volume glow</label>
       <label class="opt"><input type="checkbox" id="optLiveFlights" /> Show me live flights</label>
       <label class="opt">
         Flight source
@@ -426,16 +427,21 @@ export class UI {
 
     // Betterment-6: ground orientation layer toggles (initial state persisted;
     // main.js owns persistence + flips the matching scene group's visibility).
+    // B8.T9: volumeGlow follows the same pattern; handler calls setVolumeGlow
+    // via onGroundLayerToggle so main.js owns persistence.
     const gd = getGroundDetailSettings();
     const apChk = el.querySelector("#optAirports");
     const rrChk = el.querySelector("#optRangeRings");
     const pvChk = el.querySelector("#optProvinces");
+    const vgChk = el.querySelector("#optVolumeGlow");
     if (apChk) apChk.checked = gd.airports;
     if (rrChk) rrChk.checked = gd.rangeRings;
     if (pvChk) pvChk.checked = gd.provinces;
+    if (vgChk) vgChk.checked = gd.volumeGlow;
     apChk?.addEventListener("change", () => this.onGroundLayerToggle?.("airports", apChk.checked));
     rrChk?.addEventListener("change", () => this.onGroundLayerToggle?.("rangeRings", rrChk.checked));
     pvChk?.addEventListener("change", () => this.onGroundLayerToggle?.("provinces", pvChk.checked));
+    vgChk?.addEventListener("change", () => this.onGroundLayerToggle?.("volumeGlow", vgChk.checked));
 
     // Betterment-4: live-flights toggle + source + cadence (persisted settings
     // set the initial control values; handlers call into main.js → the layer).

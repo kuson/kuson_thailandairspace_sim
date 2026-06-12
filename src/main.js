@@ -1,7 +1,7 @@
 // main.js — entry point: scene, ground tiles, drone, airspaces, UI loop.
 import * as THREE from "three";
 import { Drone } from "./drone.js";
-import { AirspaceLayer } from "./airspace.js";
+import { AirspaceLayer, setVolumeGlow } from "./airspace.js";
 import { UI } from "./ui.js";
 import { loadTerrain } from "./terrain.js";
 import { DynamicGround } from "./ground.js";
@@ -450,12 +450,17 @@ async function bootstrap() {
   if (lfSettings.enabled) liveFlights.setEnabled(true);
 
   // Betterment-6: ground-detail layer toggles — persist + flip the scene group.
+  // B8.T9: volumeGlow routes through here too; calls setVolumeGlow (no scene
+  // group — the shared uniform in airspace.js handles all wall materials).
   ui.onGroundLayerToggle = (key, on) => {
     setGroundDetailSettings({ [key]: on });
     if (key === "airports") { if (airportBeacons) airportBeacons.group.visible = on; }
     else if (key === "rangeRings") { rangeRings.group.visible = on; }
     else if (key === "provinces") { if (provinceLines) provinceLines.group.visible = on; }
+    else if (key === "volumeGlow") { setVolumeGlow(on); }
   };
+  // Restore glow state from persistence on load.
+  setVolumeGlow(groundDetail.volumeGlow);
   window.__sim.ground = {
     rangeRings,
     get airports() { return airportBeacons; },
