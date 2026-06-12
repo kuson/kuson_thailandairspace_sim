@@ -65,6 +65,11 @@ export class FlyToController {
       this.active = false;
       this.drone.flightLocked = false;
       this.drone.hover = false;
+      // B10.T3: arrival clamp — physicsStep doesn't run while flightLocked,
+      // so refresh the terrain floor here or the drone can sit underground
+      // for up to 0.5 s on mountain arrivals.
+      const floor = this.drone.resampleTerrainFloor();
+      if (this.drone.position.y < floor) this.drone.position.y = floor;
       this.onComplete?.();
     }
     return true;

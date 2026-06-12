@@ -6,7 +6,8 @@ import { getInputSettings, pollGamepad } from "./input.js";
 import { currentWind, DEFAULT_WIND } from "./wind.js";
 import { BatterySystem, ReturnToHome, RadioLink, Geofence } from "./failures.js";
 import { isMilitaryAirspace } from "./airspace.js";
-import { AGL as terrainAGL } from "./terrain.js";
+import { AGL as terrainAGL, elevationAt } from "./terrain.js";
+import { worldToGeo } from "./coords.js";
 import { simState } from "./simState.js";
 
 const KMH_TO_MS = 1 / 3.6;
@@ -1010,6 +1011,11 @@ export class Drone {
     this._airspaceLayer = null;
     this._lastSafePos = null;
 
+    // B10.T3: terrain floor cache. Sampled ≤2 Hz in physicsStep; clamped on
+    // teleport() immediately so warps never spawn underground.
+    this._terrainFloor  = 1.5;   // elev + 1.5; initialised to sea-level safe value
+    this._terrainElevTimer = 0.5; // force immediate sample on first physicsStep
+
     this._bindEvents();
   }
 
@@ -1314,6 +1320,14 @@ export class Drone {
   physicsStep(dt) {
     if (this.flightLocked || this.paused) return;
 
+    // B10.T3: terrain floor — resample elevationAt at ≤2 Hz (0.5 s accumulator).
+    this._terrainElevTimer += dt;
+    if (this._terrainElevTimer >= 0.5) {
+      this._terrainElevTimer = 0;
+      const { lat, lon } = worldToGeo(this.position.x, this.position.z);
+      this._terrainFloor = elevationAt(lat, lon) + 1.5;
+    }
+
     // P3.T6: refresh gamepad snapshot once per substep. pollGamepad returns
     // null if no controller is connected, so keyboard-only paths are
     // unchanged when no pad is present.
@@ -1372,7 +1386,8 @@ export class Drone {
     // the camera) so synthetic playback never triggers freezes.
     this._applyGeofence(dt);
 
-    if (this.position.y < 1) this.position.y = 1;
+    // B10.T3: clamp to terrain surface (elev + 1.5 m) in all flight modes.
+    if (this.position.y < this._terrainFloor) this.position.y = this._terrainFloor;
   }
 
   // P4.T5 host wiring. main.js calls this once the AirspaceLayer JSON has
@@ -1801,8 +1816,20 @@ export class Drone {
     this._applyCameraMode();
   }
 
+  // B10.T3: event-driven terrain-floor refresh for warp arrivals (teleport,
+  // flyTo completion). Keeps the per-frame path at ≤2 Hz; this is one extra
+  // sample per arrival. Returns the floor so callers can clamp immediately.
+  resampleTerrainFloor(x = this.position.x, z = this.position.z) {
+    const { lat, lon } = worldToGeo(x, z);
+    this._terrainFloor = elevationAt(lat, lon) + 1.5;
+    this._terrainElevTimer = 0;   // reset accumulator — next sample in 0.5 s
+    return this._terrainFloor;
+  }
+
   teleport(x, y, z, yawRad = 0, pitchRad = -0.1) {
-    this.position.set(x, y, z);
+    // B10.T3: resample terrain floor at destination so warps never spawn underground.
+    const clampedY = Math.max(y, this.resampleTerrainFloor(x, z));
+    this.position.set(x, clampedY, z);
     this.bodyYaw = yawRad;
     this.bodyPitch = pitchRad;
     if (this.cameraMode == null) {

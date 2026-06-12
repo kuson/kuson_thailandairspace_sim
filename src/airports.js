@@ -8,6 +8,7 @@
 // "where am I" cue in the 3D view: there were no airport markers before.
 import * as THREE from "three";
 import { geoToWorld } from "./coords.js";
+import { elevationAt } from "./terrain.js";
 
 // Two-line label: bold "✈ ICAO·IATA" headline + lighter airport name.
 function _airportLabelSprite(icao, iata, name) {
@@ -117,17 +118,29 @@ export async function installAirportBeacons(scene, { url = "./data/airports.json
   }
   for (const ap of airports) {
     const w = geoToWorld(ap.lat, ap.lon);
+    const elev = elevationAt(ap.lat, ap.lon);   // 0 before terrain loads
     const marker = _airportMarker();
-    marker.position.set(w.x, y - 80, w.z);
+    marker.position.set(w.x, elev + y - 80, w.z);
     const halo = _airportHalo();
-    halo.position.set(w.x, y - 80, w.z);
+    halo.position.set(w.x, elev + y - 80, w.z);
     const label = _airportLabelSprite(ap.icao, ap.iata, ap.name);
     // Sit higher than city labels (y+320) so the two label layers don't collide.
-    label.position.set(w.x, y + 520, w.z);
+    label.position.set(w.x, elev + y + 520, w.z);
     group.add(halo); group.add(marker); group.add(label);
     entries.push({ ap, marker, halo, label });
   }
   scene.add(group);
+
+  // B10.T3: re-apply elevationAt() after the terrain grid resolves. Called from
+  // main.js inside loadTerrain().then(). Safe to call repeatedly (idempotent).
+  function reliftToTerrain() {
+    for (const e of entries) {
+      const elev = elevationAt(e.ap.lat, e.ap.lon);
+      e.marker.position.y = elev + y - 80;
+      e.halo.position.y   = elev + y - 80;
+      e.label.position.y  = elev + y + 520;
+    }
+  }
 
   // Same camera-distance scaling + prominence fade as the city beacons.
   function updateScales(camera, renderer) {
@@ -173,5 +186,5 @@ export async function installAirportBeacons(scene, { url = "./data/airports.json
     }
   }
 
-  return { group, updateScales };
+  return { group, updateScales, reliftToTerrain };
 }

@@ -6,6 +6,7 @@
 // stay roughly readable across the full altitude range used by the sim.
 import * as THREE from "three";
 import { geoToWorld } from "./coords.js";
+import { elevationAt } from "./terrain.js";
 
 /**
  * Major Thai cities. `prominence` is a 1–3 weight used by the top-N
@@ -158,9 +159,9 @@ function _cityHalo(prominence) {
  *
  * @param {THREE.Scene} scene
  * @param {object} [opts]
- * @param {number} [opts.y=200] — world-Y for the dot + label
+ * @param {number} [opts.y=200] — world-Y baseline above terrain for the dot + label
  * @param {number} [opts.topN] — limit visible labels by prominence × camera distance
- * @returns {{ group: THREE.Group, updateScales: (camera, renderer) => void }}
+ * @returns {{ group: THREE.Group, updateScales: (camera, renderer) => void, reliftToTerrain: () => void }}
  */
 export function installCityBeacons(scene, { y = 200, topN = null } = {}) {
   const group = new THREE.Group();
@@ -168,16 +169,28 @@ export function installCityBeacons(scene, { y = 200, topN = null } = {}) {
   const entries = [];
   for (const city of THAI_CITIES) {
     const w = geoToWorld(city.lat, city.lon);
+    const elev = elevationAt(city.lat, city.lon);   // 0 before terrain loads
     const dot = _cityDot();
-    dot.position.set(w.x, y - 80, w.z);
+    dot.position.set(w.x, elev + y - 80, w.z);
     const halo = _cityHalo(city.prominence);
-    halo.position.set(w.x, y - 80, w.z);
+    halo.position.set(w.x, elev + y - 80, w.z);
     const label = _cityLabelSprite(city.name);
-    label.position.set(w.x, y + 320, w.z);
+    label.position.set(w.x, elev + y + 320, w.z);
     group.add(halo); group.add(dot); group.add(label);
-    entries.push({ city, dot, halo, label });
+    entries.push({ city, dot, halo, label, w });
   }
   scene.add(group);
+
+  // B10.T3: called once from main.js inside loadTerrain().then() after the
+  // terrain grid resolves. Re-applies elevationAt() so beacons sit on hillsides.
+  function reliftToTerrain() {
+    for (const e of entries) {
+      const elev = elevationAt(e.city.lat, e.city.lon);
+      e.dot.position.y   = elev + y - 80;
+      e.halo.position.y  = elev + y - 80;
+      e.label.position.y = elev + y + 320;
+    }
+  }
 
   // Camera-distance scaling. Each frame, rescale labels so they stay
   // ~24 px tall regardless of altitude/zoom. Also fade by prominence at long
@@ -234,5 +247,5 @@ export function installCityBeacons(scene, { y = 200, topN = null } = {}) {
     }
   }
 
-  return { group, updateScales };
+  return { group, updateScales, reliftToTerrain };
 }

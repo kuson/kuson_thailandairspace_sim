@@ -6,8 +6,9 @@
 // just above the ground, re-centred on the drone each frame, with cyan
 // distance labels reusing makeTextSprite.
 import * as THREE from "three";
-import { NM_TO_M } from "./coords.js";
+import { NM_TO_M, worldToGeo } from "./coords.js";
 import { makeTextSprite } from "./airspace.js";
+import { elevationAt } from "./terrain.js";
 
 const RING_SEGMENTS = 96;
 const RING_Y = 20;                               // just above tiles / province lines
@@ -51,9 +52,22 @@ export function installRangeRings(scene) {
   const aeroLabels = mkLabels(AERO_LBL);
   scene.add(group);
 
-  function update(dronePos, camera, renderer, aero = false) {
+  // B10.T3: terrain-lift state. Sampled ≤2 Hz (0.5 s accumulator).
+  const ELEV_INTERVAL = 0.5;
+  let _groundElev = 0;
+  let _elevTimer   = ELEV_INTERVAL;   // fire immediately on first update
+
+  function update(dronePos, camera, renderer, aero = false, dt = 0) {
     if (!group.visible) return;
-    group.position.set(dronePos.x, 0, dronePos.z);     // follow the aircraft
+
+    // Resample terrain under drone at ≤2 Hz; lift group so rings sit above hills.
+    _elevTimer += dt;
+    if (_elevTimer >= ELEV_INTERVAL) {
+      _elevTimer = 0;
+      const { lat, lon } = worldToGeo(dronePos.x, dronePos.z);
+      _groundElev = elevationAt(lat, lon);
+    }
+    group.position.set(dronePos.x, _groundElev + 0.5, dronePos.z);     // follow the aircraft
     const radii = aero ? AERO : METRIC;
     for (let i = 0; i < 3; i++) rings[i].scale.set(radii[i], 1, radii[i]);
 
@@ -67,7 +81,7 @@ export function installRangeRings(scene) {
       s.visible = true;
       s.position.set(0, RING_Y + 5, -radii[i]);        // north edge (local to group)
       // Keep labels ~16 px tall regardless of altitude.
-      const worldPos = new THREE.Vector3(dronePos.x, RING_Y + 5, dronePos.z - radii[i]);
+      const worldPos = new THREE.Vector3(dronePos.x, _groundElev + 0.5 + RING_Y + 5, dronePos.z - radii[i]);
       const dist = Math.max(worldPos.distanceTo(camera.position), 800);
       const worldPerPx = (2 * Math.tan(vFov / 2) * dist) / hPx;
       const cw = s.userData.canvasW, ch = s.userData.canvasH;

@@ -411,6 +411,12 @@ async function bootstrap() {
       // B10.T2: tiles built before the grid resolved are flat — rebuild the
       // live set once now that elevationAt() returns real heights.
       ground.onTerrainReady();
+      // B10.T3: beacons installed before the grid resolved sit at elev 0 —
+      // re-apply their terrain lift once. Airport beacons may still be
+      // loading (async); if so their install-time elevationAt is already
+      // correct because the grid is now resolved.
+      cityBeacons.reliftToTerrain();
+      airportBeacons?.reliftToTerrain();
     })
     .catch((err) => console.warn("[terrain] load failed:", err));
 
@@ -751,7 +757,7 @@ function loop(t) {
   _safe("label-scales", () => layer.updateLabelScales(camera, renderer));
   _safe("city-scales", () => cityBeacons.updateScales(camera, renderer));
   _safe("airport-scales", () => airportBeacons?.updateScales(camera, renderer));
-  _safe("range-rings", () => rangeRings.update(drone.position, camera, renderer, ui?.unitSystem === "aero"));
+  _safe("range-rings", () => rangeRings.update(drone.position, camera, renderer, ui?.unitSystem === "aero", dt));
   _safe("province-scales", () => provinceLines?.updateScales(camera, renderer));
   _safe("liveflights", () => liveFlights.update(dt, camera.position));
   _safe("liveflights-labels", () => liveFlights.updateLabelScales(camera, renderer));
