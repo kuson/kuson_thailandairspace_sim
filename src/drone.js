@@ -967,6 +967,10 @@ export class Drone {
     // throttle, bank, pitch (γ); host owns yaw + world position.
     this._fixedwing = new FixedWingModel();
 
+    // B8.T2: buffet timer (s). Non-zero only when in airplane pre-stall band.
+    // Used in _syncCamera to add a camera-only pitch jitter.
+    this._buffetT = 0;
+
     // P3.T6: gamepad / input pipeline. Settings are loaded once from
     // localStorage and re-read by reloadInputSettings() when the UI panel
     // writes through. _padState is refreshed each physicsStep so the
@@ -1088,14 +1092,22 @@ export class Drone {
         this.position.y - fy * back + up,
         this.position.z - fz * back,
       );
+      // B8.T2: camera-only buffet jitter — zero effect above 1.1·Vs or outside airplane mode.
+      const pitchJitter = this._buffetT > 0
+        ? Math.sin(this._buffetT * 2 * Math.PI * 9) * 0.0026
+        : 0;
       this.camera.rotation.order = "YXZ";
       this.camera.rotation.y = yaw;
-      this.camera.rotation.x = pitch - 0.05;   // slight tilt-down so aircraft sits high in frame
+      this.camera.rotation.x = pitch - 0.05 + pitchJitter;   // slight tilt-down so aircraft sits high in frame
     } else {
+      // B8.T2: camera-only buffet jitter for first-person view.
+      const pitchJitter = this._buffetT > 0
+        ? Math.sin(this._buffetT * 2 * Math.PI * 9) * 0.0026
+        : 0;
       this.camera.position.copy(this.position);
       this.camera.rotation.order = "YXZ";
       this.camera.rotation.y = this.yaw;
-      this.camera.rotation.x = this.pitch;
+      this.camera.rotation.x = this.pitch + pitchJitter;
     }
   }
 
@@ -1275,7 +1287,7 @@ export class Drone {
     // modes (a Mavic lean leaking into a Cessna, or a stalled Cessna
     // resurrecting as a fresh 777, is a UX bug). Reset whenever the mode
     // resolution changes OR the preset itself changes.
-    if (modeChanged || changed) this._quadrotor.reset();
+    if (modeChanged || changed) { this._quadrotor.reset(); this._buffetT = 0; }
     if (changed) {
       this._buildModelForPreset(p.id);
       if (this.viewPerson === "third") this._syncCamera();
@@ -1746,6 +1758,13 @@ export class Drone {
     this.airspeedMs = out.airspeed;
     this._targetRoll = out.roll;   // keep snapshot/restore in sync
     this.currentSpeed = out.airspeed;
+
+    // B8.T2: accumulate buffet timer while in pre-stall band (airspeed < 1.1·Vs).
+    if (out.airspeed < 1.1 * this._fixedwing.Vs) {
+      this._buffetT += dt;
+    } else {
+      this._buffetT = 0;
+    }
   }
 
   snapshot() {

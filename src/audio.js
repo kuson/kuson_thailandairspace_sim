@@ -82,6 +82,182 @@ export function installAudio({ alerts }) {
   const _seenAlerts = new Set(); // keys of alerts that fired a tone
 
   // -------------------------------------------------------------------------
+  // B8.T2 — Engine synth state (lazy, rebuilt on mode|presetId change)
+  // -------------------------------------------------------------------------
+
+  // Key that identifies the current chain. Format: "<mode>|<presetId>".
+  let _engineKey    = null;
+  // Nodes that belong to the current chain (stopped + disconnected on rebuild).
+  let _engineNodes  = [];   // OscillatorNode / AudioBufferSourceNode instances
+  let _engineChainGain = null; // GainNode at the output of the chain → engineBus
+
+  // Prop-specific: primary osc + sub osc.
+  let _propOsc      = null;
+  let _propSub      = null;
+
+  // Jet-specific: noise source + bandpass + rumble osc.
+  let _jetNoise     = null;
+  let _jetBP        = null;
+  let _jetRumble    = null;
+
+  // Hover-specific: triangle osc + LFO osc + LFO gain mod.
+  let _hoverTriOsc  = null;
+  let _hoverLfoOsc  = null;
+  let _hoverLfoGain = null;
+
+  // Stall horn — built once (on first update with ctx), gate via gainNode.
+  let _hornOsc      = null;   // square 800 Hz
+  let _hornLfoOsc   = null;   // square 4 Hz duty modulator
+  let _hornGain     = null;   // overall horn gate gain
+  let _hornActive   = false;
+  let _hornBuilt    = false;
+
+  // Debug-readable values (updated per frame).
+  let _dbgEngineKind  = "";
+  let _dbgEngineFreq  = 0;
+  let _dbgEngineGain  = 0;
+
+  /** Classify presetId → engine kind string. */
+  function _kindForState(mode, presetId) {
+    if (mode === "airplane") {
+      if (presetId === "cessna172") return "prop";
+      return "jet";   // learjet, b777
+    }
+    if (mode === "drone") return "prop";   // Mavic — treat like prop
+    return "hover";   // UFO / HOVERCRAFT / 100x
+  }
+
+  /** Stop all running sources in _engineNodes and clear. */
+  function _disposeChain() {
+    const now = ctx ? ctx.currentTime : 0;
+    for (const n of _engineNodes) {
+      try { n.stop(now); } catch (_) { /* already stopped */ }
+      try { n.disconnect(); } catch (_) { /* */ }
+    }
+    _engineNodes = [];
+    if (_engineChainGain) {
+      try { _engineChainGain.disconnect(); } catch (_) { /* */ }
+      _engineChainGain = null;
+    }
+    _propOsc = _propSub = null;
+    _jetNoise = _jetBP = _jetRumble = null;
+    _hoverTriOsc = _hoverLfoOsc = _hoverLfoGain = null;
+  }
+
+  /** Build the engine chain for the given kind. Chain → engineBus. */
+  function _buildChain(kind) {
+    _disposeChain();
+    const now = ctx.currentTime;
+    _engineChainGain = ctx.createGain();
+    _engineChainGain.gain.setValueAtTime(0, now);
+    _engineChainGain.connect(engineBus);
+
+    if (kind === "prop") {
+      // Sawtooth primary + sine sub → lowpass → chainGain.
+      const lp = ctx.createBiquadFilter();
+      lp.type = "lowpass";
+      lp.frequency.setValueAtTime(900, now);
+
+      _propOsc = ctx.createOscillator();
+      _propOsc.type = "sawtooth";
+      _propOsc.frequency.setValueAtTime(55, now);
+      _propOsc.connect(lp);
+      _engineNodes.push(_propOsc);
+
+      _propSub = ctx.createOscillator();
+      _propSub.type = "sine";
+      _propSub.frequency.setValueAtTime(27.5, now); // half of 55
+      _propSub.connect(lp);
+      _engineNodes.push(_propSub);
+
+      lp.connect(_engineChainGain);
+
+      _propOsc.start(now);
+      _propSub.start(now);
+
+    } else if (kind === "jet") {
+      // Looped noise → bandpass + sine 60 Hz rumble → chainGain.
+      _jetNoise = ctx.createBufferSource();
+      _jetNoise.buffer = _noiseBuffer;
+      _jetNoise.loop = true;
+      _engineNodes.push(_jetNoise);
+
+      _jetBP = ctx.createBiquadFilter();
+      _jetBP.type = "bandpass";
+      _jetBP.frequency.setValueAtTime(600, now);
+      _jetBP.Q.setValueAtTime(0.8, now);
+
+      _jetRumble = ctx.createOscillator();
+      _jetRumble.type = "sine";
+      _jetRumble.frequency.setValueAtTime(60, now);
+      _engineNodes.push(_jetRumble);
+
+      _jetNoise.connect(_jetBP);
+      _jetBP.connect(_engineChainGain);
+      _jetRumble.connect(_engineChainGain);
+
+      _jetNoise.start(now);
+      _jetRumble.start(now);
+
+    } else {
+      // hover: triangle 140 Hz + 0.5 Hz LFO → lfoGain modulating chainGain.
+      _hoverTriOsc = ctx.createOscillator();
+      _hoverTriOsc.type = "triangle";
+      _hoverTriOsc.frequency.setValueAtTime(140, now);
+      _engineNodes.push(_hoverTriOsc);
+
+      _hoverLfoOsc = ctx.createOscillator();
+      _hoverLfoOsc.type = "sine";
+      _hoverLfoOsc.frequency.setValueAtTime(0.5, now);
+      _engineNodes.push(_hoverLfoOsc);
+
+      _hoverLfoGain = ctx.createGain();
+      _hoverLfoGain.gain.setValueAtTime(0.1, now); // LFO depth
+
+      _hoverTriOsc.connect(_engineChainGain);
+      _hoverLfoOsc.connect(_hoverLfoGain);
+      _hoverLfoGain.connect(_engineChainGain.gain);  // LFO modulates chainGain
+
+      _hoverTriOsc.start(now);
+      _hoverLfoOsc.start(now);
+    }
+  }
+
+  /** Build stall horn once (first update after ctx exists). */
+  function _buildHorn() {
+    if (_hornBuilt || !ctx) return;
+    _hornBuilt = true;
+    const now = ctx.currentTime;
+
+    _hornOsc = ctx.createOscillator();
+    _hornOsc.type = "square";
+    _hornOsc.frequency.setValueAtTime(800, now);
+
+    // 4 Hz LFO osc as a duty gate — we use a square LFO to toggle the horn on/off.
+    _hornLfoOsc = ctx.createOscillator();
+    _hornLfoOsc.type = "square";
+    _hornLfoOsc.frequency.setValueAtTime(4, now);
+
+    _hornGain = ctx.createGain();
+    _hornGain.gain.setValueAtTime(0, now);
+
+    // The LFO modulates a gain that drives the horn. Connect:
+    //   hornOsc → lfoModGain (constant 0.15) → hornGain (gated) → sfxBus
+    //   hornLfoOsc → lfoDepthGain (depth 0.5) → lfoModGain.gain (ignored — use direct product)
+    // Simpler: hornOsc → hornGain → sfxBus; hornLfoOsc → lfoDepthGain → hornGain.gain
+    const lfoDepthGain = ctx.createGain();
+    lfoDepthGain.gain.setValueAtTime(0.15, now); // LFO amplitude into gain param
+    _hornLfoOsc.connect(lfoDepthGain);
+    lfoDepthGain.connect(_hornGain.gain);
+
+    _hornOsc.connect(_hornGain);
+    _hornGain.connect(sfxBus);
+
+    _hornOsc.start(now);
+    _hornLfoOsc.start(now);
+  }
+
+  // -------------------------------------------------------------------------
   // Internal helpers
   // -------------------------------------------------------------------------
 
@@ -393,14 +569,15 @@ export function installAudio({ alerts }) {
 
     /**
      * update(dt, droneState) — per-frame call.
-     * This task: only ramps masterGain toward the target value (80 ms ramp).
-     * B8.T2 will add engine AudioParam updates here.
+     * Ramps masterGain (80 ms) and drives engine synth + stall horn.
+     * droneState: { mode, presetId, throttle, airspeedMs, Vs, stalled, paused }
      */
-    update(_dt, _droneState) {
+    update(_dt, droneState) {
       if (!ctx || !masterGain) return;
+
+      // --- masterGain ramp ---
       const target = _settings.muted ? 0 : _settings.volume;
       const now    = ctx.currentTime;
-      // Only reschedule if the target changed (avoid flooding the param queue).
       const current = masterGain.gain.value;
       if (Math.abs(current - target) > 0.001) {
         masterGain.gain.cancelScheduledValues(now);
@@ -408,7 +585,74 @@ export function installAudio({ alerts }) {
         masterGain.gain.linearRampToValueAtTime(target, now + 0.080);
         _targetMasterGain = target;
       }
+
+      // --- engine synth ---
+      const state = droneState;
+      if (!state || !state.mode) {
+        // No state: silence engine.
+        if (_engineChainGain) {
+          _engineChainGain.gain.setTargetAtTime(0, now, 0.050);
+        }
+        _dbgEngineGain = 0;
+        _dbgEngineKind = "";
+        return;
+      }
+
+      const { mode, presetId, throttle = 0, airspeedMs = 0, Vs = 0, paused = false } = state;
+      const kind = _kindForState(mode, presetId);
+      const newKey = `${mode}|${presetId}`;
+
+      // Rebuild chain only when key changes.
+      if (newKey !== _engineKey) {
+        _engineKey = newKey;
+        _buildChain(kind);
+      }
+
+      // Build stall horn lazily.
+      _buildHorn();
+
+      const RAMP = 0.050; // 50 ms time constant for all AudioParam changes
+
+      // --- Per-frame: freq + gain updates (AudioParam only, zero node creation) ---
+      if (_engineChainGain) {
+        const gainTarget = (paused) ? 0 : 0.15 + 0.4 * throttle;
+        _engineChainGain.gain.setTargetAtTime(gainTarget, now, RAMP);
+        _dbgEngineGain = gainTarget;
+
+        if (kind === "prop" && _propOsc) {
+          const freq = 55 + 55 * throttle;
+          _propOsc.frequency.setTargetAtTime(freq, now, RAMP);
+          _propSub.frequency.setTargetAtTime(freq * 0.5, now, RAMP);
+          _dbgEngineFreq = freq;
+
+        } else if (kind === "jet" && _jetBP) {
+          const bpFreq = 600 + 1800 * throttle;
+          _jetBP.frequency.setTargetAtTime(bpFreq, now, RAMP);
+          _dbgEngineFreq = bpFreq;
+
+        } else if (kind === "hover" && _hoverTriOsc) {
+          _dbgEngineFreq = 140;
+        }
+
+        _dbgEngineKind = kind;
+      }
+
+      // --- Stall horn ---
+      if (_hornGain) {
+        const hornActive = (mode === "airplane") && !paused && (airspeedMs < 1.1 * Vs) && Vs > 0;
+        if (hornActive !== _hornActive) {
+          _hornActive = hornActive;
+          const hornTarget = hornActive ? 0.25 : 0;
+          _hornGain.gain.setTargetAtTime(hornTarget, now, 0.010); // ≤50 ms ramp
+        }
+      }
     },
+
+    // --- B8.T2 debug getters ---
+    get _engineKind() { return _dbgEngineKind; },
+    get _engineFreq() { return _dbgEngineFreq; },
+    get _engineGain() { return _dbgEngineGain; },
+    get _hornActive() { return _hornActive; },
 
     setVolume(v) {
       _settings.volume = Math.max(0, Math.min(1, v));
@@ -433,6 +677,11 @@ export function installAudio({ alerts }) {
     dispose() {
       _removeUnlockListeners();
       if (_alertUnsub) { _alertUnsub(); _alertUnsub = null; }
+      _disposeChain();
+      if (_hornOsc)    { try { _hornOsc.stop();    } catch (_) {} }
+      if (_hornLfoOsc) { try { _hornLfoOsc.stop(); } catch (_) {} }
+      _hornOsc = _hornLfoOsc = _hornGain = null;
+      _hornBuilt = false;
       if (ctx) { ctx.close().catch(() => {}); ctx = null; }
       masterGain = engineBus = sfxBus = _noiseBuffer = null;
     },

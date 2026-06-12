@@ -7,7 +7,7 @@ import { loadTerrain } from "./terrain.js";
 import { DynamicGround } from "./ground.js";
 import { FlyToController } from "./flyto.js";
 import { FlightHistory, HISTORY_EVENT_TYPES } from "./flightHistory.js";
-import { EasyMode } from "./modes.js";
+import { EasyMode, FlightMode } from "./modes.js";
 import { pickAirspacesAlongRay } from "./identify.js";
 import { getStartLocation } from "./geolocation.js";
 import { geoToWorld, ORIGIN } from "./coords.js";
@@ -538,6 +538,48 @@ const DPR_MIN = Math.max(DPR_MAX / 2, 0.5);
 let currentDPR = DPR_MAX;
 let slowFrameRun = 0;
 let fastFrameRun = 0;
+
+/**
+ * B8.T2 — Snapshot drone state for the audio engine each frame.
+ * Reads from the live drone object; safe to call while paused.
+ */
+function droneStateForAudio() {
+  const fm = drone.flightMode;
+  let mode;
+  if (fm === FlightMode.AIRPLANE) {
+    mode = "airplane";
+  } else if (fm === FlightMode.DRONE) {
+    mode = "drone";
+  } else {
+    mode = "hover"; // HOVERCRAFT / UFO
+  }
+
+  let throttle, airspeedMs, Vs, stalled;
+  if (mode === "airplane" && drone._fixedwing) {
+    throttle   = drone._fixedwing.throttle;
+    airspeedMs = drone._fixedwing.airspeedMs;
+    Vs         = drone._fixedwing.Vs;
+    stalled    = drone._fixedwing.stalled;
+  } else {
+    // drone / hover: use currentSpeed as proxy (0–50 m/s → 0–1)
+    const spd = drone.currentSpeed ?? 0;
+    throttle   = Math.max(0, Math.min(1, spd / 50));
+    airspeedMs = 0;
+    Vs         = 0;
+    stalled    = false;
+  }
+
+  return {
+    mode,
+    presetId:   drone.speedPresetId,
+    throttle:   throttle   ?? 0,
+    airspeedMs: airspeedMs ?? 0,
+    Vs:         Vs         ?? 0,
+    stalled:    stalled    ?? false,
+    paused:     !!drone.paused,
+  };
+}
+
 function _safe(label, fn) {
   try { return fn(); }
   catch (err) { console.error(`[loop:${label}]`, err); return undefined; }
@@ -664,7 +706,7 @@ function loop(t) {
   _safe("liveflights", () => liveFlights.update(dt, camera.position));
   _safe("liveflights-labels", () => liveFlights.updateLabelScales(camera, renderer));
   _safe("ufos", () => ufos.update(dt));
-  _safe("audio", () => audio.update(dt, null));
+  _safe("audio", () => audio.update(dt, droneStateForAudio()));
   _safe("game", () => game.update(dt));
 
   if (ui) {
