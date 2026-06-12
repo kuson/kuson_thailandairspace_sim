@@ -1001,6 +1001,36 @@
     #gameBriefing[hidden],
     #gameDebrief[hidden] { display: none; }
 
+    /* B9.T2: aim-mode reticle — centered crosshair, z-index 55 (above HUD layers) */
+    #reticle {
+      position: fixed;
+      left: 50%; top: 50%;
+      transform: translate(-50%, -50%);
+      width: 2px; height: 2px;
+      background: rgba(255,255,255,0.9);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 55;
+      display: none;
+      /* four arms: left, right, up, down — each 5px long, 2px wide, 4px gap */
+      box-shadow:
+        /* center dot glow */
+        0 0 3px 2px rgba(180,220,255,0.5),
+        /* left arm */
+        -7px 0 0 1px rgba(255,255,255,0.85),
+        /* right arm */
+         7px 0 0 1px rgba(255,255,255,0.85),
+        /* up arm */
+        0 -7px 0 1px rgba(255,255,255,0.85),
+        /* down arm */
+        0  7px 0 1px rgba(255,255,255,0.85),
+        /* arm glows */
+        -7px 0 4px 1px rgba(180,220,255,0.45),
+         7px 0 4px 1px rgba(180,220,255,0.45),
+        0 -7px 4px 1px rgba(180,220,255,0.45),
+        0  7px 4px 1px rgba(180,220,255,0.45);
+    }
+
     /* Inner card — same HUD panel palette as .tc-card */
     .gc-card {
       background: var(--panel);
