@@ -429,6 +429,9 @@ async function bootstrap() {
     },
   });
   await tourGuide.load();
+  // Re-publish tourGuide on __sim now that it exists — the top-level
+  // assignment captured undefined because bootstrap() is async.
+  window.__sim.tourGuide = tourGuide;
   startScreen.tick("Loading tour data…");
 
   ui = new UI({
@@ -492,7 +495,7 @@ async function bootstrap() {
   };
   // Restore glow state from persistence on load.
   setVolumeGlow(groundDetail.volumeGlow);
-  window.__sim.ground = {
+  window.__sim.groundLayers = {
     rangeRings,
     get airports() { return airportBeacons; },
     get provinces() { return provinceLines; },
