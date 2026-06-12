@@ -117,6 +117,19 @@ export function installAudio({ alerts }) {
   let _dbgEngineFreq  = 0;
   let _dbgEngineGain  = 0;
 
+  // B8.T3 — Speech synthesis / engine duck state.
+  // _voiceList: cached voices array; refreshed on voiceschanged (once).
+  // _voiceListened: true once the voiceschanged listener has been registered.
+  // _ducked: true while an utterance is speaking; drives a per-frame multiplier.
+  // _duckMult: current duck multiplier applied to _engineChainGain per-frame.
+  //            Ramped toward _duckTarget at _duckRatePerFrame speed in update().
+  // _duckTarget: 1.0 (normal) or 0.4 (ducked).
+  let _voiceList      = null;
+  let _voiceListened  = false;
+  let _ducked         = false;
+  let _duckMult       = 1.0;
+  let _duckTarget     = 1.0;
+
   /** Classify presetId → engine kind string. */
   function _kindForState(mode, presetId) {
     if (mode === "airplane") {
@@ -465,6 +478,19 @@ export function installAudio({ alerts }) {
     }
   }
 
+  function _playClickBlip() {
+    // Short 30 ms click blip (noise burst) — used as radio squelch-off chirp.
+    const t   = ctx.currentTime;
+    const ns  = ctx.createBufferSource();
+    const nsG = ctx.createGain();
+    ns.buffer = _noiseBuffer;
+    ns.connect(nsG);
+    nsG.connect(sfxBus);
+    _env(nsG, t, 0.002, 0.18, 0.025);
+    ns.start(t);
+    ns.stop(t + 0.030);
+  }
+
   const _TONES = {
     alertSafety:   _playAlertSafety,
     alertRadio:    _playAlertRadio,
@@ -507,6 +533,7 @@ export function installAudio({ alerts }) {
     // Debug fields — mutable, read by console / tests.
     _lastPlayed: null,
     _lastSay:    null,
+    _speaking:   false,
 
     /**
      * unlock() — create the AudioContext (lazy) and attempt ctx.resume().
@@ -560,11 +587,72 @@ export function installAudio({ alerts }) {
     },
 
     /**
-     * say(text) — STUB (B8.T3 implements speech synthesis).
+     * say(text) — B8.T3: speak text via SpeechSynthesis with engine ducking.
+     * Keeps _lastSay as the verification hook (set unconditionally, first line).
      */
     say(text) {
       this._lastSay = text;
-      // B8.T3 will implement SpeechSynthesis here.
+
+      // Gate 1: voice setting off.
+      if (!_settings.voice) return;
+      // Gate 2: no SpeechSynthesis API (node / old browsers).
+      if (typeof window === "undefined" || !window.speechSynthesis) return;
+      // Gate 3: empty text.
+      if (!text || !text.trim()) return;
+
+      // Ensure voice list is populated and refreshed on async voiceschanged.
+      if (!_voiceListened) {
+        _voiceListened = true;
+        _voiceList = window.speechSynthesis.getVoices();
+        window.speechSynthesis.addEventListener("voiceschanged", () => {
+          _voiceList = window.speechSynthesis.getVoices();
+        });
+      } else if (_voiceList === null) {
+        _voiceList = window.speechSynthesis.getVoices();
+      }
+
+      // Cancel any ongoing utterance (new call preempts stale chatter).
+      window.speechSynthesis.cancel();
+
+      // Pick voice: prefer en-GB, then en-US, then any en.
+      let voice = null;
+      if (_voiceList && _voiceList.length > 0) {
+        voice =
+          _voiceList.find((v) => v.lang.startsWith("en-GB")) ??
+          _voiceList.find((v) => v.lang.startsWith("en-US")) ??
+          _voiceList.find((v) => v.lang.startsWith("en")) ??
+          null;
+      }
+
+      const utter = new SpeechSynthesisUtterance(text);
+      utter.rate   = 1.05;
+      utter.pitch  = 0.9;
+      // Volume follows master setting; 0 when muted.
+      utter.volume = _settings.muted ? 0 : _settings.volume;
+      if (voice) utter.voice = voice;
+
+      // Duck engine on speak start.
+      const _onStart = () => {
+        _audio._speaking = true;
+        _ducked      = true;
+        _duckTarget  = 0.4;
+        // Squelch chirp before speech (only if ctx is unlocked).
+        if (ctx && ctx.state === "running") _playAlertRadio();
+      };
+
+      // Restore engine and play blip on end/error.
+      const _onEnd = () => {
+        _audio._speaking = false;
+        _ducked     = false;
+        _duckTarget = 1.0;
+        if (ctx && ctx.state === "running") _playClickBlip();
+      };
+
+      utter.addEventListener("start", _onStart);
+      utter.addEventListener("end",   _onEnd);
+      utter.addEventListener("error", _onEnd);
+
+      window.speechSynthesis.speak(utter);
     },
 
     /**
@@ -584,6 +672,17 @@ export function installAudio({ alerts }) {
         masterGain.gain.setValueAtTime(current, now);
         masterGain.gain.linearRampToValueAtTime(target, now + 0.080);
         _targetMasterGain = target;
+      }
+
+      // --- engine duck ramp (B8.T3) ---
+      // Ramp _duckMult toward _duckTarget at ~4.0 units/s (150 ms full swing).
+      // Applied as a multiplier on the chain-gain target below.
+      if (_duckMult !== _duckTarget) {
+        const step = (_duckTarget > _duckMult ? 1 : -1) * Math.min(_dt, 0.1) * 4.0;
+        _duckMult = _duckMult + step;
+        // Clamp to [0.4, 1.0] and snap to target when close enough.
+        if (Math.abs(_duckMult - _duckTarget) < 0.01) _duckMult = _duckTarget;
+        _duckMult = Math.max(0.4, Math.min(1.0, _duckMult));
       }
 
       // --- engine synth ---
@@ -615,7 +714,7 @@ export function installAudio({ alerts }) {
 
       // --- Per-frame: freq + gain updates (AudioParam only, zero node creation) ---
       if (_engineChainGain) {
-        const gainTarget = (paused) ? 0 : 0.15 + 0.4 * throttle;
+        const gainTarget = ((paused) ? 0 : 0.15 + 0.4 * throttle) * _duckMult;
         _engineChainGain.gain.setTargetAtTime(gainTarget, now, RAMP);
         _dbgEngineGain = gainTarget;
 
@@ -677,6 +776,12 @@ export function installAudio({ alerts }) {
     dispose() {
       _removeUnlockListeners();
       if (_alertUnsub) { _alertUnsub(); _alertUnsub = null; }
+      // B8.T3: cancel any in-flight speech and restore duck state.
+      if (typeof window !== "undefined" && window.speechSynthesis) {
+        window.speechSynthesis.cancel();
+      }
+      this._speaking = false;
+      _ducked = false; _duckTarget = 1.0; _duckMult = 1.0;
       _disposeChain();
       if (_hornOsc)    { try { _hornOsc.stop();    } catch (_) {} }
       if (_hornLfoOsc) { try { _hornLfoOsc.stop(); } catch (_) {} }

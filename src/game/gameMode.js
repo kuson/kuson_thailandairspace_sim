@@ -36,9 +36,10 @@ export class GameMode {
    *   typing?: object,
    *   alerts?: object,
    *   AlertTier?: object,
+   *   audio?: object,
    * }} deps
    */
-  constructor({ layer, startFlyTo, getDronePos, atc, ufos, typing, alerts, AlertTier }) {
+  constructor({ layer, startFlyTo, getDronePos, atc, ufos, typing, alerts, AlertTier, audio }) {
     this.layer       = layer;
     this.startFlyTo  = startFlyTo;
     this.getDronePos = getDronePos;
@@ -48,6 +49,7 @@ export class GameMode {
     this.typing      = typing     ?? null;
     this._alerts     = alerts     ?? null;
     this._alertTier  = AlertTier  ?? null;
+    this.audio       = audio      ?? null;
 
     this.state       = "IDLE";
     this._listeners  = new Map(); // event -> Set<cb>
@@ -255,12 +257,17 @@ export class GameMode {
     // Pass stat helpers to the wave after construction (wave reads _statsModule
     // from deps reference which is `this`).
     this._wave._statsModule = { getGameStats, setGameStats };
+    // B8.T3: announce wave start.
+    const n = this._wave._contacts?.length ?? 3;
+    this.audio?.say(`Scramble, scramble, scramble — ${n} contacts inbound`);
   }
 
   _enterDebrief() {
     const summary = this._wave?.summary() ?? { contacts: [], total: 0, identified: 0, lost: 0 };
     this._wave = null;
     if (!this._enter("DEBRIEF")) return;
+    // B8.T3: announce debrief.
+    this.audio?.say(`Wave complete — ${summary.total} points`);
 
     // Persist stats.
     const stats    = getGameStats();

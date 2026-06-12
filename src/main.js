@@ -250,10 +250,10 @@ const audio = installAudio({ alerts });
 // flag-AND tangle the loop used to juggle.
 const simMode = new SimModeMachine();
 
-const atc    = new AtcRadio({ layer, getDronePos: () => drone.position, alerts, AlertTier });
+const atc    = new AtcRadio({ layer, getDronePos: () => drone.position, alerts, AlertTier, audio });
 const ufos   = new UfoLayer(scene, { layer });
 const typing = new TypingChallenge({ drone });
-const game   = new GameMode({ layer, startFlyTo, getDronePos: () => drone.position, atc, ufos, typing, alerts, AlertTier });
+const game   = new GameMode({ layer, startFlyTo, getDronePos: () => drone.position, atc, ufos, typing, alerts, AlertTier, audio });
 
 // Betterment-2 P3: build the per-frame context the flight-history event log
 // diffs against. Cheap — airspacesAt is AABB-accelerated.

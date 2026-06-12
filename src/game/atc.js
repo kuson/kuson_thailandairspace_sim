@@ -12,13 +12,14 @@
 
 export class AtcRadio {
   /**
-   * @param {{ layer: object, getDronePos: Function, alerts: object, AlertTier: object }} deps
+   * @param {{ layer: object, getDronePos: Function, alerts: object, AlertTier: object, audio?: object }} deps
    */
-  constructor({ layer, getDronePos, alerts, AlertTier }) {
+  constructor({ layer, getDronePos, alerts, AlertTier, audio }) {
     this.layer       = layer;
     this.getDronePos = getDronePos;
     this.alerts      = alerts;
     this.AlertTier   = AlertTier;
+    this._audio      = audio ?? null;
 
     /** @type {Array<{ts: number, message: string, airspaceId: string}>} */
     this.log = [];
@@ -98,6 +99,8 @@ export class AtcRadio {
     if (this.log.length > 20) this.log.length = 20;
 
     this._emit(entry);
+    // B8.T3: speak the radio call if audio is wired.
+    this._audio?.say(message);
     return entry;
   }
 
