@@ -121,9 +121,96 @@ Rules:
 
 ---
 
-## Phases B8–B10 (sketch — expand into task contracts when reached)
+## Phase Betterment-8 — SCRAMBLE complete + Sound (expanded 2026-06-12, Fable)
 
-- **B8 — SCRAMBLE complete + Sound:** `src/audio.js` (speechSynthesis ATC voice + radio chirp, engine loop, stall horn at 1.1·Vs, alert tones), difficulty tiers (Cadet/Pilot/Ace per report §3.3), full wave/combo system, 60-s interactive tutorial (reuses tour overlay + flyto + identify), progressive HUD. *Model: sonnet executors; Fable writes the audio-graph design note first.*
+**Goal (Pass Criterion for the phase):** The sim is no longer silent — engine, warnings, ATC voice, and game SFX all play (procedural Web Audio, zero asset files, all user-toggleable); SCRAMBLE has Cadet/Pilot/Ace tiers and escalating waves; a first-time player gets a 60-second interactive tutorial and a minimal HUD; airspace volumes get a subtle fresnel edge-glow. Audio off / fresh-profile off ⇒ pre-B8 behavior. New persistence: `kuson.audio.v1`, `kuson.hud.v1`; `kuson.game.v1` gains `{difficulty, waveReached}`.
+
+### §B8.0 Audio-graph design note (orchestrator-authored — binding)
+```
+AudioContext (lazy; resume() on startScreen activation + every pointerdown/keydown until "running")
+ └─ masterGain  (volume+mute from kuson.audio.v1; 0 when muted)
+     ├─ engineBus (gain; ducked ×0.4 with 150 ms ramps while ATC voice speaks)
+     │    prop  (Mavic/C172): saw osc 55→110 Hz by throttle + sine sub (f/2) → lowpass 900 Hz
+     │    jet   (Lear/777):   looped white-noise buffer → bandpass 600→2400 Hz by throttle + sine 60 Hz rumble
+     │    hover/UFO (Easy):   triangle 140 Hz + 0.5 Hz LFO on gain (soft hum)
+     ├─ sfxBus  — stall horn (square 800 Hz gated 4 Hz), alert tones by tier
+     │            (safety = urgent triple beep · RADIO = squelch chirp · ADVISORY = single soft ping),
+     │            game SFX (glyph tick, ID-lock sweep, banish whoosh+bell, contact-lost descend, score chime)
+     └─ (voice = speechSynthesis, outside Web Audio; ducks engineBus via gain automation)
+Rules: engine chain rebuilt ONLY on (flightMode|presetId) change; per-frame work = AudioParam updates only
+(no node churn, no allocation). All buses created once. document hidden → ctx.suspend(), visible → resume().
+```
+
+### B8.T1 — Audio core: engine module, alert tones, settings (`src/audio.js`) — model: sonnet
+- `installAudio()` → `{update(dt, droneState), play(name), say(text), setVoiceEnabled, unlock(), dispose}` implementing §B8.0 graph skeleton + tone library (`play("lockSweep")` etc. — implement: alertSafety, alertRadio, alertAdvisory, tick, lockSweep, banish, lost, chime). Settings `get/setAudioSettings` (`kuson.audio.v1`, `{volume: 0.7, muted: false, voice: true}`, guarded merge per `simState.js` pattern).
+- Subscribe to the alert queue (`alerts.subscribe(fn)`, alerts.js:65): on each NEW key entering the active set, play its tier tone (map by `tier.id`; track seen keys to avoid re-fire on re-publish).
+- Settings UI: "Sound" block in Display options (volume slider + Mute + Voice checkboxes), wired + persisted, matching `.opt` idiom.
+- main.js: instantiate; `audio.unlock()` wired into startScreen `ready` handlers + capture pointerdown/keydown fallback; `_safe("audio", () => audio.update(dt, droneStateForAudio()))` in the loop; expose `window.__sim.audio`.
+- **Pass:** `node --check` clean; with ctx running, publishing a RADIO alert fires the chirp (verifiable: `__sim.audio` exposes `_lastPlayed` debug field); volume/mute persist across reload; muted ⇒ masterGain 0.
+- **Commit:** `feat(audio): procedural audio core — buses, alert tones, settings`
+
+### B8.T2 — Engine loop + stall horn + buffet (`src/audio.js`, `src/drone.js` read-only state, `src/main.js`) — model: sonnet
+- `droneStateForAudio()` in main.js: `{mode (easy|drone|airplane|ufo), presetId, throttle (fixedwing.throttle or climb proxy), airspeedMs, Vs, stalled}` — read from `drone` + `drone._fixedwing` (physics.js:292/385 fields; Vs per preset, physics.js:210–220).
+- Engine synth per §B8.0; smooth param ramps (≥50 ms) so preset switches don't click. Stall horn: airplane realistic mode, `airspeedMs < 1.1·Vs` → gated square; stops immediately above threshold or on mode change.
+- Buffet: same band → `drone` camera shake hook — add a tiny `this.buffetT` driven offset (±0.15° pitch jitter at 9 Hz) inside the existing camera sync (find `_syncCamera`); zero when audio muted? NO — buffet is physics feedback, independent of audio mute.
+- **Pass:** engine pitch/gain track throttle changes (assert AudioParam values via `__sim.audio` debug getters at two throttle settings); horn gates on/off across the 1.1·Vs boundary (drive `__sim.drone._fixedwing.airspeedMs` in console); no node creation in `update` (code-inspect).
+- **Commit:** `feat(audio): per-preset engine loop + stall horn + buffet shake`
+
+### B8.T3 — ATC voice (`src/audio.js`, `src/game/atc.js`) — model: sonnet
+- `say(text)`: speechSynthesis, rate 1.05, pitch 0.9, prefer en-GB/en-US voice (voices load async — re-query on `voiceschanged`); cancel-queue policy: new radio call cancels any still-pending utterance; squelch chirp before, click after; engineBus duck ×0.4 during utterance (150 ms ramps, restore on `end`/`error`).
+- atc.js: after publishing, call `this._audio?.say(message)` (inject audio handle via constructor deps from main.js — optional dep, null-safe). Voice toggle from settings gates `say()` entirely.
+- gameMode: say wave-start ("Scramble, scramble, scramble — {n} contacts inbound") and debrief ("Wave complete — {score} points") lines.
+- **Pass:** `say` fires utterance when voice on (assert `speechSynthesis.pending/speaking` or a `_lastUtterance` debug field), silent + no errors when off; radio text always lands in the log regardless.
+- **Commit:** `feat(audio): speech-synthesis ATC voice with engine ducking`
+
+### B8.T4 — Game SFX wiring (`src/game/typing.js`, `src/game/scramble.js`, `src/game/gameMode.js`) — model: sonnet
+- Inject optional `audio` dep (constructor, null-safe — test-seam discipline, no hard import in game modules): typing glyph keystroke → `tick` (throttle ≤ 1 per 40 ms), correct resolve → `lockSweep`; scramble banish → `banish`, contact lost → `lost`; debrief shown → `chime`.
+- **Pass:** each event fires its named tone (assert via `_lastPlayed`); null audio ⇒ identical pre-B8 behavior (`node --check` + code-inspect).
+- **Commit:** `feat(game): SFX hooks across typing/scramble/debrief`
+- **CHECKPOINT C1 (orchestrator):** browser — unlock context, run a mini-wave, assert tone/voice debug fields fire at each beat; engine params track throttle; settings persist; muted run silent (masterGain 0).
+
+### B8.T5 — Difficulty tiers (`src/game/gameMode.js`, `src/game/scramble.js`, `src/game/score.js`) — model: sonnet
+- Briefing card gains a tier selector (3 buttons, ←/→ or 1/2/3 while card open; persisted `kuson.game.v1.difficulty`, default cadet):
+  | | contacts | timeLimitS | challengeS | autopilot btn | answers accepted | score mult |
+  |---|---|---|---|---|---|---|
+  | CADET | 3 | 90 | 45 | yes | id, shortName, name | ×1 |
+  | PILOT | 4 | 75 | 35 | no | id, shortName | ×1.5 |
+  | ACE | 5 | 60 | 30 | no | id only | ×2 |
+- ScrambleWave takes the tier config object; score.contactIdentified multiplies by tier mult; debrief shows tier.
+- **Pass:** REPL — tier table produces the right wave config; browser at C2 — Pilot hides AUTOPILOT, Ace rejects shortName answer (typed shortName → glyphs can still render target but resolve correct=false… target display for ACE = the `id`).
+- **Commit:** `feat(game): Cadet/Pilot/Ace difficulty tiers`
+
+### B8.T6 — Wave progression (`src/game/gameMode.js`, `src/game/scramble.js`, `src/game/score.js`) — model: sonnet
+- Debrief gains "Next wave (Enter) / End (Esc)": next wave = wave N+1 with +1 contact (cap +3) and timeLimitS −10% per wave (floor 45 s); session total accumulates across waves; `kuson.game.v1.waveReached` = max wave index reached; debrief shows "WAVE {n} · SESSION {total}".
+- DEBRIEF→WAVE added to the FSM guard table (legal only via next-wave path).
+- **Pass:** two consecutive waves in browser at C2; waveReached persists; End → IDLE clean.
+- **Commit:** `feat(game): escalating multi-wave progression`
+
+### B8.T7 — 60-second interactive tutorial (`src/game/tutorial.js` new, start-screen entry) — model: sonnet
+- Steps (each = instruction card top-center + completion detector): 1) "Hold W" (drone.keys has w for 1 s) → 2) "Mouse-look" (|Δyaw| > 0.5 rad cumulative) → 3) "Fly through the rings" — 3 torus rings (THREE.TorusGeometry, cyan, additive) strung ahead of spawn; proximity < 120 m pops each (SFX `chime`) → 4) "Press I and look at an airspace" (identifyMode on + a non-empty pick) → 5) practice typing challenge (Bangkok CTR, no timer) → done card → offers Play.
+- Entry: start screen Play → if `kuson.game.v1.wavesPlayed === 0` and tutorial never completed (`kuson.game.v1.tutorialDone`), briefing card offers "First time? 60-second tutorial (T)"; also tutorial replayable via `__sim.game.tutorial.start()`.
+- Reuse: typing modal, alerts ADVISORY for step text is NOT enough — build a small instruction card (clone `.gc-card` family); rings disposed on finish/abort; abort path via Esc → everything cleaned (UfoLayer-style dispose hygiene).
+- **Pass:** full tutorial playable in browser (C2) — each detector advances, rings pop with chime, practice challenge resolves, `tutorialDone` persists, abort mid-tutorial leaves no rings/cards.
+- **Commit:** `feat(game): 60-second interactive tutorial`
+- **CHECKPOINT C2 (orchestrator):** tutorial start-to-finish; Pilot + Ace wave each verified; two-wave progression; all with audio beats firing.
+
+### B8.T8 — Progressive HUD + quick chips (`src/ui.js`, `index.html`, `src/main.js`) — model: sonnet
+- Minimal-HUD mode: only LAT/LON+ALT+SPD+HDG rows + minimap + alerts visible; everything else (VS/WIND/BAT/LINK/NEXT/MODE/SIM SPEED/FLIGHT HISTORY, right-panel sections beyond tour+display) collapsed behind a "⚙ Pro panel" toggle chip (top of HUD). Persisted `kuson.hud.v1` `{pro: bool}`.
+- Default: `pro: true` for EXISTING users (any `kuson.*`/`thairspace.*` key present at first run of this feature), `pro: false` only for completely fresh profiles — the operator's own setup must not change.
+- Quick chips (O5): 4 warp chips above `#airspaceFilter` — Bangkok (VTBD-CTR), Chiang Mai (VTCC-CTR), Phuket (VTSP-CTR), U-Tapao (resolve actual id from data — grep airspaces.json) — each calls the existing list-row warp path.
+- **Pass:** fresh profile (cleared storage) ⇒ minimal HUD; toggling Pro reveals all + persists; existing-profile default unchanged; chips warp correctly (browser).
+- **Commit:** `feat(ui): progressive HUD (pro toggle) + quick warp chips`
+
+### B8.T9 — Airspace fresnel edge-glow (V4) (`src/airspace.js`, display option) — model: sonnet, escalation-watch (shader)
+- Extend the existing `onBeforeCompile` pattern infra (airspace.js wallMatFor/pattern pool, ~line 55–125): add a view-angle fresnel term brightening wall edges (pow(1−|dot(N,V)|, 3) × categoryColor × 0.35, additive into the fragment color) — subtle; floors unchanged. Pooling intact (key gains a glow flag only if needed — prefer same material, uniform-free implementation).
+- Display option "Volume glow" checkbox (default ON), persisted in `kuson.grounddetail.v1` as `{volumeGlow}`; OFF ⇒ exactly pre-B8 shader path (the no-glow material variant).
+- **Pass:** browser — glow visible at grazing angles on CTR walls, OFF toggle restores baseline screenshot; program count delta ≤ +4 (overlay).
+- **Commit:** `feat(airspace): fresnel edge-glow on volume walls (toggleable)`
+- **CHECKPOINT C3 (orchestrator):** full regression — B5/B6/B7 smoke lists; fresh-profile first-run flow (minimal HUD → tutorial → first wave); audio-off run; baseline diff with glow OFF.
+
+### B8.T10 — Docs (`spec.md`, `journal.md`, `state_TODO.md`) — model: sonnet
+- spec §3.17 "Audio" + §3.16 additions (tiers, waves, tutorial) + §6 acceptance rows (~8); journal block 2026-06-12 (b) with C1–C3 evidence; TODO §0 extended; push.
+- **Commit:** `docs: spec §3.17 audio + B8 journal/TODO`
 - **B9 — INTERCEPT:** `src/game/weapons.js` hitscan + tracer/spark pools, UFO EVADE/ATTACK behaviors, ground crawlers vs airport beacons, identify-then-engage combined mode, airspace frustum culling + trail buffer reuse (report P4–P5). *Model: sonnet; Fable reviews the hit-detection math.*
 - **B10 — World beauty:** terrain relief from `data/terrain.bin` displacement, day/night + night city lights, water shader, wind-by-altitude + crosswind HUD, G-limits. *Model: Fable designs the terrain-displacement approach (one task), sonnet executes the rest.*
 
