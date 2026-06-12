@@ -407,10 +407,19 @@ export class LiveFlightsLayer {
     label.material.opacity = 0;
     this.labelsGroup.add(label);
 
+    const trailPos = new Float32Array(TRAIL_MAX_PTS * 3);
+    const trailCol = new Float32Array(TRAIL_MAX_PTS * 3);
+    const trailGeom = new THREE.BufferGeometry();
+    const trailPosAttr = new THREE.BufferAttribute(trailPos, 3);
+    const trailColAttr = new THREE.BufferAttribute(trailCol, 3);
+    trailGeom.setAttribute("position", trailPosAttr);
+    trailGeom.setAttribute("color", trailColAttr);
+    trailGeom.setDrawRange(0, 0);
     const line = new THREE.Line(
-      new THREE.BufferGeometry(),
+      trailGeom,
       new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.8, depthTest: true }),
     );
+    line.frustumCulled = false;
     this.trailsGroup.add(line);
 
     return {
@@ -483,17 +492,19 @@ export class LiveFlightsLayer {
   _rebuildTrail(f) {
     const pts = f.trail;
     const n = pts.length;
-    const pos = new Float32Array(n * 3);
-    const col = new Float32Array(n * 3);
+    const g = f.line.geometry;
+    const posAttr = g.attributes.position;
+    const colAttr = g.attributes.color;
+    const pos = posAttr.array;
+    const col = colAttr.array;
     for (let i = 0; i < n; i++) {
       pos[i * 3] = pts[i].x; pos[i * 3 + 1] = pts[i].y; pos[i * 3 + 2] = pts[i].z;
       const age = i / Math.max(n - 1, 1);          // 0 = oldest … 1 = newest
       const k = 0.2 + 0.8 * age;                    // dim tail → bright head
       col[i * 3] = TRAIL_COLOR.r * k; col[i * 3 + 1] = TRAIL_COLOR.g * k; col[i * 3 + 2] = TRAIL_COLOR.b * k;
     }
-    const g = f.line.geometry;
-    g.setAttribute("position", new THREE.BufferAttribute(pos, 3));
-    g.setAttribute("color", new THREE.BufferAttribute(col, 3));
+    posAttr.needsUpdate = true;
+    colAttr.needsUpdate = true;
     g.setDrawRange(0, n);
   }
 
