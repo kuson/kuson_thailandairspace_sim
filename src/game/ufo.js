@@ -3,6 +3,12 @@
 import * as THREE from "three";
 import { FT_TO_M } from "../coords.js";
 import { buildLiveAircraftModel } from "../drone.js";
+import { worldToGeo } from "../coords.js";
+import { elevationAt } from "../terrain.js";
+import { makeShadowBlob } from "./shadows.js";
+
+// Elevation resample interval for combat UFO shadow (≤2 Hz — mirrors crawlers).
+const UFO_ELEV_INTERVAL = 0.5;
 
 // Shared glow texture (built once, never disposed — reused by all UFOs).
 const _glowTex = (() => {
@@ -131,6 +137,9 @@ export class UfoLayer {
       });
     }
 
+    // Combat UFOs get a shadow blob; non-combat (SCRAMBLE) get none.
+    const shadow = opts.combat ? makeShadowBlob(this.group, 60) : null;
+
     const entity = {
       id,
       holder,
@@ -173,6 +182,11 @@ export class UfoLayer {
 
       // Base glow opacity (normal, non-shielded).
       baseGlowOpacity: 0.7,
+
+      // Shadow blob (combat only; null for non-combat/SCRAMBLE).
+      shadow,
+      shadowGroundY:  0,                  // cached terrain Y; resampled at ≤2 Hz
+      shadowElevTimer: UFO_ELEV_INTERVAL, // force a real sample on first update
     };
 
     // Apply initial shield glow if shielded.
@@ -340,6 +354,8 @@ export class UfoLayer {
       u.baseY    + 60      * Math.sin(u.t * 0.8 + u.bobPhase),
       u.center.z + u.radius * Math.sin(u.angle),
     );
+    // Shadow blob update (combat only).
+    if (u.shadow) this._updateShadow(u, dt);
     // Slow yaw spin of the mesh body.
     u.mesh.rotation.y += 0.4 * dt;
     // Glow pulse (respects shield multiplier for combat entities).
@@ -352,6 +368,7 @@ export class UfoLayer {
   }
 
   _updateBanish(u, dt) {
+    if (u.shadow) u.shadow.hide();
     const prog = u.t / 0.6;   // 0→1 over 0.6 s
     if (prog >= 1) {
       this._dispose(u);
@@ -374,6 +391,7 @@ export class UfoLayer {
   }
 
   _updateDestroy(u, dt) {
+    if (u.shadow) u.shadow.hide();
     // Fast fade-out for combat destruction — reuses the same opacity-fade approach
     // as BANISH but with a tighter 0.4 s window and no scale-up.
     const prog = u.t / 0.4;
@@ -410,6 +428,8 @@ export class UfoLayer {
     u.holder.position.z += Math.sin(u.evadeHeading) * speed * dt;
     u.holder.position.y  = u.baseY + 60 * Math.sin(u.t * 0.8 + u.bobPhase);
     u.mesh.rotation.y += 0.8 * dt;
+    // Shadow blob update.
+    if (u.shadow) this._updateShadow(u, dt);
 
     // Glow pulse with shield multiplier.
     const basePulse = 0.5 + 0.25 * Math.sin(u.t * 2.2);
@@ -450,6 +470,8 @@ export class UfoLayer {
       pos.addScaledVector(_tmpVec, ATTACK_SPEED * dt);
     }
     u.mesh.rotation.y += 0.6 * dt;
+    // Shadow blob update.
+    if (u.shadow) this._updateShadow(u, dt);
 
     const basePulse = 0.5 + 0.25 * Math.sin(u.t * 2.2);
     u.glow.material.opacity = u.shielded ? basePulse * SHIELD_GLOW_MUL : basePulse;
@@ -463,6 +485,8 @@ export class UfoLayer {
     }
     u.holder.position.y += RETREAT_CLIMB * dt;
     u.mesh.rotation.y += 0.3 * dt;
+    // Shadow fades as UFO climbs during retreat; update uses cached groundY.
+    if (u.shadow) this._updateShadow(u, dt);
 
     const basePulse = 0.4 + 0.2 * Math.sin(u.t * 2.2);
     u.glow.material.opacity = basePulse;
@@ -473,6 +497,31 @@ export class UfoLayer {
       u.state = "BANISH";
       u.t     = 0;
     }
+  }
+
+  // ── internal — shadow helpers ─────────────────────────────────────────────
+
+  /**
+   * Update the combat UFO shadow blob. Resamples terrain at ≤2 Hz (same
+   * pattern as crawlers). Uses the entity's cached shadowGroundY between
+   * samples — no per-frame allocation.
+   * @param {object} u entity
+   * @param {number} dt seconds
+   */
+  _updateShadow(u, dt) {
+    u.shadowElevTimer += dt;
+    if (u.shadowElevTimer >= UFO_ELEV_INTERVAL) {
+      u.shadowElevTimer = 0;
+      const { lat, lon } = worldToGeo(u.holder.position.x, u.holder.position.z);
+      u.shadowGroundY = elevationAt(lat, lon);
+    }
+    const agl = u.holder.position.y - u.shadowGroundY;
+    u.shadow.update(
+      u.holder.position.x,
+      u.holder.position.z,
+      u.shadowGroundY,
+      agl,
+    );
   }
 
   // ── internal — combat transitions ─────────────────────────────────────────
@@ -587,6 +636,8 @@ export class UfoLayer {
     // Dispose the per-UFO glow material only (texture is shared — skip it).
     u.glow.material.map = null;   // detach shared texture before dispose
     u.glow.material.dispose();
+    // Dispose shadow blob if present (combat only).
+    u.shadow?.dispose();
     this.ufos.delete(u.id);
   }
 }

@@ -4,6 +4,7 @@
 import * as THREE from "three";
 import { worldToGeo } from "../coords.js";
 import { elevationAt } from "../terrain.js";
+import { makeShadowBlob } from "./shadows.js";
 
 // ── Shared geometry + material (module-level singletons — NEVER disposed) ──
 
@@ -107,6 +108,9 @@ export class CrawlerLayer {
       const len = Math.sqrt(dx * dx + dz * dz) || 1;
       const dir = new THREE.Vector2(dx / len, dz / len);
 
+      // Shadow blob: crawlers sit at groundY+12, so AGL≈12 → always full-size.
+      const shadow = makeShadowBlob(this.group, 35);
+
       const id = ++this._seq;
       const entity = {
         id,
@@ -122,6 +126,7 @@ export class CrawlerLayer {
         t: 0,
         reachedBase: false,
         fade: 1,
+        shadow,
       };
 
       this.crawlers.set(id, entity);
@@ -224,6 +229,14 @@ export class CrawlerLayer {
     c.holder.position.x += c.dir.x * CRAWL_SPEED * dt;
     c.holder.position.z += c.dir.y * CRAWL_SPEED * dt;
 
+    // Shadow blob: crawler sits at groundY+GROUND_OFFSET (agl≈12 → always full-size).
+    c.shadow.update(
+      c.holder.position.x,
+      c.holder.position.z,
+      c.groundY - GROUND_OFFSET,  // terrain surface (groundY already includes offset)
+      GROUND_OFFSET,              // agl ≈ constant 12 m
+    );
+
     // Slow yaw spin for visual flavour.
     c.ring.rotation.z += 0.6 * dt;
 
@@ -244,6 +257,8 @@ export class CrawlerLayer {
   }
 
   _updateDestroy(c, dt) {
+    // Hide shadow during destroy animation.
+    c.shadow.hide();
     const prog = c.t / FADE_DURATION;
     if (prog >= 1) {
       this._dispose(c);
@@ -285,6 +300,7 @@ export class CrawlerLayer {
       c.ring.material.dispose();
     }
     // Do NOT dispose _domeGeo, _ringGeo, _domeMat, _ringMat — module singletons.
+    c.shadow.dispose();
     this.crawlers.delete(c.id);
   }
 }

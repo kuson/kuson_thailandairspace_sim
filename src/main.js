@@ -3,14 +3,14 @@ import * as THREE from "three";
 import { Drone } from "./drone.js";
 import { AirspaceLayer, setVolumeGlow } from "./airspace.js";
 import { UI } from "./ui.js";
-import { loadTerrain } from "./terrain.js";
+import { loadTerrain, elevationAt } from "./terrain.js";
 import { DynamicGround } from "./ground.js";
 import { FlyToController } from "./flyto.js";
 import { FlightHistory, HISTORY_EVENT_TYPES } from "./flightHistory.js";
 import { EasyMode, FlightMode } from "./modes.js";
 import { pickAirspacesAlongRay } from "./identify.js";
 import { getStartLocation } from "./geolocation.js";
-import { geoToWorld, ORIGIN } from "./coords.js";
+import { geoToWorld, worldToGeo, ORIGIN } from "./coords.js";
 import { TourGuide } from "./tourGuide.js";
 import { installSky, updateSky } from "./sky.js";
 import { installCityBeacons } from "./cities.js";
@@ -37,6 +37,7 @@ import { Weapons } from "./game/weapons.js";
 import { alerts, AlertTier } from "./alerts.js";
 import { installStartScreen } from "./startScreen.js";
 import { installAudio } from "./audio.js";
+import { makeShadowBlob } from "./game/shadows.js";
 
 // B7.T9: build the start-screen overlay immediately (before bootstrap runs).
 // Failure-safe: if construction throws, stub methods are returned and dismissed
@@ -268,6 +269,24 @@ const game   = new GameMode({
   weapons, aim,
   getUi: () => window.__sim.ui,
 });
+
+// B9.T7: Player shadow blob — always on, no toggle, no game-state gate.
+// Terrain is sampled at ≤2 Hz (same ELEV_INTERVAL pattern as crawlers).
+const playerShadow = makeShadowBlob(scene, 8);
+let _playerShadowGroundY = 0;
+let _playerShadowElevTimer = 0.5;  // trigger first sample immediately
+const _PLAYER_SHADOW_ELEV_INTERVAL = 0.5;
+
+function _updatePlayerShadow(dt) {
+  _playerShadowElevTimer += dt;
+  if (_playerShadowElevTimer >= _PLAYER_SHADOW_ELEV_INTERVAL) {
+    _playerShadowElevTimer = 0;
+    const { lat, lon } = worldToGeo(drone.position.x, drone.position.z);
+    _playerShadowGroundY = elevationAt(lat, lon);
+  }
+  const agl = drone.position.y - _playerShadowGroundY;
+  playerShadow.update(drone.position.x, drone.position.z, _playerShadowGroundY, agl);
+}
 
 // Betterment-2 P3: build the per-frame context the flight-history event log
 // diffs against. Cheap — airspacesAt is AABB-accelerated.
@@ -726,6 +745,7 @@ function loop(t) {
   _safe("liveflights-labels", () => liveFlights.updateLabelScales(camera, renderer));
   _safe("ufos", () => ufos.update(dt));
   _safe("crawlers", () => crawlers.update(dt));
+  _safe("shadow", () => _updatePlayerShadow(dt));
   _safe("audio", () => audio.update(dt, droneStateForAudio()));
   _safe("game", () => game.update(dt));
   _safe("aim", () => aim.update(dt));
