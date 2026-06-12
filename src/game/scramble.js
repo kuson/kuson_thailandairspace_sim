@@ -88,6 +88,7 @@ export class ScrambleWave {
     this._typing     = deps.typing;
     this._alerts     = deps._alerts   ?? null;
     this._alertTier  = deps._alertTier ?? null;
+    this._audio      = deps.audio      ?? null;
     this._timeLimitS = timeLimitS;
     this._score      = deps._score;   // GameScore set before ScrambleWave constructed
 
@@ -247,6 +248,7 @@ export class ScrambleWave {
     const c = this._currentContact();
     if (!c) return;
     c.lost = true;
+    this._audio?.play("lost");
     this._score?.contactLost();
     // Banish UFO.
     if (this._ufos && this._ufoId !== null) this._ufos.banish(this._ufoId);
@@ -362,6 +364,7 @@ export class ScrambleWave {
 
       if (result.correct) {
         // Correct identification.
+        this._audio?.play("banish");
         c.points   = this._score?.contactIdentified({
           elapsedS:   result.elapsedS,
           accuracy:   result.accuracy,

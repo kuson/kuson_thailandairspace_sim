@@ -252,7 +252,7 @@ const simMode = new SimModeMachine();
 
 const atc    = new AtcRadio({ layer, getDronePos: () => drone.position, alerts, AlertTier, audio });
 const ufos   = new UfoLayer(scene, { layer });
-const typing = new TypingChallenge({ drone });
+const typing = new TypingChallenge({ drone, audio });
 const game   = new GameMode({ layer, startFlyTo, getDronePos: () => drone.position, atc, ufos, typing, alerts, AlertTier, audio });
 
 // Betterment-2 P3: build the per-frame context the flight-history event log

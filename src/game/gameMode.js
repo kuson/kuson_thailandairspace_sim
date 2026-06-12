@@ -289,6 +289,7 @@ export class GameMode {
     if (!this._debriefCard) this._buildDebriefCard();
     this._populateDebrief(summary, bestScore);
     this._debriefCard.removeAttribute("hidden");
+    this.audio?.play("chime");
 
     if (!this._debriefKeyListener) {
       this._debriefKeyListener = (e) => {

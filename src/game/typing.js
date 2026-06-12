@@ -22,11 +22,16 @@
 
 export class TypingChallenge {
   /**
-   * @param {{ drone: object }} deps
+   * @param {{ drone: object, audio?: object }} deps
    *   drone — Drone instance; must expose a `keys` Set.
+   *   audio — optional audio instance (play is a safe no-op pre-unlock).
    */
-  constructor({ drone }) {
+  constructor({ drone, audio }) {
     this.drone = drone;
+    /** @type {object|null} */
+    this._audio = audio ?? null;
+    /** @type {number} last timestamp (ms) a tick tone was fired — throttle guard. */
+    this._lastTickMs = 0;
 
     /** @type {boolean} */
     this._open = false;
@@ -241,6 +246,14 @@ export class TypingChallenge {
   /** Called on each input event: update keystroke counters + glyph feedback. */
   _onInput() {
     this._totalKeystrokes++;
+
+    // Tick tone — throttled to ≥40 ms apart.
+    const now = performance.now();
+    if (this._audio && now - this._lastTickMs >= 40) {
+      this._lastTickMs = now;
+      this._audio.play("tick");
+    }
+
     const val     = this._input.value;
     const normVal = this._normalize(val);
 
@@ -307,6 +320,7 @@ export class TypingChallenge {
     const normVal = this._normalize(val);
     const correct = this._answers.some((a) => this._normalize(a) === normVal);
     const elapsedS = (performance.now() - this._startTs) / 1000;
+    if (correct) this._audio?.play("lockSweep");
     this._close({
       correct,
       elapsedS,
