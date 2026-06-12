@@ -65,7 +65,26 @@
 - [ ] Shadow blobs for live-traffic (ADS-B layer) aircraft — deferred, cost.
 - [ ] Wave-1 CADET INTERCEPT mathematically unlosable (3×20 + 3×10 = 90 < 100) — acceptable ramp, noted only.
 - [ ] Player shadow blob not verifiable in suspended-rAF harness — code-reviewed; verify in a live session.
-- [ ] `__sim.ground` bootstrap overwrite hides `DynamicGround` (pre-existing; blocks manual ground updates in harness).
+- [x] `__sim.ground` bootstrap overwrite hides `DynamicGround` — FIXED in B10.T1 (`d7b59aa`): bag renamed `groundLayers`, `tourGuide` re-published.
+
+---
+
+## 0d. Betterment-10 — World Beauty (2026-06-12/13, browser-verified C1–C3)
+
+> Playbook: `20260612_ShebangPlaybook.md §B10`. Journal: 2026-06-12 (d). Branch `betterment7-20260612`.
+
+- [x] **B10.T1 __sim handles** — `__sim.ground` = DynamicGround (updateAround callable), bootstrap bag → `groundLayers`, `tourGuide` defined; old bag was write-only (grep evidence). (`d7b59aa`)
+- [x] **B10.T2 Terrain relief** *(Fable inline)* — per-vertex CPU displacement from the AGL elevation grid at tile build; SEGS 24/24; `aSea` attribute; `onTerrainReady` rebuild-once; toggle OFF byte-identical (tris 25 908 exact). Doi Inthanon tile 591–2 533 m; +55 200 rendered tris at baseline view (≤ 85 k budget). (`9c027a2`)
+- [x] **B10.T3 Objects on relief + drone clamp** — beacon relifts after terrain load (race orchestrator-flagged); rings ride cached ground elev ≤ 2 Hz; drone floor `elevationAt + 1.5` all modes + teleport/flyTo arrival resample. **C1:** seam max gap 0.0004 m / 20 pairs; clamp 500→2 496.9 at the summit; AGL 1.5 m steady; frame-ms delta ≈ 0 → SEGS_BASE stays 24. Executor died mid-task → finished inline. (`1b4a813`)
+- [x] **B10.T4 Day/dusk/night** — §B10.0 ramp table; DAY short-circuit = byte parity; auto = Bangkok clock; `kuson.daynight.v1`. Orchestrator fixes: module-level TDZ boot crash; `getNightFactor` 0/0.6/1 (was 0 at dusk). Sky via Preetham params (no color uniforms in sky.js — approximation noted). (`6e79397`)
+- [x] **B10.T5 Night city + airport lights** — ONE Points/texture/program, world-metre sizes by prominence, async airport fill, relift, opacity = nightFactor × 0.9. Orchestrator fixes: world-size shader (was sub-pixel), frustumCulled=false, zero-viewport guard, **logdepthbuf chunks** (logarithmic depth buffer silently kills custom-shader points). (`bacb432`, fix `03bd1b7`)
+- [x] **B10.T6 Water shimmer** *(Fable inline)* — `onBeforeCompile` + `aSea`; two sine bands ≤ 0.05 amplitude; ONE shared uTime/uWaterOn; constant cache key (+1 program); OFF mathematically identical. **C2:** Gulf scroll 8 083 px; OFF 0 px; inland 0 px; program delta ≤ +2 total; DAY parity exact. (`97c5a1f`)
+- [x] **B10.T7 Wind profile + crosswind HUD** — ×1.0/1.5/2.0/2.8 at ≤500 m/3 k/6 k/11 k, veer +15°/3 km above 500 m dead-band (surface bit-parity 3/3); chip `… · X 3.8L T 4.2` flips L/R+H/T on 180° reversal; browser ratio 2.00 + veer +30° at 6 km exact. (`0345578`)
+- [x] **B10.T8 G-limits** — n = 1/cos(bank) + q·V/g published per step (drag stays turn-only — review fix); C172 +3.8/−1.5, Learjet +4.4/−1.8, B777 +2.5/−1.0; proximity buffet + one-shot 880→660 tone (0.85 hysteresis); ADVISORY "AIRFRAME OVERSTRESS" after 1.5 s cumulative, auto-retract (alerts-snapshot verified); G row in pro HUD; easy mode G 1.0 inert. Executor died mid-task → finished inline. **C3:** full B5–B9 regression green, console zero entries all session. (`c09b44a`, `c4d02f7`)
+- [x] **B10.T9 Docs** — spec §3.18 + §6 rows 53–60; journal 2026-06-12 (d); TODO §0d.
+- [ ] Province LINES on relief — flat polylines bury under mountains in the north; lifting long polylines is a heavier task, deferred.
+- [ ] City lights composed-scene visual under SwiftShader unverifiable (bare-scene + opacity law + counts all pass) — verify in a live hardware session.
+- [ ] flyTo/tour lerp can pass through a mountain mid-flight (only arrival is clamped) — cinematic path, newly visible with relief.
 
 ---
 
