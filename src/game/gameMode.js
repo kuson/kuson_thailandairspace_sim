@@ -15,8 +15,13 @@
 //   alerts      — AlertQueue singleton (optional; wired in B7.T8).
 //   AlertTier   — frozen tier object (optional; wired in B7.T8).
 
-import { ScrambleWave }          from "./scramble.js";
+import { ScrambleWave, DIFFICULTY_TIERS } from "./scramble.js";
 import { GameScore, getGameStats, setGameStats } from "./score.js";
+
+// Map persisted key string → tier object (fallback to CADET).
+function _tierFromKey(key) {
+  return Object.values(DIFFICULTY_TIERS).find((t) => t.key === key) ?? DIFFICULTY_TIERS.CADET;
+}
 
 const LEGAL = {
   IDLE:     ["BRIEFING"],
@@ -150,8 +155,28 @@ export class GameMode {
 
   // ── BRIEFING ───────────────────────────────────────────────────────────────
 
+  _selectTier(key) {
+    // Update active highlight on tier buttons.
+    if (this._tierBtns) {
+      Object.values(this._tierBtns).forEach((tb) => {
+        tb.classList.toggle("gc-tier--active", tb.dataset.tierKey === key);
+      });
+    }
+    // Update the contact-count bullet dynamically.
+    const tier = _tierFromKey(key);
+    const li = this._briefingCard?.querySelector("#gcContactCountLine");
+    if (li) li.textContent = `${tier.contacts} unidentified contacts inbound`;
+    // Persist selection.
+    setGameStats({ difficulty: key });
+  }
+
   _showBriefing() {
     if (!this._briefingCard) this._buildBriefingCard();
+
+    // Restore persisted tier selection on each open.
+    const savedKey = getGameStats().difficulty ?? "cadet";
+    this._selectTier(savedKey);
+
     this._briefingCard.removeAttribute("hidden");
 
     // Capture-phase keydown, gated on card visibility — permanent listener.
@@ -166,6 +191,18 @@ export class GameMode {
           e.preventDefault();
           e.stopImmediatePropagation();
           this._cancelBriefing();
+        } else if (e.key === "1") {
+          e.preventDefault();
+          e.stopImmediatePropagation();
+          this._selectTier("cadet");
+        } else if (e.key === "2") {
+          e.preventDefault();
+          e.stopImmediatePropagation();
+          this._selectTier("pilot");
+        } else if (e.key === "3") {
+          e.preventDefault();
+          e.stopImmediatePropagation();
+          this._selectTier("ace");
         }
       };
       window.addEventListener("keydown", this._briefingKeyListener, true);
@@ -195,10 +232,30 @@ export class GameMode {
     title.className = "gc-title";
     title.textContent = "OPERATION SKY GUARDIAN — SCRAMBLE";
 
+    // Tier selector row — three buttons above the briefing bullets.
+    const tierRow = document.createElement("div");
+    tierRow.className = "gc-tier-row";
+    this._tierBtns = {};
+    Object.values(DIFFICULTY_TIERS).forEach((t) => {
+      const tb = document.createElement("button");
+      tb.type = "button";
+      tb.className = "gc-tier";
+      tb.textContent = t.label;
+      tb.dataset.tierKey = t.key;
+      tb.addEventListener("click", () => this._selectTier(t.key));
+      tierRow.appendChild(tb);
+      this._tierBtns[t.key] = tb;
+    });
+
+    // Briefing bullets — contact count line is dynamic.
     const body = document.createElement("ul");
     body.className = "gc-body";
+
+    const contactLi = document.createElement("li");
+    contactLi.id = "gcContactCountLine";
+    body.appendChild(contactLi);
+
     [
-      "3 unidentified contacts inbound",
       "Fly into each target airspace volume",
       "Identify it by typing its designator",
       "Speed and accuracy earn bonus points",
@@ -227,6 +284,7 @@ export class GameMode {
     btns.appendChild(cancelBtn);
 
     card.appendChild(title);
+    card.appendChild(tierRow);
     card.appendChild(body);
     card.appendChild(btns);
     overlay.appendChild(card);
@@ -249,16 +307,20 @@ export class GameMode {
     this._hideBriefing();
     if (!this._enter("WAVE")) return;
     this._score = new GameScore();
+    // Resolve difficulty tier from persistence.
+    const tierKey    = getGameStats().difficulty ?? "cadet";
+    const tier       = _tierFromKey(tierKey);
     // Inject score and stat helpers into deps bundle.
     const deps = this;
     deps._score      = this._score;
     deps._statsModule = { getGameStats, setGameStats };
-    this._wave = new ScrambleWave(deps, { contacts: 3, timeLimitS: 90 });
+    this._lastTierLabel = tier.label;
+    this._wave = new ScrambleWave(deps, { tier });
     // Pass stat helpers to the wave after construction (wave reads _statsModule
     // from deps reference which is `this`).
     this._wave._statsModule = { getGameStats, setGameStats };
     // B8.T3: announce wave start.
-    const n = this._wave._contacts?.length ?? 3;
+    const n = this._wave._contacts?.length ?? tier.contacts;
     this.audio?.say(`Scramble, scramble, scramble — ${n} contacts inbound`);
   }
 
@@ -287,6 +349,9 @@ export class GameMode {
 
   _showDebrief(summary, bestScore) {
     if (!this._debriefCard) this._buildDebriefCard();
+    // Update title to include the tier label used in the wave.
+    const titleEl = this._debriefCard.querySelector("#gameDebriefTitle");
+    if (titleEl) titleEl.textContent = `DEBRIEF — ${this._lastTierLabel ?? "CADET"}`;
     this._populateDebrief(summary, bestScore);
     this._debriefCard.removeAttribute("hidden");
     this.audio?.play("chime");

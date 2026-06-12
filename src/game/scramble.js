@@ -16,6 +16,14 @@
 
 import { FT_TO_M } from "../coords.js";
 
+// ── Difficulty tiers ───────────────────────────────────────────────────────
+
+export const DIFFICULTY_TIERS = {
+  CADET: { key: "cadet", label: "CADET", contacts: 3, timeLimitS: 90, challengeS: 45, autopilot: true,  answers: "all",   mult: 1   },
+  PILOT: { key: "pilot", label: "PILOT", contacts: 4, timeLimitS: 75, challengeS: 35, autopilot: false, answers: "short", mult: 1.5 },
+  ACE:   { key: "ace",   label: "ACE",   contacts: 5, timeLimitS: 60, challengeS: 30, autopilot: false, answers: "id",    mult: 2   },
+};
+
 const CONTACT_PHASE = {
   CALLING:    "CALLING",
   ANNOUNCED:  "ANNOUNCED",
@@ -77,9 +85,15 @@ export class ScrambleWave {
    * @param {object} deps  GameMode instance (contains layer, startFlyTo,
    *                       getDronePos, atc, ufos, typing) plus
    *                       deps._alerts / deps._alertTier injected by GameMode.
-   * @param {{ contacts?: number, timeLimitS?: number }} opts
+   * @param {{ contacts?: number, timeLimitS?: number, challengeS?: number, tier?: object }} opts
    */
-  constructor(deps, { contacts = 3, timeLimitS = 90 } = {}) {
+  constructor(deps, { contacts, timeLimitS, challengeS, tier } = {}) {
+    // Resolve tier first (default CADET); explicit opts override for testability.
+    this._tier       = tier ?? DIFFICULTY_TIERS.CADET;
+    const _contacts  = contacts   ?? this._tier.contacts;
+    const _tLimit    = timeLimitS ?? this._tier.timeLimitS;
+    const _cLimit    = challengeS ?? this._tier.challengeS;
+
     this._layer      = deps.layer;
     this._flyTo      = deps.startFlyTo;
     this._dronePos   = deps.getDronePos;
@@ -89,11 +103,12 @@ export class ScrambleWave {
     this._alerts     = deps._alerts   ?? null;
     this._alertTier  = deps._alertTier ?? null;
     this._audio      = deps.audio      ?? null;
-    this._timeLimitS = timeLimitS;
+    this._timeLimitS = _tLimit;
+    this._challengeS = _cLimit;
     this._score      = deps._score;   // GameScore set before ScrambleWave constructed
 
     // Pick contacts once at construction time.
-    this._contacts = _pickContacts(this._layer, contacts).map((c) => ({
+    this._contacts = _pickContacts(this._layer, _contacts).map((c) => ({
       id:        c.airspace.id,
       shortName: c.airspace.shortName ?? c.airspace.id,
       name:      c.airspace.name      ?? "",
@@ -153,6 +168,8 @@ export class ScrambleWave {
     btn.type = "button";
     btn.id   = "gameAutopilotBtn";
     btn.textContent = "AUTOPILOT";
+    // Hide autopilot when the current tier does not allow it.
+    if (!this._tier.autopilot) btn.style.display = "none";
     btn.addEventListener("click", () => {
       const c = this._currentContact();
       if (!c) return;
@@ -183,6 +200,9 @@ export class ScrambleWave {
     if (!this._hud) return;
     if (show) {
       this._hud.removeAttribute("hidden");
+      // Re-assert autopilot visibility on every show (tier may have changed).
+      const apBtn = this._hud.querySelector("#gameAutopilotBtn");
+      if (apBtn) apBtn.style.display = this._tier.autopilot ? "" : "none";
     } else {
       this._hud.setAttribute("hidden", "");
     }
@@ -343,12 +363,25 @@ export class ScrambleWave {
     this._challengeStarted = true;
     this._showHud(false);
 
-    const answers = [c.id, c.shortName, c.name].filter(Boolean);
+    // Build answers list and display target per tier.
+    const answersMode = this._tier.answers;
+    let answers;
+    if (answersMode === "id") {
+      answers = [c.id].filter(Boolean);
+    } else if (answersMode === "short") {
+      answers = [c.id, c.shortName].filter(Boolean);
+    } else {
+      // "all"
+      answers = [c.id, c.shortName, c.name].filter(Boolean);
+    }
+    // Typing target (the displayed string the player must reproduce).
+    const target = answersMode === "id" ? c.id : c.shortName;
+
     const p = this._typing.open({
       prompt:   "UNIDENTIFIED CRAFT — type the airspace designator",
-      target:   c.shortName,
+      target,
       answers,
-      timeoutS: 45,
+      timeoutS: this._challengeS,
     });
 
     if (!p) {
@@ -369,6 +402,7 @@ export class ScrambleWave {
           elapsedS:   result.elapsedS,
           accuracy:   result.accuracy,
           timeLimitS: this._timeLimitS,
+          mult:       this._tier.mult,
         }) ?? 0;
         c.wpm      = result.wpm      ?? 0;
         c.accuracy = result.accuracy ?? 0;

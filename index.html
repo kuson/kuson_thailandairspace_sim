@@ -1043,6 +1043,32 @@
       border-color: rgba(255,255,255,0.20);
       color: var(--text);
     }
+    /* Difficulty tier selector row (B8.T5) */
+    .gc-tier-row {
+      display: flex;
+      gap: 8px;
+    }
+    .gc-tier {
+      flex: 1;
+      background: transparent;
+      border: 1px solid var(--panel-border);
+      border-radius: 5px;
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 0.06em;
+      padding: 5px 0;
+      cursor: pointer;
+    }
+    .gc-tier:hover {
+      border-color: rgba(102,255,204,0.35);
+      color: var(--text);
+    }
+    .gc-tier--active {
+      background: rgba(102,255,204,0.12);
+      border-color: rgba(102,255,204,0.55);
+      color: var(--accent);
+    }
   </style>
 </head>
 <body>

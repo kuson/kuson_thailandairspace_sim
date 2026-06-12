@@ -10,6 +10,7 @@ const STATS_DEFAULT = {
   bestScore:            0,
   wavesPlayed:          0,
   airspacesIdentified:  {},
+  difficulty:           "cadet",
 };
 
 function _withDefaults(raw) {
@@ -18,6 +19,7 @@ function _withDefaults(raw) {
   if (raw && typeof raw === "object") {
     if (typeof raw.bestScore           === "number") out.bestScore           = raw.bestScore;
     if (typeof raw.wavesPlayed         === "number") out.wavesPlayed         = raw.wavesPlayed;
+    if (typeof raw.difficulty          === "string") out.difficulty          = raw.difficulty;
     if (raw.airspacesIdentified && typeof raw.airspacesIdentified === "object") {
       out.airspacesIdentified = { ...raw.airspacesIdentified };
     }
@@ -46,8 +48,9 @@ export function getGameStats() {
 export function setGameStats(patch) {
   const current = getGameStats();
   const next = { ...current };
-  if (typeof patch.bestScore  === "number") next.bestScore  = patch.bestScore;
+  if (typeof patch.bestScore   === "number") next.bestScore   = patch.bestScore;
   if (typeof patch.wavesPlayed === "number") next.wavesPlayed = patch.wavesPlayed;
+  if (typeof patch.difficulty  === "string") next.difficulty  = patch.difficulty;
   if (patch.airspacesIdentified && typeof patch.airspacesIdentified === "object") {
     next.airspacesIdentified = {
       ...current.airspacesIdentified,
@@ -82,15 +85,15 @@ export class GameScore {
    *   streakMult = 1.1 ^ streak  (streak capped at MAX_STREAK before multiply)
    *   points     = round(base × (1 + speedBonus) × accuracy × streakMult)
    *
-   * @param {{ elapsedS: number, accuracy: number, timeLimitS: number }} opts
+   * @param {{ elapsedS: number, accuracy: number, timeLimitS: number, mult?: number }} opts
    * @returns {number} points awarded (rounded integer)
    */
-  contactIdentified({ elapsedS, accuracy, timeLimitS }) {
+  contactIdentified({ elapsedS, accuracy, timeLimitS, mult = 1 }) {
     const base       = 100;
     const speedBonus = Math.max(0, 1 - elapsedS / timeLimitS);
     const cappedStreak = Math.min(this.streak, MAX_STREAK);
     const streakMult = Math.pow(1.1, cappedStreak);
-    const points     = Math.round(base * (1 + speedBonus) * accuracy * streakMult);
+    const points     = Math.round(base * (1 + speedBonus) * accuracy * streakMult * mult);
     this.streak++;
     this.waveScore += points;
     return points;
