@@ -158,6 +158,37 @@
     }
     #hudToggles button:hover { background: rgba(255,255,255,0.10); }
 
+    /* B8.T8: PRO toggle chip — sits at the very top of the HUD. Styled like
+       the hudToggles buttons but stands alone. */
+    #hudProChip {
+      width: 100%; margin-bottom: 4px;
+      padding: 3px 6px; font-size: 11px; line-height: 1.2;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--panel-border); border-radius: 4px;
+      color: var(--muted); font-family: var(--mono); cursor: pointer;
+      text-align: left;
+    }
+    #hudProChip.pro {
+      background: rgba(102,255,204,0.10); border-color: rgba(102,255,204,0.30); color: #b8ffea;
+    }
+
+    /* B8.T8: minimal mode — hide the pro-only HUD rows via a CSS class.
+       Adding .minimal to #hud suppresses everything except the core
+       LAT/LON, ALT, HDG, SPD, MODE rows and the PRO chip itself. */
+    #hud.minimal #vsRow,
+    #hud.minimal #windRow,
+    #hud.minimal #batteryRow,
+    #hud.minimal #signalRow,
+    #hud.minimal #nextAirspaceRow,
+    #hud.minimal #speedRow,
+    #hud.minimal #historyBlock,
+    #hud.minimal #hudToggles,
+    #hud.minimal #caatRow { display: none !important; }
+    /* altTape is outside #hud but inside #telemetryStack — hide it too */
+    #telemetryStack.hud-minimal #altTape { display: none !important; }
+    /* attitudeIndicator is outside #telemetryStack */
+    body.hud-minimal #attitudeIndicator { display: none !important; }
+
     /* Betterment-2 P1.T4: Strict-CAAT policy toggle — its own row at the
        bottom of the HUD so it reads as a mode switch, not an instrument.
        Amber when ON (enforcement active). */
@@ -618,6 +649,17 @@
       border: 1px solid var(--panel-border); background: rgba(255,255,255,0.04);
       color: var(--text); font-family: var(--mono); font-size: 11px;
     }
+    /* B8.T8: quick warp chips — 4 city pills above the airspace filter */
+    #quickWarpChips { display: flex; flex-wrap: wrap; gap: 4px; margin: 4px 0 4px; }
+    .qwarp-chip {
+      padding: 3px 8px; font-size: 11px; line-height: 1.4;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--panel-border); border-radius: 10px;
+      color: var(--text); font-family: var(--mono); cursor: pointer;
+      white-space: nowrap;
+    }
+    .qwarp-chip:hover { background: rgba(102,255,204,0.12); border-color: rgba(102,255,204,0.35); color: #b8ffea; }
+
     /* Airspace group filters (Betterment-5) */
     #airspaceGroups { display: flex; flex-wrap: wrap; gap: 4px; margin: 4px 0 2px; }
     #airspaceGroups .asgroup-chip {
@@ -1097,6 +1139,7 @@
 
   <div id="telemetryStack">
     <div id="hud">
+      <button type="button" id="hudProChip" title="Toggle pro (full) HUD vs. minimal HUD">⚙ PRO</button>
       <div class="row"><span class="label">LAT/LON</span> <span class="val" id="latlon">—</span></div>
       <div class="row"><span class="label">ALT</span>     <span class="val" id="alt">—</span></div>
       <div class="row" id="hdgRow">
@@ -1107,8 +1150,8 @@
         </div>
       </div>
       <div class="row"><span class="label">SPD</span>     <span class="val" id="speed">—</span></div>
-      <div class="row"><span class="label">VS</span>      <span class="val" id="vsi">—</span></div>
-      <div class="row"><span class="label">WIND</span>    <span class="val" id="wind">—</span></div>
+      <div class="row" id="vsRow"><span class="label">VS</span>      <span class="val" id="vsi">—</span></div>
+      <div class="row" id="windRow"><span class="label">WIND</span>    <span class="val" id="wind">—</span></div>
       <div class="row" id="batteryRow"><span class="label">BAT</span> <span id="batteryChip">—</span></div>
       <div class="row" id="signalRow"><span class="label">LINK</span> <span id="signalChip"><span class="bar"></span><span class="bar"></span><span class="bar"></span><span class="bar"></span><span class="bar"></span></span> <span id="signalText" class="signal-text">5/5</span></div>
       <div class="row" id="nextAirspaceRow" hidden><span class="label">NEXT</span> <span class="val" id="nextAirspaceChip">—</span></div>
@@ -1188,6 +1231,7 @@
       <div id="droneRules" class="collapsible-body collapsed"></div>
       <h3>Airspaces (click to warp to overview)</h3>
       <div id="airspaceGroups" class="asgroups"></div>
+      <div id="quickWarpChips"></div>
       <input type="search" id="airspaceFilter" placeholder="Filter airspaces…" autocomplete="off" />
       <ul id="airspaceList"></ul>
     </div>

@@ -46,6 +46,40 @@ const DRONE_RULES_HTML = `
   </ul>
   <p style="opacity:0.7;font-size:11px">Always confirm against current CAAT guidance.</p>`;
 
+// B8.T8 — HUD settings (pro/minimal toggle).
+// Default resolution: pro:true if any kuson./thairspace. key already exists
+// in localStorage (existing user), pro:false for a completely fresh profile.
+// Once resolved the value is written back so the heuristic runs only once.
+const HUD_KEY = "kuson.hud.v1";
+
+export function getHudSettings() {
+  try {
+    const raw = localStorage.getItem(HUD_KEY);
+    if (raw !== null) return { pro: true, ...JSON.parse(raw) };
+  } catch { /* private mode or bad JSON */ }
+  // First-run resolution: detect any existing kuson./thairspace. key.
+  let existingUser = false;
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && (k.startsWith("kuson.") || k.startsWith("thairspace."))) {
+        existingUser = true;
+        break;
+      }
+    }
+  } catch { /* ignore */ }
+  const defaults = { pro: existingUser };
+  try { localStorage.setItem(HUD_KEY, JSON.stringify(defaults)); } catch { /* ignore */ }
+  return defaults;
+}
+
+export function setHudSettings(patch) {
+  const current = getHudSettings();
+  const next = { ...current, ...patch };
+  try { localStorage.setItem(HUD_KEY, JSON.stringify(next)); } catch { /* ignore */ }
+  return next;
+}
+
 const COMPASS_TAU = 0.14;
 
 export class UI {
@@ -194,6 +228,7 @@ export class UI {
     this._buildSpeedControls();
     this._buildDisplayOptions();
     this._buildAirspaceGroups();
+    this._buildQuickWarpChips();
     this._buildInputOptions();
     this._buildAltLimits();
     this._initHistoryCollapse();
@@ -202,6 +237,7 @@ export class UI {
     this._bind();
     this._scheduleHintCollapse();
     this._initEasyModeIntro();
+    this._initHudMode();
   }
 
   setTourRunning(on) {
@@ -1867,6 +1903,44 @@ export class UI {
     this.easyModeIntroClose?.addEventListener("click", dismiss);
     this.easyModeIntro.classList.add("visible");
     setTimeout(dismiss, 15000);  // auto-dismiss after 15s if user ignores
+  }
+
+  // B8.T8 — minimal/pro HUD toggle.
+  // Wires the #hudProChip button and applies the persisted setting on load.
+  _initHudMode() {
+    const btn = document.getElementById("hudProChip");
+    if (!btn) return;
+    const apply = (pro) => {
+      btn.textContent = pro ? "⚙ PRO" : "⚙ MIN";
+      btn.classList.toggle("pro", pro);
+      this.hud?.classList.toggle("minimal", !pro);
+      document.getElementById("telemetryStack")?.classList.toggle("hud-minimal", !pro);
+      document.body.classList.toggle("hud-minimal", !pro);
+    };
+    apply(getHudSettings().pro);
+    btn.addEventListener("click", () => {
+      const next = setHudSettings({ pro: !getHudSettings().pro });
+      apply(next.pro);
+    });
+  }
+
+  // B8.T8 — quick warp chips: Bangkok / Chiang Mai / Phuket / U-Tapao.
+  // Reuses _requestFlyTo() — the same path as clicking a teleport row.
+  _buildQuickWarpChips() {
+    const el = document.getElementById("quickWarpChips");
+    if (!el) return;
+    const WARPS = [
+      { label: "Bangkok",     id: "VTBD-CTR" },
+      { label: "Chiang Mai",  id: "VTCC-CTR" },
+      { label: "Phuket",      id: "VTSP-CTR" },
+      { label: "U-Tapao",     id: "VTBU-CTR" },
+    ];
+    el.innerHTML = WARPS.map((w) =>
+      `<button type="button" class="qwarp-chip" data-id="${w.id}" title="Warp to ${w.label} airspace">${w.label}</button>`
+    ).join("");
+    el.querySelectorAll(".qwarp-chip").forEach((btn) => {
+      btn.addEventListener("click", () => this._requestFlyTo(btn.dataset.id));
+    });
   }
 
   _buildPanel() {
