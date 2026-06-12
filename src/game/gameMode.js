@@ -11,6 +11,7 @@
 //   getDronePos — () => drone.position (live world-space position).
 //   atc        — AtcRadio instance (optional; wired in B7.T5).
 //   ufos       — UfoLayer instance (optional; wired in B7.T6).
+//   typing     — TypingChallenge instance (optional; wired in B7.T7).
 
 const LEGAL = {
   IDLE:     ["BRIEFING"],
@@ -20,13 +21,15 @@ const LEGAL = {
 };
 
 export class GameMode {
-  /** @param {{ layer: object, startFlyTo: Function, getDronePos: Function, atc?: object, ufos?: object }} deps */
-  constructor({ layer, startFlyTo, getDronePos, atc, ufos }) {
+  /** @param {{ layer: object, startFlyTo: Function, getDronePos: Function, atc?: object, ufos?: object, typing?: object }} deps */
+  constructor({ layer, startFlyTo, getDronePos, atc, ufos, typing }) {
     this.layer       = layer;
     this.startFlyTo  = startFlyTo;
     this.getDronePos = getDronePos;
-    this.atc         = atc  ?? null;
-    this.ufos        = ufos ?? null;
+    this.atc         = atc    ?? null;
+    this.ufos        = ufos   ?? null;
+    /** @type {import("./typing.js").TypingChallenge|null} */
+    this.typing      = typing ?? null;
     this.state       = "IDLE";
     this._listeners  = new Map(); // event -> Set<cb>
   }

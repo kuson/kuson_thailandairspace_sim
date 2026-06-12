@@ -725,6 +725,88 @@
     #tourProgressLabel { font-size: 10px; color: var(--muted); font-family: var(--mono); }
     #tourControls .tour-btns { display: flex; gap: 6px; }
     #tourControls button { font-size: 11px; padding: 4px 10px; }
+
+    /* ---- Typing Challenge Modal (B7.T7) ---- */
+    /* Outer overlay: full-screen dark backdrop, flex-centers the card. */
+    #typingModal {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 300;
+      background: rgba(10, 14, 21, 0.72);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+    }
+    /* Inner card — matches HUD panel palette. */
+    #typingModal .tc-card {
+      background: var(--panel);
+      border: 1px solid var(--panel-border);
+      border-radius: 12px;
+      box-shadow: var(--shadow);
+      padding: 24px 28px;
+      width: min(420px, calc(100vw - 48px));
+      display: flex;
+      flex-direction: column;
+    }
+    #typingModal .tc-prompt {
+      font-family: var(--mono);
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 10px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+    #typingModal .tc-glyphs {
+      font-family: var(--mono);
+      font-size: 22px;
+      letter-spacing: 0.08em;
+      margin-bottom: 14px;
+      user-select: none;
+    }
+    #typingModal .tc-glyphs .glyph-ok  { color: var(--ok);    }
+    #typingModal .tc-glyphs .glyph-bad { color: var(--danger); }
+    #typingModal .tc-glyphs .glyph-dim { color: var(--muted);  opacity: 0.55; }
+    #typingModal .tc-input {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--panel-border);
+      border-radius: 6px;
+      padding: 7px 10px;
+      font-family: var(--mono);
+      font-size: 15px;
+      color: var(--text);
+      outline: none;
+      caret-color: var(--accent);
+      margin-bottom: 10px;
+    }
+    #typingModal .tc-input:focus {
+      border-color: rgba(102, 255, 204, 0.45);
+      box-shadow: 0 0 0 2px rgba(102, 255, 204, 0.12);
+    }
+    #typingModal .tc-bar-outer {
+      width: 100%;
+      height: 3px;
+      background: rgba(255, 255, 255, 0.10);
+      border-radius: 2px;
+      overflow: hidden;
+      margin-bottom: 10px;
+    }
+    #typingModal .tc-bar-inner {
+      height: 100%;
+      background: var(--accent);
+      border-radius: 2px;
+      transition: width 0.1s linear;
+      width: 100%;
+    }
+    #typingModal .tc-hint {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--muted);
+      text-align: center;
+      opacity: 0.7;
+    }
   </style>
 </head>
 <body>

@@ -29,6 +29,7 @@ import { installDebugOverlay } from "./debugOverlay.js";
 import { GameMode } from "./game/gameMode.js";
 import { AtcRadio } from "./game/atc.js";
 import { UfoLayer } from "./game/ufo.js";
+import { TypingChallenge } from "./game/typing.js";
 import { alerts, AlertTier } from "./alerts.js";
 
 const scene = new THREE.Scene();
@@ -239,9 +240,10 @@ let _applyingHistory = false;
 // flag-AND tangle the loop used to juggle.
 const simMode = new SimModeMachine();
 
-const atc  = new AtcRadio({ layer, getDronePos: () => drone.position, alerts, AlertTier });
-const ufos = new UfoLayer(scene, { layer });
-const game = new GameMode({ layer, startFlyTo, getDronePos: () => drone.position, atc, ufos });
+const atc    = new AtcRadio({ layer, getDronePos: () => drone.position, alerts, AlertTier });
+const ufos   = new UfoLayer(scene, { layer });
+const typing = new TypingChallenge({ drone });
+const game   = new GameMode({ layer, startFlyTo, getDronePos: () => drone.position, atc, ufos, typing });
 
 // Betterment-2 P3: build the per-frame context the flight-history event log
 // diffs against. Cheap — airspacesAt is AABB-accelerated.
