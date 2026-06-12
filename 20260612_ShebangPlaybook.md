@@ -211,7 +211,74 @@ Rules: engine chain rebuilt ONLY on (flightMode|presetId) change; per-frame work
 ### B8.T10 — Docs (`spec.md`, `journal.md`, `state_TODO.md`) — model: sonnet
 - spec §3.17 "Audio" + §3.16 additions (tiers, waves, tutorial) + §6 acceptance rows (~8); journal block 2026-06-12 (b) with C1–C3 evidence; TODO §0 extended; push.
 - **Commit:** `docs: spec §3.17 audio + B8 journal/TODO`
-- **B9 — INTERCEPT:** `src/game/weapons.js` hitscan + tracer/spark pools, UFO EVADE/ATTACK behaviors, ground crawlers vs airport beacons, identify-then-engage combined mode, airspace frustum culling + trail buffer reuse (report P4–P5). *Model: sonnet; Fable reviews the hit-detection math.*
+## Phase Betterment-9 — INTERCEPT (expanded 2026-06-12, Fable)
+
+**Goal (Pass Criterion for the phase):** A second game mode, INTERCEPT, selectable from the briefing: ATC assigns a defended airspace; shielded UFO raiders fly attack runs and ground crawlers converge on the airport beacon; the player types the airspace designator once to go **weapons free** (identify-then-engage ROE), then destroys raiders with a hitscan cannon (reticle, heat, tracers, sparks) before base integrity hits zero. SCRAMBLE, the tutorial, and the sandbox are pixel/behaviour-identical when INTERCEPT is never selected. Target: ≥ baseline FPS with 8 UFOs + 6 crawlers + tracers active (measure with the `~` overlay).
+
+### §B9.0 Verification-harness notes (binding — lessons paid for in B7/B8)
+- Preview tab is backgrounded between tool calls: **rAF suspended, `setTimeout` clamped ≥ 1 s**. Drive sim manually via `__sim` handles (`game.update(dt)`, `game.ufos.update(dt)`, weapons/crawlers update); flush promises with chained `Promise.resolve()`, never timer waits; `preview_screenshot` wakes the tab for real frames (use for fly-to/cinematics).
+- **Dismiss the start screen before any keyboard-driven test** — its capture listener swallows all keys while visible (caused two false "bugs" in B8 verification).
+- Console buffer **persists across reloads** — judge by entry-count deltas, not presence.
+- THREE auto-frustum-culls per Mesh (`frustumCulled` default true) — **measure before believing any "no culling" claim** (B7.T3 audit claims were stale; verify with `renderer.info` before optimizing).
+- Sonnet executors died mid-task twice (B8.T7/T9) — when a report comes back truncated mid-sentence, run `git status` immediately and finish the remainder inline.
+- Audio asserts: `__sim.audio._lastPlayed/_lastSay/_engineFreq/_hornActive`; tones are no-ops pre-`unlock()`.
+
+### B9.T1 — Perf pre-work: trail buffers + measured culling go/no-go — model: sonnet
+- `src/liveFlights.js` trail rebuild (`_rebuildTrail`, allocates `new THREE.BufferAttribute` per poll): preallocate one Float32Array/BufferAttribute per trail at max length (120 pts), update in place + `setDrawRange` + `needsUpdate` — no per-poll allocation.
+- Airspace culling go/no-go: MEASURE first (overlay: draw calls at ground level vs 40 k ft, all groups on). THREE already culls per-mesh; only act if calls at typical game altitudes exceed ~450. If acting: per-group boundingSphere distance gate in `updateLabelScales`'s sibling pass — else record the measurement and SKIP (write the numbers in the commit body either way).
+- **Pass:** no allocation in the trail path (code-inspect); measurement numbers recorded.
+- **Commit:** `perf(trails): reuse trail buffers; record airspace culling measurement`
+
+### B9.T2 — Aim mode: reticle + FOV zoom + fire input — model: sonnet
+- Reticle: small SVG/CSS crosshair `#reticle` centered, hidden by default; shown only while INTERCEPT wave is active (driven by game mode, T6 wires it — this task ships it with a debug toggle on `window.__sim`).
+- Aim zoom: while reticle shown, camera FOV eases 70 → 58 (lerp ≤ 150 ms, `camera.updateProjectionMatrix()` on change only).
+- Fire input: pointer-lock pattern at drone.js:1219–1230 (`this.locked`, click requests lock). Fire = `mousedown` button 0 **while `drone.locked === true`** (first unlocked click takes the lock — standard FPS pattern), plus `KeyF` held = autofire fallback (verify F is unbound: grep drone.js/ui.js key handlers first). Expose `onFire(cb)` registration; no behavior outside INTERCEPT (callback simply not registered).
+- **Pass:** reticle toggles via `__sim`; FOV eases and restores; fire events emitted only when locked; zero effect when never enabled.
+- **Commit:** `feat(game): aim reticle, FOV zoom, and fire input`
+
+### B9.T3 — Weapons: hitscan + heat + tracers + sparks + tones (`src/game/weapons.js`, `src/audio.js`) — model: sonnet, **Fable reviews hit math**
+- `class Weapons` deps `{ scene, camera, audio, getTargets }` — `getTargets()` returns an array of `{ id, kind: "ufo"|"crawler", position: Vector3, radius, shielded, takeHit(dmg) }` (provider injected in T6; T3 ships with a stub).
+- Hitscan: ray from camera (center) — reuse a module-level `THREE.Raycaster`-free analytical ray-sphere test (match identify.js's pure-math style): nearest target whose sphere (radius ~60 m UFO / 40 m crawler) intersects the ray within 4 000 m. Shielded hit → `audio.play("shieldPing")` + small flash, no damage.
+- Heat: +8/shot, −30/s, max 100 → overheat lockout 1.5 s + `overheat` tone; cooldown 0.12 s between shots. Heat bar UI: thin vertical bar beside the reticle (same DOM family).
+- Tracers: pool of 8 `THREE.Line`s (additive, depthWrite false) reused — drawn camera-muzzle→impact (or max range), fade over 80 ms. Sparks: ONE `THREE.Points` pool (64 verts), burst of 6–10 at impact, 0.5 s gravity fade. **No allocation per shot** (pool everything; module-level temps).
+- `src/audio.js`: add one-shots `fire` (40 ms filtered noise snap), `spark` (2.5 kHz ping decay), `shieldPing` (hollow 1.2 kHz ring), `overheat` (descending buzz), `explode` (noise burst → lowpass sweep + thump) — follow the existing tone-lib pattern exactly.
+- **Pass:** REPL ray-sphere math (hit at offset < r, miss at > r, nearest-first ordering — paste output); code-inspect pooling; tones exist + named correctly.
+- **Commit:** `feat(game): hitscan weapons — heat, tracers, sparks, tones`
+
+### B9.T4 — UFO combat behaviors (`src/game/ufo.js`) — model: sonnet
+- Extend entities: `hp` (3), `shielded` (bool, strong glow ×1.6 while true), `behavior: "ORBIT"|"EVADE"|"ATTACK_RUN"|"RETREAT"` + `setBehavior(id, b, opts)`. SCRAMBLE spawns keep pure ORBIT (no hp/shield semantics — `spawnAt(airspaceId, { combat:false })` default preserves today's behavior exactly).
+- EVADE: on `takeHit` while alive — 6 s of lateral jinks (heading ± up to 60° every 0.8–1.4 s, speed ×1.5), then resume previous behavior. ATTACK_RUN: descend/steer toward an assigned world point at ~70 m/s; within 400 m → `onReachTarget(id)` callback then RETREAT. RETREAT: climb away from target heading, despawn (existing fade path) after 15 s.
+- `takeHit(dmg)`: shielded → no-op (weapons already pinged); else hp −= dmg, white flash (emissive pulse), hp ≤ 0 → explosion: `audio.play("explode")`, spark-burst hook (callback to weapons pool), then existing dispose path. Leak rule unchanged: geometry counts return to baseline (browser-assert like B7.T6).
+- **Pass:** spawn combat UFO via console, drive update; behaviors transition; 3 hits destroy with clean dispose; SCRAMBLE spawn unchanged (no shield glow).
+- **Commit:** `feat(game): UFO combat behaviors — shield, evade, attack-run, destroy`
+
+### B9.T5 — Ground crawlers (`src/game/crawlers.js`) — model: sonnet
+- `class CrawlerLayer(scene, { layer })` — UfoLayer lifecycle hygiene. `spawnRing(airportPos, count, distM=10_000)`: spawn `count` crawlers on a ring around the defended airport, converge at 15 m/s. Terrain-follow: y = `elevationAt(lat, lon)` + 12 — NOTE `elevationAt` takes lat/lon (terrain.js:59): convert via `worldToGeo` from coords.js, sample ≤ 2 Hz per crawler (cache between samples; no per-frame trig).
+- Mesh: low-poly dark dome + glow ring (shared geometry/material across crawlers — build once at module level), ~25 m. `hp` 2, `takeHit`, destroy = explode tone + dispose. Within 500 m of the airport → `onReachBase(id)` then despawn.
+- Radar blips: mirror the live-flight blip pattern (ui.js:2468–2562, `showRadarFlights` gate) — small red triangles via a `ui.drawGameBlips(list)` hook the UI calls inside the radar draw when a provider is registered (`ui.setGameBlipProvider(fn)`); provider supplied in T6.
+- **Pass:** spawn 6 via console, converge on heading toward airport, terrain-following y, destroy + reach-base callbacks fire, dispose leak-free; blips render on the radar.
+- **Commit:** `feat(game): ground crawler raiders with radar blips`
+
+### B9.T6 — INTERCEPT wave + mode select + weapons-free gate (`src/game/intercept.js`, gameMode, scramble untouched) — model: sonnet
+- Briefing card: mode row **SCRAMBLE | INTERCEPT** above the tier row (persisted `kuson.game.v1.mode`, keys Q/E or ←/→ — check unbound within the card's capture listener). Tier matrix applies to both modes (contacts → raider count).
+- `class InterceptWave(deps, { tier, waveIndex })`: pick ONE defended airspace (CTR with a matching airport in data/airports.json — resolve beacon world pos via geoToWorld); ATC: "Raid warning — {shortName}. {n} contacts inbound. Identify for weapons free."; spawn `tier.contacts + waveIndex-1` combat UFOs (shielded, ORBIT 8 km out) + `2 + waveIndex` crawlers (T5 ring).
+- Weapons-free gate: typing challenge (same tier answer rules) available immediately (auto-open on first fire attempt while shielded, or via Enter on the objective strip); correct → all raiders' shields drop + `lockSweep` + ATC "Weapons free, weapons free"; UFOs go ATTACK_RUN toward the beacon, staggered 5 s apart.
+- Base integrity 100: UFO reaching beacon −20, crawler −10 (then despawn); integrity ≤ 0 → wave lost (debrief shows BASE OVERRUN); all raiders destroyed → wave won. Score: 150/UFO kill, 75/crawler, ×tier.mult, accuracy bonus = `round(100 × hits/shots)` (weapons exposes counters), integrity bonus = integrity remaining. Debrief reuses the existing card (per-line: kills, accuracy, integrity, total); Next-wave escalation per B8.T6 pattern.
+- gameMode `_beginWave()`: branch on persisted mode → ScrambleWave (unchanged) or InterceptWave; reticle/weapons active only during INTERCEPT WAVE; abort path disposes weapons effects, crawlers, UFOs, reticle.
+- **Pass (orchestrator at C2):** full INTERCEPT wave win + loss paths; SCRAMBLE regression (one cadet contact); abort clean from mid-fight (0 entities, no reticle, FOV restored).
+- **Commit:** `feat(game): INTERCEPT mode — raids, weapons-free gate, base integrity`
+
+### B9.T7 — Shadow blobs (V5) (`src/game/` entities + drone) — model: sonnet
+- Soft dark ellipse (radial-gradient canvas sprite, shared texture) under: player aircraft, combat UFOs, crawlers — y = terrain + 1, scale by altitude (full at ≤ 200 m AGL, fade out by 2 000 m), opacity ≤ 0.35. One shared texture; per-entity sprite. Skip live-traffic aircraft (cost — deferred row).
+- **Pass:** blob under the drone at low AGL fades with climb; blobs under crawlers/UFOs during a raid; no blob when game off (player blob is fine to keep always — it's the V5 realism item; default ON, no toggle).
+- **Commit:** `feat(visual): altitude-faded shadow blobs (player + game entities)`
+- **CHECKPOINT C3 (orchestrator):** INTERCEPT + SCRAMBLE + tutorial + sandbox regression; FPS with 8 UFOs + 6 crawlers + tracers vs baseline (overlay numbers in journal); glow/audio toggles still clean.
+
+### B9.T8 — Docs — model: sonnet
+- spec §3.16 INTERCEPT subsection + §6 rows (~8: mode select persists; shielded ping no-damage; weapons-free drops all shields; integrity loss path; accuracy counter; abort restores FOV/reticle; SCRAMBLE untouched; FPS bound). Journal block 2026-06-12 (c) or next slot with C1–C3 evidence + measurements; TODO §0c; push.
+- **Commit:** `docs: spec INTERCEPT + B9 journal/TODO`
+
+**Checkpoints:** C1 after T3 (fire path: spawn static combat UFO, hitscan hits/misses by math, tracer+spark pools cycle, heat locks out, tones fire). C2 after T6 (full wave win/loss + SCRAMBLE regression). C3 after T7 (above).
 - **B10 — World beauty:** terrain relief from `data/terrain.bin` displacement, day/night + night city lights, water shader, wind-by-altitude + crosswind HUD, G-limits. *Model: Fable designs the terrain-displacement approach (one task), sonnet executes the rest.*
 
 ---
