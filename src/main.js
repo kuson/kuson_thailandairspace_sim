@@ -38,6 +38,7 @@ import { alerts, AlertTier } from "./alerts.js";
 import { installStartScreen } from "./startScreen.js";
 import { installAudio } from "./audio.js";
 import { makeShadowBlob } from "./game/shadows.js";
+import { installCityLights } from "./cityLights.js";
 import { installDayNight, getDayNightSettings, setDayNightSettings } from "./daynight.js";
 
 // B7.T9: build the start-screen overlay immediately (before bootstrap runs).
@@ -134,6 +135,9 @@ const daynight = installDayNight({ scene, skyRig, hemi, sun, groundTiles: ground
 // Thai city beacons (Phase 2 P2.T5). Top 18 by prominence × proximity so a
 // satellite-style view doesn't read as a wall of labels.
 const cityBeacons = installCityBeacons(scene, { y: 200, topN: 24 });
+// B10.T5: night city + airport lights — built immediately; daynight exists above.
+const cityLights = installCityLights({ scene, daynight, camera, renderer });
+cityLights.setEnabled(getGroundDetailSettings().cityLights);
 
 // Betterment-6: ground orientation layers (airports / range rings / province
 // names), each independently toggleable + persisted (kuson.grounddetail.v1).
@@ -422,6 +426,7 @@ async function bootstrap() {
       // correct because the grid is now resolved.
       cityBeacons.reliftToTerrain();
       airportBeacons?.reliftToTerrain();
+      cityLights.reliftToTerrain();
     })
     .catch((err) => console.warn("[terrain] load failed:", err));
 
@@ -519,6 +524,7 @@ async function bootstrap() {
     else if (key === "provinces") { if (provinceLines) provinceLines.group.visible = on; }
     else if (key === "volumeGlow") { setVolumeGlow(on); }
     else if (key === "terrain") { ground.setTerrainEnabled(on); }
+    else if (key === "cityLights") { cityLights.setEnabled(on); }
   };
   // Restore glow state from persistence on load.
   setVolumeGlow(groundDetail.volumeGlow);
@@ -739,6 +745,8 @@ function loop(t) {
   _safe("sky-follow", () => updateSky(skyRig, camera.position, drone.position.y));
   // B10.T4: day/dusk/night cycle — runs AFTER sky-follow so uniform writes win.
   _safe("daynight", () => daynight.update(dt));
+  // B10.T5: city lights opacity — reads nightFactor that daynight just wrote.
+  _safe("citylights", () => cityLights.update());
 
   _safe("ground-alt", () => ground.setAltitude(drone.position.y));
   _safe("ground-update", () => ground.updateAround(drone.position.x, drone.position.z));
@@ -830,5 +838,5 @@ window.__sim = {
   physics: { RigidBody, QuadrotorModel, FixedWingModel },
   debugOverlay, game, audio, aim, weapons,
   ufos, crawlers,
-  daynight,
+  daynight, cityLights,
 };
