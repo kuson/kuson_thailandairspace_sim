@@ -35,6 +35,32 @@ const TRAIL_COLOR = new THREE.Color(0x00e5ff);
 // model is uniformly scaled at spawn so live aircraft are sized realistically.
 const TARGET_LEN_M = { light: 11, bizjet: 17, narrowbody: 38, heavy: 64, unknown: 20 };
 
+// Module-level flight-label texture cache.
+// key   = string describing exactly what is rendered (callsign + variant).
+// value = { tex: THREE.CanvasTexture, w: number, h: number, refs: number }
+const _labelTexCache = new Map();
+
+function _labelTexRetain(key, buildFn) {
+  let entry = _labelTexCache.get(key);
+  if (!entry) {
+    entry = buildFn();
+    entry.refs = 0;
+    _labelTexCache.set(key, entry);
+  }
+  entry.refs++;
+  return entry;
+}
+
+function _labelTexRelease(key) {
+  const entry = _labelTexCache.get(key);
+  if (!entry) return;
+  entry.refs--;
+  if (entry.refs <= 0) {
+    entry.tex.dispose();
+    _labelTexCache.delete(key);
+  }
+}
+
 let _iconTex = null;
 function _planeIcon() {
   if (_iconTex) return _iconTex;
@@ -86,7 +112,28 @@ function _vsGlyph(vertRateMs) {
 // When `data` ({hdgDeg,altM,velMs,vertRateMs,onGround}) is supplied, a second row
 // — HDG · altitude(FL/ft, alt-coloured) · V/S arrow · GS — is drawn under the
 // callsign on a transparent background. Pass null/undefined for callsign-only.
-function _flightLabel(callsign, airline, data) {
+//
+// Textures are cached by their cache key (see _flightLabelKey).  Identical keys
+// share one CanvasTexture via _labelTexRetain / _labelTexRelease.
+
+function _flightLabelKey(callsign, airline, data) {
+  // The key must encode every value that influences pixels, so it is built
+  // from the exact formatted strings/colours the draw code produces — raw
+  // value buckets would let two flights share a texture while their drawn
+  // numbers differ. Logo readiness is included so a pre-logo texture is
+  // replaced once the image loads.
+  const logo = airline.iata ? airlineLogo(airline.iata) : null;
+  const logoReady = !!(logo && logo.complete && logo.naturalWidth > 0);
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  let k = `cs:${callsign}|ia:${airline.iata || ""}|ic:${airline.icao || ""}|lr:${logoReady ? 1 : 0}|dpr:${dpr}`;
+  if (!data) return k + "|no-data";
+  const vs = data.onGround ? "" : _vsGlyph(data.vertRateMs);
+  return k +
+    `|h:${_fmtHeading(data.hdgDeg)}|a:${_fmtAltFt(data.altM, data.onGround)}` +
+    `|ac:${data.onGround ? "g" : altColor(data.altM)}|vs:${vs}|gs:${_fmtGs(data.velMs)}`;
+}
+
+function _buildLabelTex(callsign, airline, data) {
   const logo = airline.iata ? airlineLogo(airline.iata) : null;
   const logoReady = !!(logo && logo.complete && logo.naturalWidth > 0);
   const fs = 22, padX = 12, padY = 7, boxH = 30;
@@ -155,9 +202,17 @@ function _flightLabel(callsign, airline, data) {
   }
 
   const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace;
+  return { tex, w, h, topH };
+}
+
+function _flightLabel(callsign, airline, data) {
+  const key = _flightLabelKey(callsign, airline, data);
+  const entry = _labelTexRetain(key, () => _buildLabelTex(callsign, airline, data));
+  const { tex, w, h, topH } = entry;
   const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false, depthWrite: false }));
   sp.userData.canvasW = w; sp.userData.canvasH = h; sp.userData.baseScale = 10; sp.renderOrder = 9999;
   sp.userData.screenH = h * (20 / topH);   // keep the callsign row ~20px on screen
+  sp.userData.labelKey = key;              // remembered so callers can release it
   return sp;
 }
 
@@ -394,7 +449,9 @@ export class LiveFlightsLayer {
     next.visible = old.visible;
     next.material.opacity = old.material.opacity;
     this.labelsGroup.remove(old);
-    old.material.map?.dispose(); old.material.dispose();
+    // Release the old texture via the cache (disposes only when refs hit 0).
+    _labelTexRelease(old.userData.labelKey);
+    old.material.dispose();
     this.labelsGroup.add(next);
     f.label = next;
   }
@@ -403,7 +460,9 @@ export class LiveFlightsLayer {
     this.aircraftGroup.remove(f.holder);
     f.holder.traverse((o) => { o.geometry?.dispose?.(); if (o.material) (Array.isArray(o.material) ? o.material : [o.material]).forEach((mm) => mm.dispose()); });
     this.labelsGroup.remove(f.label);
-    f.label.material.map?.dispose(); f.label.material.dispose();
+    // Release via cache; the texture is disposed when its ref count reaches 0.
+    _labelTexRelease(f.label.userData.labelKey);
+    f.label.material.dispose();
     this.trailsGroup.remove(f.line);
     f.line.geometry.dispose(); f.line.material.dispose();
     this.flights.delete(f.id);
