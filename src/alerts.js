@@ -21,7 +21,8 @@ export const AlertTier = Object.freeze({
   ALT_OVER_OP:  { id: "ALT_OVER_OP",  rank: 4, cls: "over" },
   ALT_AT_REG:   { id: "ALT_AT_REG",   rank: 5, cls: "warn" },
   ALT_AT_OP:    { id: "ALT_AT_OP",    rank: 6, cls: "warn" },
-  ADVISORY:     { id: "ADVISORY",     rank: 7, cls: "advisory" },
+  RADIO:        { id: "RADIO",        rank: 7, cls: "radio" },
+  ADVISORY:     { id: "ADVISORY",     rank: 8, cls: "advisory" },
 });
 
 class AlertQueue {

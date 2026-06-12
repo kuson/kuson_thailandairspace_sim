@@ -27,6 +27,8 @@ import { simState } from "./simState.js";
 import * as ceilings from "./ceilings.js";
 import { installDebugOverlay } from "./debugOverlay.js";
 import { GameMode } from "./game/gameMode.js";
+import { AtcRadio } from "./game/atc.js";
+import { alerts, AlertTier } from "./alerts.js";
 
 const scene = new THREE.Scene();
 // Shared sun direction — the Sky shader, the sun-disc sprite, and the
@@ -236,7 +238,8 @@ let _applyingHistory = false;
 // flag-AND tangle the loop used to juggle.
 const simMode = new SimModeMachine();
 
-const game = new GameMode({ layer, startFlyTo, getDronePos: () => drone.position });
+const atc  = new AtcRadio({ layer, getDronePos: () => drone.position, alerts, AlertTier });
+const game = new GameMode({ layer, startFlyTo, getDronePos: () => drone.position, atc });
 
 // Betterment-2 P3: build the per-frame context the flight-history event log
 // diffs against. Cheap — airspacesAt is AABB-accelerated.
@@ -392,6 +395,9 @@ async function bootstrap() {
   // Re-publish ui on __sim now that it exists — the top-level assignment
   // captured it as undefined because bootstrap() is async.
   window.__sim.ui = ui;
+
+  // B7.T5: wire ATC radio log → UI panel.
+  atc.onMessage((e) => ui?.appendRadioLog(e));
 
   // UI's 'M' key toggles map-primary; we own the renderer, so resize it here.
   ui.onGroundQualityChange = (mode) => {

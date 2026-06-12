@@ -346,6 +346,19 @@
     #alertChips .alert-chip.tier-rth { color: #ffe0a8; border-color: rgba(255,180,80,0.5); }
     #alertChips .alert-chip.tier-over { color: #ffbcbc; border-color: rgba(255,120,120,0.5); }
     #alertChips .alert-chip.tier-warn { color: #ffe6a0; border-color: rgba(255,210,100,0.45); }
+    #alertChips .alert-chip.tier-radio { color: #7fffee; border-color: rgba(0,210,200,0.5); }
+    #alertChips .alert-chip.tier-advisory { color: #fff0a0; border-color: rgba(255,220,80,0.4); }
+    /* B7.T5: RADIO banner tier — cyan comms accent consistent with dark HUD palette. */
+    #alertBanner.tier-radio {
+      background: rgba(0,210,200,0.18); border: 1px solid rgba(0,210,200,0.6); color: #7fffee;
+    }
+    /* B7.T5: radio log panel entries. */
+    #radioLog { padding: 4px 0; }
+    #radioLog .radio-entry {
+      font-family: var(--mono); font-size: 11px; color: rgba(102,255,238,0.75);
+      padding: 2px 0; border-bottom: 1px solid rgba(255,255,255,0.05);
+      white-space: pre-wrap; word-break: break-word;
+    }
 
     /* Betterment-2 P1.T2: fly-to lockout toast. Same anatomy as the
        no-fly toast, neutral palette — never silent-fail on a click. */
@@ -806,6 +819,8 @@
         <div id="liveFlightsCard"></div>
         <ul id="liveFlightsList"></ul>
       </div>
+      <h3 class="collapsible-head" id="radioLogToggle">Radio log (<span id="radioLogCount">0</span>)</h3>
+      <div id="radioLogSection" class="collapsible-body collapsed"><div id="radioLog"></div></div>
       <h3 class="collapsible-head" id="inputOptionsToggle">Controls</h3>
       <div id="inputOptions" class="collapsible-body collapsed"></div>
       <h3 class="collapsible-head" id="altLimitsToggle">Altitude limits</h3>

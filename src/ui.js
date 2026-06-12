@@ -196,6 +196,7 @@ export class UI {
     this._buildInputOptions();
     this._buildAltLimits();
     this._initHistoryCollapse();
+    this._initRadioLogCollapse();
     this._bindRadar();
     this._bind();
     this._scheduleHintCollapse();
@@ -2510,5 +2511,48 @@ export class UI {
       ctx.lineTo(dx, dy + 12);
       ctx.stroke();
     }
+  }
+
+  // ── B7.T5: radio log ────────────────────────────────────────────────────────
+
+  _initRadioLogCollapse() {
+    const toggle  = document.getElementById("radioLogToggle");
+    const section = document.getElementById("radioLogSection");
+    if (!toggle || !section) return;
+    let collapsed = true;
+    try {
+      collapsed = localStorage.getItem("kuson.radioLog.collapsed") !== "0";
+    } catch { /* default collapsed */ }
+    const apply = () => {
+      section.classList.toggle("collapsed", collapsed);
+      toggle.classList.toggle("expanded", !collapsed);
+    };
+    apply();
+    toggle.addEventListener("click", () => {
+      collapsed = !collapsed;
+      try { localStorage.setItem("kuson.radioLog.collapsed", collapsed ? "1" : "0"); } catch { /* ignore */ }
+      apply();
+    });
+  }
+
+  /**
+   * Prepend a new entry to the radio log panel.
+   * @param {{ ts: number, message: string, airspaceId: string }} entry
+   */
+  appendRadioLog(entry) {
+    const log      = document.getElementById("radioLog");
+    const countEl  = document.getElementById("radioLogCount");
+    if (!log) return;
+
+    const ts  = new Date(entry.ts).toLocaleTimeString("en-GB", { hour12: false });
+    const div = document.createElement("div");
+    div.className   = "radio-entry";
+    div.textContent = `[${ts}] ${entry.message}`;
+    log.prepend(div);
+
+    // Cap children at 20 — remove the last (oldest) child.
+    while (log.children.length > 20) log.removeChild(log.lastChild);
+
+    if (countEl) countEl.textContent = String(log.children.length);
   }
 }

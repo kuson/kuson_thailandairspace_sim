@@ -9,6 +9,7 @@
 //   layer      — AirspaceLayer instance (wave geometry queries).
 //   startFlyTo — the function defined in main.js (camera transition).
 //   getDronePos — () => drone.position (live world-space position).
+//   atc        — AtcRadio instance (optional; wired in B7.T5).
 
 const LEGAL = {
   IDLE:     ["BRIEFING"],
@@ -18,11 +19,12 @@ const LEGAL = {
 };
 
 export class GameMode {
-  /** @param {{ layer: object, startFlyTo: Function, getDronePos: Function }} deps */
-  constructor({ layer, startFlyTo, getDronePos }) {
+  /** @param {{ layer: object, startFlyTo: Function, getDronePos: Function, atc?: object }} deps */
+  constructor({ layer, startFlyTo, getDronePos, atc }) {
     this.layer       = layer;
     this.startFlyTo  = startFlyTo;
     this.getDronePos = getDronePos;
+    this.atc         = atc ?? null;
     this.state       = "IDLE";
     this._listeners  = new Map(); // event -> Set<cb>
   }
