@@ -9,6 +9,7 @@ import {
   geoToWorld, worldToGeo,
   lonToTileX, latToTileY, tileXToLon, tileYToLat,
 } from "./coords.js";
+import { elevationAt } from "./terrain.js";
 
 // Single source of truth for the basemap style — one-word switchable (e.g. to
 // "rastertiles/voyager" → satellite imagery) without touching the URL builder.
@@ -25,6 +26,16 @@ const TILE_URL = (x, y, z) => {
 // 256 covers the 121-tile window plus panning headroom (~3–8 MB of small
 // CARTO PNGs).
 const MINIMAP_TILE_CACHE_MAX = 256;
+
+// B10.T2 terrain relief — tile grid segmentation for CPU displacement at
+// build time. The visual mesh samples the same elevationAt() bilinear grid
+// that crawlers / shadow blobs / AGL use, so entities and ground agree
+// exactly. z11 detail tile ≈ 19.6 km → ~815 m/quad at 24 segs (matches the
+// 30″ ≈ 925 m bake); z9 base tile ≈ 78 km → ~3.2 km/quad background relief.
+// Shared tile edges sample identical world coordinates → bilinear
+// continuity → no cracks between same-zoom neighbours.
+const SEGS_DETAIL = 24;
+const SEGS_BASE = 24;
 
 export class DynamicGround {
   /**
@@ -48,6 +59,11 @@ export class DynamicGround {
     this._fallbackPlane = null;
     this.qualityMode = "med";   // matches the default args
     this._autoApplied = null;
+    // B10.T2: kuson.grounddetail.v1.terrain — main.js sets this from
+    // persistence before any tiles build. OFF ⇒ 1×1 flat tiles,
+    // byte-identical to pre-B10 geometry.
+    this.terrainEnabled = true;
+    this._lastWorld = null;     // last updateAround() position, for rebuilds
   }
 
   /** Available presets — exposed for the Settings UI. */
@@ -110,11 +126,32 @@ export class DynamicGround {
     const se = geoToWorld(latS, lonE);
     const width = se.x - nw.x;
     const height = se.z - nw.z;
-
-    const geo = new THREE.PlaneGeometry(width, height);
-    geo.rotateX(-Math.PI / 2);
+    const cx = (nw.x + se.x) / 2;
+    const cz = (nw.z + se.z) / 2;
 
     const isDetail = z === this.detailZoom;
+    const segs = this.terrainEnabled ? (isDetail ? SEGS_DETAIL : SEGS_BASE) : 1;
+    const geo = segs > 1
+      ? new THREE.PlaneGeometry(width, height, segs, segs)
+      : new THREE.PlaneGeometry(width, height);
+    geo.rotateX(-Math.PI / 2);
+
+    if (segs > 1) {
+      // CPU displacement: vertex local + mesh centre → geo → elevation.
+      // Before loadTerrain resolves elevationAt returns 0 (flat tiles);
+      // onTerrainReady() rebuilds the live set once when the grid arrives.
+      const pos = geo.attributes.position;
+      const n = pos.count;
+      const sea = new Float32Array(n);
+      for (let i = 0; i < n; i++) {
+        const g = worldToGeo(pos.getX(i) + cx, pos.getZ(i) + cz);
+        const elev = elevationAt(g.lat, g.lon);
+        pos.setY(i, elev);
+        sea[i] = elev <= 0.5 ? 1.0 : 0.0;   // consumed by the water shader (B10.T6)
+      }
+      geo.setAttribute("aSea", new THREE.BufferAttribute(sea, 1));
+      geo.computeVertexNormals();
+    }
     const mat = new THREE.MeshBasicMaterial({
       // Deep-ocean placeholder while the tile texture streams in (was a dark
       // green that flashed over water); replaced by the texture on load.
@@ -127,7 +164,7 @@ export class DynamicGround {
     });
     const mesh = new THREE.Mesh(geo, mat);
     const meshY = isDetail ? 0.4 : 0;
-    mesh.position.set((nw.x + se.x) / 2, meshY, (nw.z + se.z) / 2);
+    mesh.position.set(cx, meshY, cz);
     mesh.renderOrder = isDetail ? 2 : 0;
 
     this._loader.load(
@@ -159,6 +196,28 @@ export class DynamicGround {
     this._fallbackPlane = mesh;
   }
 
+  /**
+   * B10.T2: called by main.js once loadTerrain resolves. Tiles built before
+   * the grid arrived displaced to elevation 0 (flat) — drop and rebuild the
+   * live set once; tiles built after readiness displace at build time.
+   */
+  onTerrainReady() {
+    this._rebuildTiles();
+  }
+
+  /** B10.T2: terrain relief toggle (kuson.grounddetail.v1.terrain). */
+  setTerrainEnabled(on) {
+    on = !!on;
+    if (on === this.terrainEnabled) return;
+    this.terrainEnabled = on;
+    this._rebuildTiles();
+  }
+
+  _rebuildTiles() {
+    this._clearTiles();
+    if (this._lastWorld) this.updateAround(this._lastWorld.x, this._lastWorld.z);
+  }
+
   _pruneZoom(zoom, centerTx, centerTy, range) {
     const keep = new Set();
     for (let dy = -range; dy <= range; dy++) {
@@ -179,6 +238,8 @@ export class DynamicGround {
 
   /** Call each frame (or when drone moves > half a tile). */
   updateAround(worldX, worldZ) {
+    if (this._lastWorld) { this._lastWorld.x = worldX; this._lastWorld.z = worldZ; }
+    else this._lastWorld = { x: worldX, z: worldZ };
     const geo = worldToGeo(worldX, worldZ);
 
     if (this._fallbackPlane) {

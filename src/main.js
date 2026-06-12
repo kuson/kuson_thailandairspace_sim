@@ -134,6 +134,9 @@ const cityBeacons = installCityBeacons(scene, { y: 200, topN: 24 });
 // names), each independently toggleable + persisted (kuson.grounddetail.v1).
 // Defaults: airports + provinces on, range rings off (opt-in).
 const groundDetail = getGroundDetailSettings();
+// B10.T2: restore terrain-relief state before any tile builds (bootstrap
+// triggers the first updateAround, so a plain property write is safe here).
+ground.terrainEnabled = groundDetail.terrain;
 const rangeRings = installRangeRings(scene);
 rangeRings.group.visible = groundDetail.rangeRings;
 let airportBeacons = null;
@@ -403,7 +406,12 @@ async function bootstrap() {
   // geofence ceiling reads as if ground were at MSL — same behaviour the
   // sim had before T4 landed, just with one degraded frame at startup.
   loadTerrain("./data/terrain.bin", "./data/terrain.json")
-    .then(() => startScreen.tick("Loading terrain…"))
+    .then(() => {
+      startScreen.tick("Loading terrain…");
+      // B10.T2: tiles built before the grid resolved are flat — rebuild the
+      // live set once now that elevationAt() returns real heights.
+      ground.onTerrainReady();
+    })
     .catch((err) => console.warn("[terrain] load failed:", err));
 
   tourGuide = new TourGuide({
@@ -492,6 +500,7 @@ async function bootstrap() {
     else if (key === "rangeRings") { rangeRings.group.visible = on; }
     else if (key === "provinces") { if (provinceLines) provinceLines.group.visible = on; }
     else if (key === "volumeGlow") { setVolumeGlow(on); }
+    else if (key === "terrain") { ground.setTerrainEnabled(on); }
   };
   // Restore glow state from persistence on load.
   setVolumeGlow(groundDetail.volumeGlow);

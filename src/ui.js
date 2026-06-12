@@ -382,6 +382,7 @@ export class UI {
           <option value="auto">Auto (alt-adaptive)</option>
         </select>
       </label>
+      <label class="opt"><input type="checkbox" id="optTerrain" /> Terrain relief</label>
       <label class="opt"><input type="checkbox" id="optAirports" /> Airport markers</label>
       <label class="opt"><input type="checkbox" id="optRangeRings" /> Range rings (50/100/200 km)</label>
       <label class="opt"><input type="checkbox" id="optProvinces" /> Province names</label>
@@ -435,14 +436,17 @@ export class UI {
     const rrChk = el.querySelector("#optRangeRings");
     const pvChk = el.querySelector("#optProvinces");
     const vgChk = el.querySelector("#optVolumeGlow");
+    const tnChk = el.querySelector("#optTerrain");
     if (apChk) apChk.checked = gd.airports;
     if (rrChk) rrChk.checked = gd.rangeRings;
     if (pvChk) pvChk.checked = gd.provinces;
     if (vgChk) vgChk.checked = gd.volumeGlow;
+    if (tnChk) tnChk.checked = gd.terrain;
     apChk?.addEventListener("change", () => this.onGroundLayerToggle?.("airports", apChk.checked));
     rrChk?.addEventListener("change", () => this.onGroundLayerToggle?.("rangeRings", rrChk.checked));
     pvChk?.addEventListener("change", () => this.onGroundLayerToggle?.("provinces", pvChk.checked));
     vgChk?.addEventListener("change", () => this.onGroundLayerToggle?.("volumeGlow", vgChk.checked));
+    tnChk?.addEventListener("change", () => this.onGroundLayerToggle?.("terrain", tnChk.checked));
 
     // Betterment-4: live-flights toggle + source + cadence (persisted settings
     // set the initial control values; handlers call into main.js → the layer).
