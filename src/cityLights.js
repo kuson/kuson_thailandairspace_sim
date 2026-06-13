@@ -66,8 +66,13 @@ uniform vec3  uColor;
 varying float vAlpha;
 void main() {
   #include <logdepthbuf_fragment>
-  vec4 t = texture2D(uTex, gl_PointCoord);
-  gl_FragColor = vec4(uColor * t.rgb, t.a * uOpacity * vAlpha);
+  // The glow texture is a white radial gradient used ONLY as a soft-edge
+  // ALPHA mask. Its RGB samples as ~0 in the composed scene (canvas-texture
+  // colour-management quirk; real-hardware verified), so multiplying the
+  // tint by tex.rgb drove it to black and the lights were invisible. Take
+  // the colour from uColor directly and the falloff from the texture alpha.
+  float mask = texture2D(uTex, gl_PointCoord).a;
+  gl_FragColor = vec4(uColor, mask * uOpacity * vAlpha);
 }
 `;
 
@@ -137,6 +142,13 @@ export function installCityLights({ scene, daynight, camera, renderer }) {
     fragmentShader: _fragmentShader,
     transparent:    true,
     depthWrite:     false,
+    // Additive glow markers must NOT depth-test: the points sit ~30 m above
+    // terrain whose detail tiles carry a polygonOffset -2 depth bias that
+    // wins the comparison, so depth-testing makes the lights vanish entirely
+    // in the composed scene (real-hardware verified — the prior logdepthbuf
+    // fix treated the wrong cause). Standard treatment for additive light
+    // sprites (sun disc, UFO glow) is depthTest off.
+    depthTest:      false,
     blending:       THREE.AdditiveBlending,
   });
 
