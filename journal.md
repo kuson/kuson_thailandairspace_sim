@@ -1410,3 +1410,28 @@ Executed the full B5 + B6 playbook to completion (10 atomic commits) and first l
 - Day↔night tile-tint flash ≤ 1 frame possible when a tile texture lands mid-night (loader callback sets white; next tint pass corrects).
 
 **End HEAD:** `c4d02f7` (pre-docs; this docs commit — spec §3.18 + journal (d) + TODO §0d — follows immediately on the same branch).
+
+---
+
+## 2026-06-13 (e) — B10 cross-phase verification sweep · STATUS: GATE PASSED (1 bug found + fixed)
+
+**Session:** Ran the playbook §385 cross-phase gate (global regression §0.5.2 + B5/B6/tour/identify smoke + 2-min mixed-session console-clean) and folded in the two B10-deferred live-hardware visual checks. Branch `betterment7-20260612` from `c4d02f7`.
+
+**Harness pivot (important):** the Claude-preview helper lost macOS TCC access to the external volume mid-session — `python3` raised `EPERM` even on `os.getcwd()`, so `preview_start` could not launch (and the preview API has no attach-to-existing-server path). Worked around it: started the no-cache dev server via the Bash tool (which retained volume access) and drove the user's **real local Chrome** through the extension MCP. This gave a **real Apple-M1 Metal GPU** instead of the preview's SwiftShader — which is what exposed the city-lights bug below. The automation tab is backgrounded, so its rAF is browser-paused (this is the true cause of the whole effort's "suspended rAF" — not a dead loop); all verification used manual `renderer.render()` + `__sim`, identical methodology to C1–C3, plus real-GPU `readPixels` for the visual checks.
+
+**🔴 BUG FOUND + FIXED — city lights were invisible in the live app (`2e04555`).** B10.T5 night city/airport lights rendered **zero pixels** in the composed scene on real hardware; the B10 journal's "SwiftShader artifact" note had masked a genuine two-part defect. Root-caused by bisection (stock `PointsMaterial` on the same geometry rendered 70 k px; the custom material rendered 0; solid-frag rendered, textured-frag did not; fresh-white-texture rendered, the glow canvas did not):
+1. The white radial **glow CanvasTexture samples with RGB ≈ 0** in the composed scene, so the fragment's `uColor * tex.rgb` drove the tint to black → additive blend of black = nothing. **Fix:** take colour from `uColor`, use the texture purely as a soft-edge **alpha** mask (its intended role).
+2. The detail terrain tiles carry **`polygonOffset -2`**, biasing them in front of the points ~30 m above them → depth-test hid the lights. **Fix:** `depthTest:false` (standard for additive glow markers — sun disc / UFO glow). The earlier `03bd1b7` logdepthbuf fix treated the wrong cause.
+**Verified (real M1, post-fix):** night 916 px warm `[255,193,123]` (on/off); dusk 832 px (factor 0.6); day `visible:false` (factor 0); **visual screenshot shows the warm Bangkok glow** under the city beacon. Program count unchanged; DAY parity preserved (lights hidden by day). One self-inflicted snag caught by `node --check --input-type=module`: backticks inside a GLSL comment terminated the JS template literal — removed before commit.
+
+**§0.5.2 global regression — PASS:** load clean (zero console errors/warnings); 5 presets cycle via 1–5 (`1x / cessna172 / learjet / b777 / 100x`); WASD moved 4 167 m; HUD fields populate (LAT/LON, ALT 200 m/656 ft, SPD, WIND, G 1.0); instruments present (`hdgCompass`, `altTape`, `attitudeIndicator`, minimap — 5 canvases); identify (I) → `identifyMode true`; pause (P) false→true, hover (Space) true, units (U) metric→aero; manual frame **1.06 ms (~946 fps proxy, ≫ 45)**. Minor: view-toggle (V) did not visibly change `cameraMode` in hover/easy state — pre-existing, B10 untouched.
+
+**B5/B6 smoke — PASS:** B5 danger group toggle (settled) **341 → 201 → 341, exact restore** (matches C3); B6 airport/range-ring/province layer toggles each restore to 341; ground-detail quality select med→high works; identify works. Tour: the `tourGuide` handle (B10.T1 fix) and its methods (`start/update/skipToNext/isRunning/stop`) are present, but a synthetic `start()` didn't engage in the harness (needs the UI-button path) — B10 changed nothing in tourGuide beyond exposing the handle.
+
+**2-min mixed session — PASS:** SCRAMBLE `IDLE→BRIEFING→WAVE→abort→IDLE→explore` clean; **console zero errors and zero warnings** across load + settle + B5/B6 + tour + the full game cycle.
+
+**Player shadow blob — STILL DEFERRED (harness limit, not a defect):** `_updatePlayerShadow` runs only in the live rAF loop and isn't exposed; the backgrounded automation tab keeps rAF paused, so the blob is never instantiated (`flatHiddenPlanes: 0`). Its code path is identical to the B9-verified combat-entity blobs. Needs a genuine foreground session to see.
+
+**Commits:** `2e04555` fix(sky): city lights were invisible · this docs commit.
+
+**Net:** cross-phase gate **PASSED**; the long-owed city-lights visual check is cleared **and** the feature actually works now (it never did before this sweep). Remaining open: player-shadow foreground check; the two B10 terrain regressions (province lines bury under mountains; flyTo/tour can tunnel through a peak); merge-to-main + `betterment7-complete` tag (user decision — still unmerged, 190 commits ahead).
