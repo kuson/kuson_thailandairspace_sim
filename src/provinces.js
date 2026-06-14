@@ -6,12 +6,17 @@
 // Sits at y=1 just above the basemap so it never z-fights but reads as
 // part of the ground.
 import * as THREE from "three";
-import { geoToWorld } from "./coords.js";
+import { geoToWorld, worldToGeo } from "./coords.js";
+import { elevationAt } from "./terrain.js";
 
 const PROVINCES_URL = "data/provinces.geojson";
 const LINE_COLOR = 0xf0c040;   // vivid amber-gold (Betterment-3: pops on Voyager, was muted 0xc8a050)
 const LINE_OPACITY = 0.7;      // higher-contrast province boundaries (was 0.55)
-const LINE_Y = 1;
+// B10 fixup: lift boundary lines onto the terrain (elevationAt + this offset)
+// so they don't bury under northern relief. The offset clears the displaced
+// detail tiles (meshY 0.4 + polygonOffset) and small inter-vertex dips on
+// slopes; was a flat LINE_Y = 1 over the pre-relief ground.
+const LINE_Y = 12;
 const LABEL_Y = 60;            // province names sit low, beneath city/airport labels
 const PROV_TOPN = 16;          // nearest-N province names shown (declutter)
 
@@ -67,7 +72,11 @@ function _ringToSegments(ring, segments) {
     const b = ring[Math.min(i + STRIDE, ring.length - 1)];
     const w1 = geoToWorld(a[1], a[0]);
     const w2 = geoToWorld(b[1], b[0]);
-    segments.push(w1.x, LINE_Y, w1.z, w2.x, LINE_Y, w2.z);
+    // B10 fixup: per-vertex terrain lift (elevationAt returns 0 before the
+    // grid loads → flat; reliftToTerrain re-applies once it resolves).
+    const y1 = elevationAt(a[1], a[0]) + LINE_Y;
+    const y2 = elevationAt(b[1], b[0]) + LINE_Y;
+    segments.push(w1.x, y1, w1.z, w2.x, y2, w2.z);
   }
 }
 
@@ -130,7 +139,8 @@ export async function installProvinceLines(scene) {
   for (const ld of labelData) {
     const w = geoToWorld(ld.lat, ld.lon);
     const sp = _provinceLabelSprite(ld.name);
-    sp.position.set(w.x, LABEL_Y, w.z);
+    sp.position.set(w.x, elevationAt(ld.lat, ld.lon) + LABEL_Y, w.z);
+    sp.userData.lat = ld.lat; sp.userData.lon = ld.lon;   // for reliftToTerrain
     group.add(sp);
     labelEntries.push(sp);
   }
@@ -159,5 +169,21 @@ export async function installProvinceLines(scene) {
     }
   }
 
-  return { group, updateScales, featureCount, segmentCount: segments.length / 6 };
+  // B10 fixup: re-apply the terrain lift after data/terrain.bin resolves
+  // (provinces install before the grid, so the build-time elevationAt read 0).
+  // Called once from main.js loadTerrain().then(), beside the beacon relifts.
+  function reliftToTerrain() {
+    const pos = bufGeo.attributes.position;
+    for (let i = 0; i < pos.count; i++) {
+      const g = worldToGeo(pos.getX(i), pos.getZ(i));
+      pos.setY(i, elevationAt(g.lat, g.lon) + LINE_Y);
+    }
+    pos.needsUpdate = true;
+    bufGeo.computeBoundingSphere();   // y range changed → keep frustum cull honest
+    for (const sp of labelEntries) {
+      sp.position.y = elevationAt(sp.userData.lat, sp.userData.lon) + LABEL_Y;
+    }
+  }
+
+  return { group, updateScales, reliftToTerrain, featureCount, segmentCount: segments.length / 6 };
 }

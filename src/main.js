@@ -429,6 +429,9 @@ async function bootstrap() {
       cityBeacons.reliftToTerrain();
       airportBeacons?.reliftToTerrain();
       cityLights.reliftToTerrain();
+      // B10 fixup: lift province boundary lines + names onto the relief too
+      // (async-loaded; null-guarded like airportBeacons).
+      provinceLines?.reliftToTerrain();
     })
     .catch((err) => console.warn("[terrain] load failed:", err));
 
