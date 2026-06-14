@@ -1435,3 +1435,19 @@ Executed the full B5 + B6 playbook to completion (10 atomic commits) and first l
 **Commits:** `2e04555` fix(sky): city lights were invisible · this docs commit.
 
 **Net:** cross-phase gate **PASSED**; the long-owed city-lights visual check is cleared **and** the feature actually works now (it never did before this sweep). Remaining open: player-shadow foreground check; the two B10 terrain regressions (province lines bury under mountains; flyTo/tour can tunnel through a peak); merge-to-main + `betterment7-complete` tag (user decision — still unmerged, 190 commits ahead).
+
+---
+
+## 2026-06-14 (f) — B10 terrain fixups (province lines + flyTo path) · branch `b10-terrain-fixups-20260613`
+
+**Session:** Cleared the two B10 terrain regressions left open after the sweep, on a fresh branch off the now-current `main`. Real-hardware Chrome verification (preview helper still lacks volume access → Bash dev server + extension-driven local Chrome).
+
+**Fix 1 — province lines onto relief (`446b40b`, provinces.js + main.js):** boundary polylines + name labels lift per-vertex to `elevationAt + 12 m` at build, with `reliftToTerrain()` (worldToGeo each line vertex → re-sample elevation + computeBoundingSphere; labels via stored lat/lon) called from the `loadTerrain().then()` beside the beacon/city-light relifts. **Verified:** province vertices now span 12 m (sea) → 1,715 m (northern peaks), 74% > 100 m, 2% at the flat baseline — they follow terrain instead of burying under it.
+
+**Fix 2 — flyTo/tour transit clamp (`ba6130b`, flyto.js):** the shared `FlyToController` (catalog warps AND every tour stop) clamped only on arrival, so the straight-line lerp could pass through a peak mid-flight. Now each frame clamps the lerped y to `elevationAt + clearance`; full 120 m clearance through the journey, eased to a near-surface margin over the final 15% (`approach → 0` at u=1) so a low destination still lands. **Verified** (50 m warp over flat Bangkok): mid-transit rose to ~124 m (straight line 50 m → +76 m, no tunnelling), eased to 50 m exactly on arrival.
+
+**Harness note:** Chrome applies intensive throttling to a tab hidden > 5 min — async evals (`await import`, `setTimeout`-polls) stall past the 45 s CDP timeout; switched to synchronous-only evals against already-loaded `__sim` objects (`s.tourGuide.flyTo` is the live FlyToController). Console clean throughout both fixes.
+
+**Branch state:** `b10-terrain-fixups-20260613` off `main` (71c38dc) with `446b40b` + `ba6130b`. Not yet merged — separate from the tagged `betterment7-complete` line.
+
+**Still open:** player-shadow-blob foreground visual (harness rAF-pause limitation, not a defect).

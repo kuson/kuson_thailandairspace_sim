@@ -82,10 +82,10 @@
 - [x] **B10.T7 Wind profile + crosswind HUD** — ×1.0/1.5/2.0/2.8 at ≤500 m/3 k/6 k/11 k, veer +15°/3 km above 500 m dead-band (surface bit-parity 3/3); chip `… · X 3.8L T 4.2` flips L/R+H/T on 180° reversal; browser ratio 2.00 + veer +30° at 6 km exact. (`0345578`)
 - [x] **B10.T8 G-limits** — n = 1/cos(bank) + q·V/g published per step (drag stays turn-only — review fix); C172 +3.8/−1.5, Learjet +4.4/−1.8, B777 +2.5/−1.0; proximity buffet + one-shot 880→660 tone (0.85 hysteresis); ADVISORY "AIRFRAME OVERSTRESS" after 1.5 s cumulative, auto-retract (alerts-snapshot verified); G row in pro HUD; easy mode G 1.0 inert. Executor died mid-task → finished inline. **C3:** full B5–B9 regression green, console zero entries all session. (`c09b44a`, `c4d02f7`)
 - [x] **B10.T9 Docs** — spec §3.18 + §6 rows 53–60; journal 2026-06-12 (d); TODO §0d.
-- [ ] Province LINES on relief — flat polylines bury under mountains in the north; lifting long polylines is a heavier task, deferred.
+- [x] Province LINES on relief — FIXED on branch `b10-terrain-fixups-20260613` (`446b40b`): per-vertex elevationAt lift (+12 m) at build + reliftToTerrain after grid load; labels lifted too. Verified vertices span 12 m → 1,715 m (74% > 100 m).
 - [x] City lights composed-scene visual — cross-phase sweep on real M1 hardware (journal 2026-06-13 (e)) found the lights rendered ZERO px in the live app; root-caused (glow-tex RGB→0 + terrain polygonOffset depth bias) and FIXED (`2e04555`): tint from uColor + texture as alpha mask + depthTest:false. Verified night 916px / dusk 832px / day hidden + visual screenshot.
 - [ ] Player shadow blob still needs a foreground session — its updater runs only in the live rAF loop (backgrounded automation tab keeps rAF paused); code path identical to B9-verified combat blobs.
-- [ ] flyTo/tour lerp can pass through a mountain mid-flight (only arrival is clamped) — cinematic path, newly visible with relief.
+- [x] flyTo/tour lerp can pass through a mountain mid-flight — FIXED on branch `b10-terrain-fixups-20260613` (`ba6130b`): per-frame transit clamp to elevationAt + 120 m clearance, eased to target on final approach. Verified 50 m warp rose to ~124 m mid-transit, landed at 50 m.
 
 ## 0e. B10 cross-phase verification sweep (2026-06-13, real-hardware Chrome)
 
