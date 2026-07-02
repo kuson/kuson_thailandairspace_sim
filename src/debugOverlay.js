@@ -1,4 +1,5 @@
-// debugOverlay.js — renderer.info debug panel, toggled by backquote (~).
+// debugOverlay.js — renderer.info debug panel. Visibility is driven by
+// uiPrefs (backquote → uiPrefs.toggle('debugOverlay') → setVisible below).
 const SAMPLE_WINDOW = 30;
 const DOM_THROTTLE_MS = 250;
 
@@ -26,14 +27,10 @@ export function installDebugOverlay(renderer) {
   const frameTimes = [];
   let lastDomWrite = 0;
 
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "`" || e.code === "Backquote") {
-      const tag = document.activeElement?.tagName ?? "";
-      if (tag === "INPUT" || tag === "TEXTAREA") return;
-      visible = !visible;
-      panel.style.display = visible ? "block" : "none";
-    }
-  });
+  function setVisible(next) {
+    visible = !!next;
+    panel.style.display = visible ? "block" : "none";
+  }
 
   function update() {
     const now = performance.now();
@@ -62,5 +59,5 @@ export function installDebugOverlay(renderer) {
     ].join("\n");
   }
 
-  return { update };
+  return { update, setVisible };
 }

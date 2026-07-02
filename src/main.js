@@ -40,6 +40,7 @@ import { installAudio } from "./audio.js";
 import { makeShadowBlob } from "./game/shadows.js";
 import { installCityLights } from "./cityLights.js";
 import { installDayNight, getDayNightSettings, setDayNightSettings } from "./daynight.js";
+import * as uiPrefs from "./uiPrefs.js";
 
 // B7.T9: build the start-screen overlay immediately (before bootstrap runs).
 // Failure-safe: if construction throws, stub methods are returned and dismissed
@@ -565,6 +566,10 @@ async function bootstrap() {
   // B8.T1: bind audio to UI (Sound settings block).
   ui.bindAudio(audio);
 
+  // B11.T1: unified visibility registry — wire deps + apply persisted/
+  // default hides now that every registry element exists in the DOM.
+  uiPrefs.init({ ui, debugOverlay });
+
   // B7.T9: hand off to the start-screen for mode selection.
   startScreen.ready({
     onExplore: () => { audio.unlock(); },
@@ -891,4 +896,5 @@ window.__sim = {
   debugOverlay, game, audio, aim, weapons,
   ufos, crawlers,
   daynight, cityLights, gLimitWatch,
+  uiPrefs,
 };

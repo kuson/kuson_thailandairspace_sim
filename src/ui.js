@@ -19,6 +19,7 @@ import { getCeilings, setCeiling, resetCeilings } from "./ceilings.js";
 import { MinimapTileCache } from "./ground.js";
 import { getInputSettings, setInputSettings, DEFAULT_INPUT_SETTINGS } from "./input.js";
 import { getAudioSettings, setAudioSettings } from "./audio.js";
+import * as uiPrefs from "./uiPrefs.js";
 
 // Betterment-2 P3.T3: glyph per history event type for the collapsible list.
 const HISTORY_GLYPHS = {
@@ -865,10 +866,13 @@ export class UI {
         this.zoomRadar(1.25);
         e.preventDefault();
       } else if (k === "j") {
-        this.toggleAltTape();
+        uiPrefs.toggle("altTape");
         e.preventDefault();
       } else if (k === "h") {
-        this.toggleAttitude();
+        uiPrefs.toggle("attitude");
+        e.preventDefault();
+      } else if (e.key === "`" || e.code === "Backquote") {
+        uiPrefs.toggle("debugOverlay");
         e.preventDefault();
       }
       // 'P' is handled inside Drone — it owns `paused`. We just listen via
@@ -1981,21 +1985,30 @@ export class UI {
 
   // B8.T8 — minimal/pro HUD toggle.
   // Wires the #hudProChip button and applies the persisted setting on load.
+  // B11.T1: setHudPro() is also the uiPrefs 'hudExtras' apply target, so the
+  // registry and the chip stay on the same kuson.hud.v1-backed state — it
+  // remains the sole persistence path (uiPrefs never writes kuson.hud.v1).
   _initHudMode() {
     const btn = document.getElementById("hudProChip");
     if (!btn) return;
-    const apply = (pro) => {
+    this._applyHudMode(getHudSettings().pro);
+    btn.addEventListener("click", () => this.setHudPro(!getHudSettings().pro));
+  }
+
+  setHudPro(pro) {
+    const next = setHudSettings({ pro });
+    this._applyHudMode(next.pro);
+  }
+
+  _applyHudMode(pro) {
+    const btn = document.getElementById("hudProChip");
+    if (btn) {
       btn.textContent = pro ? "⚙ PRO" : "⚙ MIN";
       btn.classList.toggle("pro", pro);
-      this.hud?.classList.toggle("minimal", !pro);
-      document.getElementById("telemetryStack")?.classList.toggle("hud-minimal", !pro);
-      document.body.classList.toggle("hud-minimal", !pro);
-    };
-    apply(getHudSettings().pro);
-    btn.addEventListener("click", () => {
-      const next = setHudSettings({ pro: !getHudSettings().pro });
-      apply(next.pro);
-    });
+    }
+    this.hud?.classList.toggle("minimal", !pro);
+    document.getElementById("telemetryStack")?.classList.toggle("hud-minimal", !pro);
+    document.body.classList.toggle("hud-minimal", !pro);
   }
 
   // B8.T8 — quick warp chips: Bangkok / Chiang Mai / Phuket / U-Tapao.
