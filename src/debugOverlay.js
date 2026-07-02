@@ -10,7 +10,7 @@ export function installDebugOverlay(renderer) {
     top: "8px",
     right: "8px",
     padding: "6px 10px",
-    background: "rgba(0,0,0,0.65)",
+    background: "var(--hud-bg)",
     color: "#c8e6ff",
     fontFamily: "ui-monospace, monospace",
     fontSize: "11px",

@@ -18,6 +18,95 @@
       --shadow: 0 8px 28px rgba(0,0,0,0.5);
       --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
       --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      /* B11.T3: theme token extension — classic values = today's de-facto
+         rendered colors (see report for source line per token). */
+      --accent2: #b8ffea;
+      --hud-bg: rgba(0,0,0,0.65);
+      --chip-bg: rgba(102,255,204,0.16);
+      --grid: rgba(255,255,255,0.08);
+      --cv-accent: #66ffcc;
+      --cv-accent-dim: #47b38f;
+      --cv-mute: #8a96a7;
+      --cv-marks: #ffffff;
+      --cv-danger: #ff4040;
+      --branch-rtaf: #19c9c1;
+      --branch-rtn: #2b4cd8;
+      --branch-rta: #33a83a;
+    }
+    /* B11.T3: non-classic theme overrides. Bare :root above stays classic —
+       the fresh-profile / no-JS-yet path renders classic before any script
+       runs, satisfying the pixel-identical hard rule. */
+    :root[data-theme="daylight"] {
+      --bg: #f4f7fa;
+      --panel: rgba(240,244,248,.92);
+      --panel-border: rgba(16,22,30,0.12);
+      --text: #10161e;
+      --muted: #5a6676;
+      --accent: #0b7f6a;
+      --warn: #b25e00;
+      --danger: #c81e3a;
+      --ok: #0b7f6a;
+      --shadow: 0 8px 28px rgba(16,22,30,0.18);
+      --accent2: #0a6b59;
+      --hud-bg: rgba(255,255,255,0.72);
+      --chip-bg: rgba(11,127,106,0.14);
+      --grid: rgba(16,22,30,0.10);
+      --cv-accent: #0b7f6a;
+      --cv-accent-dim: #08594a;
+      --cv-mute: #5a6676;
+      --cv-marks: #10161e;
+      --cv-danger: #c81e3a;
+      --branch-rtaf: #0f8f86;
+      --branch-rtn: #2b4cd8;
+      --branch-rta: #2f8a34;
+    }
+    :root[data-theme="nvg"] {
+      --bg: #050a05;
+      --panel: rgba(8, 16, 8, 0.90);
+      --panel-border: rgba(57,255,92,0.18);
+      --text: #9dffb0;
+      --muted: #50a860;
+      --accent: #39ff5c;
+      --warn: #ffd23f;
+      --danger: #ffd23f;
+      --ok: #39ff5c;
+      --shadow: 0 8px 28px rgba(0,0,0,0.7);
+      --accent2: #9dffb0;
+      --hud-bg: rgba(2,8,2,0.75);
+      --chip-bg: rgba(57,255,92,0.16);
+      --grid: rgba(57,255,92,0.10);
+      --cv-accent: #39ff5c;
+      --cv-accent-dim: #28b340;
+      --cv-mute: #50a860;
+      --cv-marks: #9dffb0;
+      --cv-danger: #ffd23f;
+      --branch-rtaf: #39ff5c;
+      --branch-rtn: #9dffb0;
+      --branch-rta: #22c93f;
+    }
+    :root[data-theme="amber"] {
+      --bg: #0d0800;
+      --panel: rgba(28, 16, 0, 0.90);
+      --panel-border: rgba(255,176,0,0.18);
+      --text: #ffd68c;
+      --muted: #a87828;
+      --accent: #ffb000;
+      --warn: #ffb000;
+      --danger: #ff6a3f;
+      --ok: #ffb000;
+      --shadow: 0 8px 28px rgba(0,0,0,0.7);
+      --accent2: #ffd68c;
+      --hud-bg: rgba(13,8,0,0.75);
+      --chip-bg: rgba(255,176,0,0.16);
+      --grid: rgba(255,176,0,0.10);
+      --cv-accent: #ffb000;
+      --cv-accent-dim: #b37b00;
+      --cv-mute: #a87828;
+      --cv-marks: #ffd68c;
+      --cv-danger: #ff6a3f;
+      --branch-rtaf: #ffb000;
+      --branch-rtn: #ff8a00;
+      --branch-rta: #d99400;
     }
     * { box-sizing: border-box; }
     html, body { margin: 0; padding: 0; height: 100%; background: var(--bg); color: var(--text); font-family: var(--sans); overflow: hidden; }
@@ -562,11 +651,14 @@
     #displayOptions input { accent-color: var(--accent); }
 
     /* ---- View panel (B11.T2): per-element visibility checkboxes ---- */
+    /* B11.T3: theme row — same layout as #displayOptions .opt so the
+       select sits flush with Ground detail / Time of day elsewhere. */
+    #themeRow .opt { display: flex; align-items: center; gap: 8px; font-size: 12px; cursor: pointer; margin: 0 0 8px 0; }
     .view-mode-tabs { display: flex; gap: 4px; margin: 2px 0 8px 0; }
     .view-mode-tabs button {
       flex: 1; padding: 4px 0; font-size: 11px; cursor: pointer;
     }
-    .view-mode-tabs button.active { background: rgba(102,255,204,0.16); border-color: rgba(102,255,204,0.4); color: #b8ffea; }
+    .view-mode-tabs button.active { background: var(--chip-bg); border-color: rgba(102,255,204,0.4); color: var(--accent2); }
     .view-mode-tabs button:disabled { opacity: 0.4; cursor: not-allowed; }
     #viewRows { display: flex; flex-direction: column; gap: 2px; margin: 4px 0 8px 0; }
     .view-group-head {
@@ -887,7 +979,7 @@
       margin-top: 4px;
     }
     #tourProgressBar {
-      height: 100%; width: 0%; background: linear-gradient(90deg, rgba(102,255,204,0.5), var(--accent));
+      height: 100%; width: 0%; background: linear-gradient(90deg, color-mix(in srgb, var(--accent) 50%, transparent), var(--accent));
       transition: width 0.15s linear;
     }
     #tourControls {
@@ -1227,6 +1319,18 @@
     /* B11.T1 — uiPrefs visibility registry. */
     .uiHidden { display: none !important; }
   </style>
+  <script>
+    // B11.T3: synchronous theme-init — runs before first paint so a
+    // returning user's saved theme applies with no flash-of-classic. Zero
+    // theme data lives here; it only relays whatever name was persisted by
+    // src/theme.js (applyTheme). An unrecognized/missing name simply
+    // matches no :root[data-theme="…"] CSS block, so :root (classic) shows.
+    try {
+      var kusonThemeRaw = localStorage.getItem("kuson.theme.v1");
+      var kusonThemeName = kusonThemeRaw && JSON.parse(kusonThemeRaw).name;
+      if (kusonThemeName) document.documentElement.dataset.theme = kusonThemeName;
+    } catch (e) { /* localStorage missing / quota / private mode / bad JSON */ }
+  </script>
 </head>
 <body>
   <div id="app"></div>
@@ -1316,6 +1420,7 @@
     <div class="panel-body">
       <h3 class="collapsible-head" id="viewSectionToggle">View</h3>
       <div id="viewSection" class="collapsible-body collapsed">
+        <div id="themeRow"></div>
         <div id="viewModeTabs" class="view-mode-tabs"></div>
         <div id="viewRows"></div>
         <button type="button" id="viewResetLayout" class="opt-reset">Reset layout</button>

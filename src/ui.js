@@ -20,6 +20,7 @@ import { MinimapTileCache } from "./ground.js";
 import { getInputSettings, setInputSettings, DEFAULT_INPUT_SETTINGS } from "./input.js";
 import { getAudioSettings, setAudioSettings } from "./audio.js";
 import * as uiPrefs from "./uiPrefs.js";
+import { theme, applyTheme, canvasAlpha, THEMES } from "./theme.js";
 
 // Betterment-2 P3.T3: glyph per history event type for the collapsible list.
 const HISTORY_GLYPHS = {
@@ -384,6 +385,25 @@ export class UI {
     const rowsEl = document.getElementById("viewRows");
     const resetBtn = document.getElementById("viewResetLayout");
     if (!rowsEl) return;
+
+    // B11.T3: theme row — sits above the mode tabs so it's the first
+    // control in the View section body. Initializes to the persisted
+    // theme (theme.current, resolved at module load) and applies on change.
+    const themeRowEl = document.getElementById("themeRow");
+    if (themeRowEl) {
+      themeRowEl.innerHTML = `
+        <label class="opt">
+          Theme
+          <select id="optTheme" class="opt-select">
+            ${Object.entries(THEMES).map(([name, t]) => `<option value="${name}">${t.label}</option>`).join("")}
+          </select>
+        </label>`;
+      const themeSel = themeRowEl.querySelector("#optTheme");
+      if (themeSel) {
+        themeSel.value = Object.keys(THEMES).find((name) => THEMES[name] === theme.current) ?? "classic";
+        themeSel.addEventListener("change", () => applyTheme(themeSel.value));
+      }
+    }
 
     // Mode-tab stub: only "Auto" is active/clickable. Freestyle/Learning/
     // Game are wired up by a later task (uiPrefs `modes` overrides already
@@ -1352,7 +1372,7 @@ export class UI {
     const CAP = 3;
     const expanded = this._identifyExpanded;
     const shown = expanded ? entries : entries.slice(0, CAP);
-    const BRANCH_HEX = { RTAF: "#19c9c1", RTN: "#2b4cd8", RTA: "#33a83a" };
+    const BRANCH_VAR = { RTAF: "var(--branch-rtaf)", RTN: "var(--branch-rtn)", RTA: "var(--branch-rta)" };
     const cardHtml = (e) => {
       const cls = `cat-${e.categoryKey.replace(/\s/g, "")}`;
       const distLabel = e.distanceM == null ? ""
@@ -1361,7 +1381,7 @@ export class UI {
       const distRow = e.distanceM == null ? "" : `
           <div class="ic-row"><span class="ic-label">Nearest</span><span class="ic-dist">${distLabel}</span></div>`;
       const branchTag = e.branch
-        ? `<span class="ic-branch" style="color:${BRANCH_HEX[e.branch] || "#fff"};font-size:10px;font-weight:700;margin-left:6px;letter-spacing:.06em">${e.branch}</span>`
+        ? `<span class="ic-branch" style="color:${BRANCH_VAR[e.branch] || "#fff"};font-size:10px;font-weight:700;margin-left:6px;letter-spacing:.06em">${e.branch}</span>`
         : "";
       return `
         <div class="identify-card ${cls}">
@@ -1462,7 +1482,7 @@ export class UI {
     }
     ctx.fillStyle = this._gradHeadingHousing;
     ctx.fillRect(0, 0, w, h);
-    ctx.strokeStyle = "rgba(102, 255, 204, 0.22)";
+    ctx.strokeStyle = canvasAlpha(theme.current.canvas.accent, 0.22);
     ctx.lineWidth = 1;
     ctx.strokeRect(0.5, 0.5, w - 1, h - 1);
 
@@ -1497,8 +1517,8 @@ export class UI {
       const alpha = (isCardinal ? 0.95 : isMajor ? 0.55 : 0.32) * (0.35 + 0.65 * edgeFade);
 
       ctx.strokeStyle = isCardinal
-        ? `rgba(102, 255, 204, ${alpha})`
-        : `rgba(255, 255, 255, ${alpha})`;
+        ? canvasAlpha(theme.current.canvas.accent, alpha)
+        : canvasAlpha(theme.current.canvas.marks, alpha);
       ctx.lineWidth = isCardinal ? 1.6 : isMajor ? 1 : 0.7;
       ctx.beginPath();
       ctx.moveTo(x + 0.5, baseline - tickH);
@@ -1506,7 +1526,7 @@ export class UI {
       ctx.stroke();
 
       if (isCardinal && cardinals[bearingSnap]) {
-        ctx.fillStyle = `rgba(102, 255, 204, ${0.88 + 0.12 * edgeFade})`;
+        ctx.fillStyle = canvasAlpha(theme.current.canvas.accent, 0.88 + 0.12 * edgeFade);
         ctx.font = "bold 15px ui-monospace, monospace";
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
@@ -1522,9 +1542,9 @@ export class UI {
 
     ctx.restore();
 
-    ctx.shadowColor = "rgba(102, 255, 204, 0.65)";
+    ctx.shadowColor = canvasAlpha(theme.current.canvas.accent, 0.65);
     ctx.shadowBlur = 6;
-    ctx.fillStyle = "#66ffcc";
+    ctx.fillStyle = canvasAlpha(theme.current.canvas.accent, 1);
     ctx.beginPath();
     ctx.moveTo(cx, lubberApex);
     ctx.lineTo(cx - 5, lubberBase);
@@ -1587,7 +1607,7 @@ export class UI {
     const aero = this.unitSystem === "aero";
     const bands = [
       // {fromFt, toFt, color, label, icon}
-      { fromFt: 0,      toFt: 295,    color: "rgba(102,255,204,0.16)", label: "Drone",        icon: "🚁" },
+      { fromFt: 0,      toFt: 295,    color: canvasAlpha(theme.current.canvas.accent, 0.16), label: "Drone",        icon: "🚁" },
       { fromFt: 500,    toFt: 2000,   color: "rgba(255,184,74,0.14)",  label: "Heli ops",     icon: "🚁" },
       { fromFt: 1000,   toFt: 10000,  color: "rgba(102,179,255,0.10)", label: "GA / VFR",     icon: "✈" },
       { fromFt: 18000,  toFt: 28000,  color: "rgba(160,80,255,0.10)",  label: "Jet climb",    icon: "✈" },
@@ -1653,7 +1673,7 @@ export class UI {
     // pedagogically correct "stay within 90 m of the surface" cue.
     const yLimit = m2y(groundM + 90);
     if (yLimit > 16 && yLimit < H - 16) {
-      ctx.strokeStyle = "rgba(255, 64, 64, 0.95)";
+      ctx.strokeStyle = canvasAlpha(theme.current.canvas.danger, 0.95);
       ctx.setLineDash([6, 4]);
       ctx.lineWidth = 2;
       ctx.beginPath();
@@ -1662,7 +1682,7 @@ export class UI {
       ctx.stroke();
       ctx.setLineDash([]);
       ctx.lineWidth = 1;
-      ctx.fillStyle = "rgba(255, 64, 64, 0.95)";
+      ctx.fillStyle = canvasAlpha(theme.current.canvas.danger, 0.95);
       ctx.font = "bold 9px ui-monospace, monospace";
       ctx.textAlign = "left";
       ctx.fillText("90 m AGL", 2, yLimit - 5);
@@ -1689,7 +1709,7 @@ export class UI {
 
     // ---- Aircraft marker (always clamped onto the visible scale) ----
     const yAc = Math.max(8, Math.min(H - 8, m2y(altM)));
-    ctx.fillStyle = "rgba(102,255,204,0.95)";
+    ctx.fillStyle = canvasAlpha(theme.current.canvas.accent, 0.95);
     ctx.beginPath();
     ctx.moveTo(W - 4, yAc);
     ctx.lineTo(W - 14, yAc - 6);
@@ -2522,9 +2542,9 @@ export class UI {
     ctx.lineTo(lx, ly);
     ctx.lineTo(rx, ry);
     ctx.closePath();
-    ctx.fillStyle = "rgba(102, 255, 204, 0.12)";
+    ctx.fillStyle = canvasAlpha(theme.current.canvas.accent, 0.12);
     ctx.fill();
-    ctx.strokeStyle = "rgba(102, 255, 204, 0.55)";
+    ctx.strokeStyle = canvasAlpha(theme.current.canvas.accent, 0.55);
     ctx.lineWidth = 1.5;
     ctx.setLineDash([6, 4]);
     ctx.beginPath();
@@ -2640,7 +2660,7 @@ export class UI {
       if (pat) { ctx.fillStyle = pat; ctx.fill(); }
       ctx.stroke();
       if (on) {
-        ctx.strokeStyle = "rgba(102, 255, 204, 0.85)";
+        ctx.strokeStyle = canvasAlpha(theme.current.canvas.accent, 0.85);
         ctx.lineWidth = sw(1.5);
         ctx.setLineDash([sw(4), sw(3)]);
         ctx.stroke();
@@ -2703,7 +2723,7 @@ export class UI {
       ctx.fillStyle = col;
       ctx.beginPath(); ctx.moveTo(0, -5); ctx.lineTo(3.4, 4); ctx.lineTo(0, 2); ctx.lineTo(-3.4, 4); ctx.closePath(); ctx.fill();
       ctx.restore();
-      if (sel) { ctx.strokeStyle = "rgba(102,255,204,0.95)"; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(bx, by, 8, 0, Math.PI * 2); ctx.stroke(); }
+      if (sel) { ctx.strokeStyle = canvasAlpha(theme.current.canvas.accent, 0.95); ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(bx, by, 8, 0, Math.PI * 2); ctx.stroke(); }
       if (emerg && flash) { ctx.strokeStyle = "#ff3b3b"; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(bx, by, 9, 0, Math.PI * 2); ctx.stroke(); }
       const vs = f.fix.vertRateMs || 0;
       if (Math.abs(vs) > 2) { ctx.fillStyle = vs > 0 ? "#9effa0" : "#ff9e9e"; ctx.fillText(vs > 0 ? "▲" : "▼", bx + 5, by - 3); }
@@ -2791,7 +2811,7 @@ export class UI {
     ctx.save();
     ctx.translate(dx, dy);
     ctx.rotate(-heading);
-    ctx.fillStyle = "#66ffcc";
+    ctx.fillStyle = canvasAlpha(theme.current.canvas.accent, 1);
     ctx.beginPath();
     ctx.moveTo(0, -7);
     ctx.lineTo(5, 5);
@@ -2844,7 +2864,7 @@ export class UI {
     }
 
     if (this.drone.cameraMode === "down") {
-      ctx.strokeStyle = "rgba(102, 255, 204, 0.9)";
+      ctx.strokeStyle = canvasAlpha(theme.current.canvas.accent, 0.9);
       ctx.lineWidth = 1.5;
       ctx.beginPath();
       ctx.moveTo(dx - 12, dy);
