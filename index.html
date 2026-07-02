@@ -127,7 +127,7 @@
       position: fixed; top: 64px; left: 50%; transform: translateX(-50%);
       z-index: 290; pointer-events: none;
       background: rgba(8, 14, 24, 0.88);
-      border: 1px solid rgba(102, 255, 204, 0.55); border-radius: 8px;
+      border: 1px solid color-mix(in srgb, var(--accent) 55%, transparent); border-radius: 8px;
       padding: 10px 18px; text-align: center;
       font-family: ui-monospace, monospace; color: #d9fff2;
     }
@@ -149,15 +149,15 @@
       width: min(420px, calc(100vw - 40px));
       padding: 36px 28px 32px;
       background: rgba(16, 22, 38, 0.88);
-      border: 1px solid rgba(102, 255, 204, 0.18);
+      border: 1px solid color-mix(in srgb, var(--accent) 18%, transparent);
       border-radius: 14px;
-      box-shadow: 0 12px 48px rgba(0,0,0,0.7), 0 0 0 1px rgba(102,255,204,0.06);
+      box-shadow: 0 12px 48px rgba(0,0,0,0.7), 0 0 0 1px color-mix(in srgb, var(--accent) 6%, transparent);
     }
     .ss-title {
       margin: 0;
       font-size: 22px; font-weight: 700; letter-spacing: 0.12em;
       color: var(--accent); text-align: center;
-      text-shadow: 0 0 20px rgba(102,255,204,0.45);
+      text-shadow: 0 0 20px color-mix(in srgb, var(--accent) 45%, transparent);
     }
     .ss-bar-outer {
       width: 100%; height: 3px;
@@ -169,7 +169,7 @@
       background: var(--accent);
       border-radius: 2px;
       transition: width 0.35s ease;
-      box-shadow: 0 0 8px rgba(102,255,204,0.55);
+      box-shadow: 0 0 8px color-mix(in srgb, var(--accent) 55%, transparent);
     }
     .ss-status {
       font-size: 12px; color: var(--muted);
@@ -182,17 +182,17 @@
     .ss-btn {
       display: flex; align-items: center; gap: 10px;
       width: 100%; padding: 13px 18px;
-      background: rgba(102,255,204,0.06);
-      border: 1px solid rgba(102,255,204,0.18);
+      background: color-mix(in srgb, var(--accent) 6%, transparent);
+      border: 1px solid color-mix(in srgb, var(--accent) 18%, transparent);
       border-radius: 8px;
       color: var(--text); font-family: var(--mono); font-size: 14px;
       cursor: pointer; text-align: left;
       transition: background 0.15s, border-color 0.15s, box-shadow 0.15s;
     }
     .ss-btn:hover, .ss-btn--active {
-      background: rgba(102,255,204,0.14);
-      border-color: rgba(102,255,204,0.6);
-      box-shadow: 0 0 12px rgba(102,255,204,0.18);
+      background: color-mix(in srgb, var(--accent) 14%, transparent);
+      border-color: color-mix(in srgb, var(--accent) 60%, transparent);
+      box-shadow: 0 0 12px color-mix(in srgb, var(--accent) 18%, transparent);
       color: var(--accent);
     }
     .ss-btn:focus-visible {
@@ -208,8 +208,8 @@
       font-size: 11px; color: var(--muted);
     }
     .ss-btn--active .ss-btn-key {
-      background: rgba(102,255,204,0.18);
-      border-color: rgba(102,255,204,0.5);
+      background: color-mix(in srgb, var(--accent) 18%, transparent);
+      border-color: color-mix(in srgb, var(--accent) 50%, transparent);
       color: var(--accent);
     }
     .ss-btn-emoji { font-size: 16px; }
@@ -243,7 +243,7 @@
       color: var(--text); font-family: var(--mono); cursor: pointer;
     }
     #hudToggles button.active {
-      background: rgba(102,255,204,0.18); border-color: rgba(102,255,204,0.4); color: #b8ffea;
+      background: color-mix(in srgb, var(--accent) 18%, transparent); border-color: color-mix(in srgb, var(--accent) 40%, transparent); color: var(--accent2);
     }
     #hudToggles button:hover { background: rgba(255,255,255,0.10); }
 
@@ -258,7 +258,7 @@
       text-align: left;
     }
     #hudProChip.pro {
-      background: rgba(102,255,204,0.10); border-color: rgba(102,255,204,0.30); color: #b8ffea;
+      background: color-mix(in srgb, var(--accent) 10%, transparent); border-color: color-mix(in srgb, var(--accent) 30%, transparent); color: var(--accent2);
     }
 
     /* B8.T8: minimal mode — hide the pro-only HUD rows via a CSS class.
@@ -333,9 +333,9 @@
       font-size: 9px; line-height: 1; cursor: pointer;
     }
     .compass-rose .dir-btn:hover {
-      background: rgba(102,255,204,0.18);
-      border-color: rgba(102,255,204,0.45);
-      color: #b8ffea;
+      background: color-mix(in srgb, var(--accent) 18%, transparent);
+      border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+      color: var(--accent2);
     }
     .compass-rose .dir-empty {
       width: 16px; height: 16px;
@@ -359,7 +359,7 @@
       flex: 1 1 auto; min-width: 52px; padding: 4px 5px; font-family: var(--mono); font-size: 10px;
     }
     #speedControls .speed-btn.active {
-      background: rgba(102,255,204,0.22); border-color: rgba(102,255,204,0.55); color: #b8ffea;
+      background: color-mix(in srgb, var(--accent) 22%, transparent); border-color: color-mix(in srgb, var(--accent) 55%, transparent); color: var(--accent2);
     }
     /* Betterment-2 P3.T3 (E2): collapsible flight-history block. Default
        collapsed — a single compact strip — so it stops dominating the HUD. */
@@ -390,7 +390,7 @@
       display: flex; gap: 6px; padding: 2px 4px; border-radius: 4px;
       color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
-    #historyList li.current { background: rgba(102,255,204,0.14); color: #b8ffea; }
+    #historyList li.current { background: color-mix(in srgb, var(--accent) 14%, transparent); color: var(--accent2); }
     #historyList li .h-type {
       flex-shrink: 0; width: 14px; text-align: center; opacity: 0.8;
     }
@@ -427,7 +427,7 @@
       max-width: min(520px, calc(100vw - 40px));
       padding: 10px 36px 10px 14px;
       background: rgba(20, 32, 48, 0.92);
-      border: 1px solid rgba(102,255,204,0.45);
+      border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
       border-radius: 8px;
       color: #d8f8ee;
       font-family: var(--mono); font-size: 12px; line-height: 1.5;
@@ -446,7 +446,7 @@
       background: transparent; border: none; color: #d8f8ee;
       font-size: 16px; line-height: 1; cursor: pointer; padding: 2px 6px;
     }
-    #easyModeIntroClose:hover { color: #b8ffea; }
+    #easyModeIntroClose:hover { color: var(--accent2); }
 
     /* Flight-mode chip in HUD — cyan accent when Easy Mode is on. */
     #modeChip {
@@ -456,8 +456,8 @@
       border: 1px solid rgba(255,255,255,0.10);
     }
     #modeChip.easy {
-      background: rgba(102,255,204,0.18); color: #b8ffea;
-      border-color: rgba(102,255,204,0.45);
+      background: color-mix(in srgb, var(--accent) 18%, transparent); color: var(--accent2);
+      border-color: color-mix(in srgb, var(--accent) 45%, transparent);
     }
 
     /* P4.T1: battery chip with green/yellow/red banding. */
@@ -599,7 +599,7 @@
       box-shadow: var(--shadow); background: #11161e;
       cursor: grab;
     }
-    #minimap.active { cursor: grabbing; border-color: rgba(102,255,204,0.35); }
+    #minimap.active { cursor: grabbing; border-color: color-mix(in srgb, var(--accent) 35%, transparent); }
 
     /* ---- Map-primary swap (toggled by 'M' key) ----
        Orthographic radar fills the viewport; 3D scene shrinks to a bottom-
@@ -658,7 +658,7 @@
     .view-mode-tabs button {
       flex: 1; padding: 4px 0; font-size: 11px; cursor: pointer;
     }
-    .view-mode-tabs button.active { background: var(--chip-bg); border-color: rgba(102,255,204,0.4); color: var(--accent2); }
+    .view-mode-tabs button.active { background: var(--chip-bg); border-color: color-mix(in srgb, var(--accent) 40%, transparent); color: var(--accent2); }
     .view-mode-tabs button:disabled { opacity: 0.4; cursor: not-allowed; }
     #viewRows { display: flex; flex-direction: column; gap: 2px; margin: 4px 0 8px 0; }
     .view-group-head {
@@ -738,7 +738,7 @@
       border-radius: 6px; padding: 4px 10px; font-family: var(--sans); cursor: pointer; font-size: 12px;
     }
     button:hover { background: rgba(255,255,255,0.10); }
-    button.primary { background: rgba(102,255,204,0.16); border-color: rgba(102,255,204,0.4); color: #b8ffea; }
+    button.primary { background: color-mix(in srgb, var(--accent) 16%, transparent); border-color: color-mix(in srgb, var(--accent) 40%, transparent); color: var(--accent2); }
 
     /* Legend */
     #legend { display: flex; flex-direction: column; gap: 6px; margin: 6px 0 10px 0; }
@@ -770,7 +770,7 @@
     #airspaceList .row1 { font-weight: 600; font-size: 12px; display: flex; gap: 6px; align-items: center; }
     #airspaceList .row2 { font-size: 11px; color: var(--muted); }
     #airspaceList button.teleport.active-target {
-      background: rgba(102,255,204,0.14); border-color: rgba(102,255,204,0.45);
+      background: color-mix(in srgb, var(--accent) 14%, transparent); border-color: color-mix(in srgb, var(--accent) 45%, transparent);
     }
     #airspaceFilter {
       width: 100%; margin: 4px 0 8px 0; padding: 6px 8px; border-radius: 6px;
@@ -786,7 +786,7 @@
       color: var(--text); font-family: var(--mono); cursor: pointer;
       white-space: nowrap;
     }
-    .qwarp-chip:hover { background: rgba(102,255,204,0.12); border-color: rgba(102,255,204,0.35); color: #b8ffea; }
+    .qwarp-chip:hover { background: color-mix(in srgb, var(--accent) 12%, transparent); border-color: color-mix(in srgb, var(--accent) 35%, transparent); color: var(--accent2); }
 
     /* Airspace group filters (Betterment-5) */
     #airspaceGroups { display: flex; flex-wrap: wrap; gap: 4px; margin: 4px 0 2px; }
@@ -804,23 +804,23 @@
     #liveFlightsList { list-style: none; padding: 0; margin: 4px 0 0; display: flex; flex-direction: column; gap: 3px; max-height: 240px; overflow-y: auto; }
     #liveFlightsList li { display: flex; align-items: center; gap: 6px; font-size: 11px; padding: 3px 4px; border-radius: 5px; cursor: pointer; }
     #liveFlightsList li:hover { background: rgba(255,255,255,0.06); }
-    #liveFlightsList li.sel { background: rgba(102,255,204,0.14); }
+    #liveFlightsList li.sel { background: color-mix(in srgb, var(--accent) 14%, transparent); }
     #liveFlightsList .lf-logo { width: 22px; height: 22px; object-fit: contain; border-radius: 3px; flex: 0 0 auto; background: rgba(255,255,255,0.06); }
     #liveFlightsList .lf-chip { width: 22px; height: 22px; border-radius: 3px; flex: 0 0 auto; display: flex; align-items: center; justify-content: center; font-size: 8px; font-weight: 700; color: #fff; }
     #liveFlightsList .lf-main { flex: 1 1 auto; min-width: 0; }
     #liveFlightsList .lf-cs { font-weight: 600; }
     #liveFlightsList .lf-sub { color: var(--muted); font-size: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    #liveFlightsList .lf-view { flex: 0 0 auto; font-family: var(--mono); font-size: 10px; padding: 2px 7px; border-radius: 4px; border: 1px solid var(--panel-border); background: rgba(102,255,204,0.12); color: var(--text); cursor: pointer; }
-    #liveFlightsList .lf-view:hover { background: rgba(102,255,204,0.28); }
+    #liveFlightsList .lf-view { flex: 0 0 auto; font-family: var(--mono); font-size: 10px; padding: 2px 7px; border-radius: 4px; border: 1px solid var(--panel-border); background: color-mix(in srgb, var(--accent) 12%, transparent); color: var(--text); cursor: pointer; }
+    #liveFlightsList .lf-view:hover { background: color-mix(in srgb, var(--accent) 28%, transparent); }
     #liveFlightsCard { font-size: 11px; }
     #liveFlightsCard.show { margin-bottom: 8px; padding: 8px; border: 1px solid var(--panel-border); border-radius: 8px; background: rgba(255,255,255,0.04); }
     #liveFlightsCard img.lf-photo { width: 100%; border-radius: 6px; display: block; margin-bottom: 6px; }
     #liveFlightsCard .lf-row { display: flex; justify-content: space-between; gap: 8px; margin: 2px 0; }
     #liveFlightsCard .lf-row .k { color: var(--muted); }
     #liveFlightsCard .lf-btns { display: flex; gap: 6px; margin-top: 6px; }
-    #liveFlightsCard button { font-family: var(--mono); font-size: 11px; padding: 3px 10px; border-radius: 5px; border: 1px solid var(--panel-border); background: rgba(102,255,204,0.14); color: var(--text); cursor: pointer; }
+    #liveFlightsCard button { font-family: var(--mono); font-size: 11px; padding: 3px 10px; border-radius: 5px; border: 1px solid var(--panel-border); background: color-mix(in srgb, var(--accent) 14%, transparent); color: var(--text); cursor: pointer; }
     .badge { display: inline-block; padding: 1px 5px; border-radius: 4px; font-size: 9px; font-weight: 700; letter-spacing: 0.4px; }
-    .badge.auth { background: rgba(102,255,204,0.18); color: #b8ffea; }
+    .badge.auth { background: color-mix(in srgb, var(--accent) 18%, transparent); color: var(--accent2); }
     .badge.approx { background: rgba(255,184,74,0.20); color: #ffd9a3; }
     .cat { padding: 1px 4px; border-radius: 3px; font-weight: 600; font-size: 10px; }
     .cat.cat-CTR { background: rgba(255,51,68,0.25); color: #ffd8de; }
@@ -862,10 +862,10 @@
     }
     #mobileTryAnyway {
       margin-top: 18px; padding: 10px 22px; font-family: var(--mono); font-size: 13px;
-      background: rgba(102,255,204,0.16); color: #b8ffea;
-      border: 1px solid rgba(102,255,204,0.45); border-radius: 6px; cursor: pointer;
+      background: color-mix(in srgb, var(--accent) 16%, transparent); color: var(--accent2);
+      border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent); border-radius: 6px; cursor: pointer;
     }
-    #mobileTryAnyway:active { background: rgba(102,255,204,0.30); }
+    #mobileTryAnyway:active { background: color-mix(in srgb, var(--accent) 30%, transparent); }
 
     /* Footer disclaimer */
     #footer {
@@ -881,25 +881,25 @@
     #crosshairs.visible { display: block; }
     #crosshairs::before, #crosshairs::after {
       content: ""; position: absolute; left: 50%; top: 50%;
-      background: rgba(102, 255, 204, 0.85);
+      background: color-mix(in srgb, var(--accent) 85%, transparent);
       transform: translate(-50%, -50%);
-      box-shadow: 0 0 6px rgba(102, 255, 204, 0.4);
+      box-shadow: 0 0 6px color-mix(in srgb, var(--accent) 40%, transparent);
     }
     #crosshairs::before { width: 28px; height: 2px; }
     #crosshairs::after { width: 2px; height: 28px; }
     #crosshairInfo {
       position: fixed; left: 50%; top: calc(50% + 28px); transform: translateX(-50%);
       display: none; padding: 6px 12px; border-radius: 8px;
-      background: rgba(8, 12, 20, 0.88); border: 1px solid rgba(102, 255, 204, 0.45);
-      font-family: var(--mono); font-size: 12px; color: #b8ffea; z-index: 51;
+      background: rgba(8, 12, 20, 0.88); border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
+      font-family: var(--mono); font-size: 12px; color: var(--accent2); z-index: 51;
       pointer-events: none; white-space: nowrap;
     }
     #crosshairInfo.visible { display: block; }
     #viewModeBadge {
       position: fixed; top: 14px; left: 50%; transform: translateX(-50%);
       display: none; padding: 4px 10px; border-radius: 999px;
-      background: rgba(102, 255, 204, 0.18); border: 1px solid rgba(102, 255, 204, 0.45);
-      font-family: var(--mono); font-size: 11px; color: #b8ffea; z-index: 51;
+      background: color-mix(in srgb, var(--accent) 18%, transparent); border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
+      font-family: var(--mono); font-size: 11px; color: var(--accent2); z-index: 51;
     }
     #viewModeBadge.visible { display: block; }
 
@@ -920,9 +920,9 @@
       padding: 5px 14px; border-radius: 999px;
       font-family: var(--mono); font-size: 11px;
       background: rgba(16,22,32,0.92); color: var(--accent);
-      border: 1px solid rgba(102,255,204,0.4);
+      border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
     }
-    #identifyPanel .ic-more:hover { background: rgba(102,255,204,0.16); }
+    #identifyPanel .ic-more:hover { background: color-mix(in srgb, var(--accent) 16%, transparent); }
     .identify-card {
       padding: 10px 14px; border-radius: 10px;
       border: 1px solid rgba(255,255,255,0.14);
@@ -959,7 +959,7 @@
       position: fixed; left: 50%; transform: translateX(-50%);
       bottom: 118px; z-index: 60; width: min(640px, calc(100vw - 40px));
       display: none; flex-direction: column; gap: 8px;
-      background: rgba(8, 14, 24, 0.92); border: 1px solid rgba(102, 255, 204, 0.35);
+      background: rgba(8, 14, 24, 0.92); border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
       border-radius: 14px; padding: 14px 16px 12px 16px;
       box-shadow: 0 12px 40px rgba(0,0,0,0.55);
       backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
@@ -1046,8 +1046,8 @@
       margin-bottom: 10px;
     }
     #typingModal .tc-input:focus {
-      border-color: rgba(102, 255, 204, 0.45);
-      box-shadow: 0 0 0 2px rgba(102, 255, 204, 0.12);
+      border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+      box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 12%, transparent);
     }
     #typingModal .tc-bar-outer {
       width: 100%;
@@ -1083,7 +1083,7 @@
       align-items: center;
       gap: 10px;
       background: rgba(10, 14, 21, 0.82);
-      border: 1px solid rgba(102, 255, 204, 0.30);
+      border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
       border-radius: 8px;
       padding: 6px 14px;
       font-family: var(--mono);
@@ -1097,8 +1097,8 @@
     #gameObjective[hidden] { display: none; }
     #gameObjectiveInfo { flex: 1 1 auto; }
     #gameAutopilotBtn {
-      background: rgba(102, 255, 204, 0.12);
-      border: 1px solid rgba(102, 255, 204, 0.40);
+      background: color-mix(in srgb, var(--accent) 12%, transparent);
+      border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
       border-radius: 5px;
       color: var(--accent);
       font-family: var(--mono);
@@ -1109,7 +1109,7 @@
       flex-shrink: 0;
     }
     #gameAutopilotBtn:hover {
-      background: rgba(102, 255, 204, 0.22);
+      background: color-mix(in srgb, var(--accent) 22%, transparent);
     }
 
     /* ---- Game Briefing / Debrief cards (B7.T8) ---- */
@@ -1262,8 +1262,8 @@
       justify-content: flex-end;
     }
     .gc-btn-primary {
-      background: rgba(102, 255, 204, 0.14);
-      border: 1px solid rgba(102, 255, 204, 0.45);
+      background: color-mix(in srgb, var(--accent) 14%, transparent);
+      border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
       border-radius: 6px;
       color: var(--accent);
       font-family: var(--mono);
@@ -1273,7 +1273,7 @@
       letter-spacing: 0.04em;
     }
     .gc-btn-primary:hover {
-      background: rgba(102, 255, 204, 0.24);
+      background: color-mix(in srgb, var(--accent) 24%, transparent);
     }
     .gc-btn-secondary {
       background: transparent;
@@ -1308,12 +1308,12 @@
       cursor: pointer;
     }
     .gc-tier:hover {
-      border-color: rgba(102,255,204,0.35);
+      border-color: color-mix(in srgb, var(--accent) 35%, transparent);
       color: var(--text);
     }
     .gc-tier--active {
-      background: rgba(102,255,204,0.12);
-      border-color: rgba(102,255,204,0.55);
+      background: color-mix(in srgb, var(--accent) 12%, transparent);
+      border-color: color-mix(in srgb, var(--accent) 55%, transparent);
       color: var(--accent);
     }
     /* B11.T1 — uiPrefs visibility registry. */
