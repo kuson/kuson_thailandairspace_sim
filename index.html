@@ -537,17 +537,52 @@
       padding: 4px 8px; border-radius: 6px; font-family: var(--mono); font-size: 11px;
       color: var(--muted); max-width: 260px;
     }
+    /* ---- Radar options popover (B11.T2): anchored to the ⚙ button at the
+       minimap's top-right corner; same #radarOptions element + checkboxes
+       that used to sit as an always-on floater, now gated behind uiHidden
+       (registry id 'radarOptions', default false — closed until opened). */
+    #radarGearBtn {
+      position: fixed; left: 250px; bottom: 278px;
+      width: 24px; height: 24px; padding: 0; line-height: 1;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 50%; font-size: 13px; z-index: 2;
+    }
+    body.map-primary #radarGearBtn { display: none; }
     #radarOptions {
       position: fixed; left: 14px; bottom: 308px;
       background: var(--panel); border: 1px solid var(--panel-border);
       padding: 6px 8px; border-radius: 6px; font-family: var(--mono); font-size: 10px;
       color: var(--muted); max-width: 260px; display: flex; flex-direction: column; gap: 4px;
+      box-shadow: var(--shadow); z-index: 2;
     }
     #radarOptions .opt { display: flex; align-items: center; gap: 6px; cursor: pointer; color: var(--text); }
     #radarOptions input { accent-color: var(--accent); }
     #displayOptions { display: flex; flex-direction: column; gap: 6px; margin: 4px 0 10px 0; }
     #displayOptions .opt { display: flex; align-items: center; gap: 8px; font-size: 12px; cursor: pointer; }
     #displayOptions input { accent-color: var(--accent); }
+
+    /* ---- View panel (B11.T2): per-element visibility checkboxes ---- */
+    .view-mode-tabs { display: flex; gap: 4px; margin: 2px 0 8px 0; }
+    .view-mode-tabs button {
+      flex: 1; padding: 4px 0; font-size: 11px; cursor: pointer;
+    }
+    .view-mode-tabs button.active { background: rgba(102,255,204,0.16); border-color: rgba(102,255,204,0.4); color: #b8ffea; }
+    .view-mode-tabs button:disabled { opacity: 0.4; cursor: not-allowed; }
+    #viewRows { display: flex; flex-direction: column; gap: 2px; margin: 4px 0 8px 0; }
+    .view-group-head {
+      font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted);
+      margin: 8px 0 2px 0;
+    }
+    .view-group-head:first-child { margin-top: 0; }
+    .view-row {
+      display: flex; align-items: center; gap: 8px; font-size: 12px; cursor: pointer; padding: 2px 0;
+    }
+    .view-row input { accent-color: var(--accent); }
+    .view-row .view-label { flex: 1; }
+    .view-row .view-key {
+      font-family: var(--mono); font-size: 10px; color: var(--muted);
+      border: 1px solid var(--panel-border); border-radius: 4px; padding: 0 4px;
+    }
 
     /* ---- Input/Controls panel section (P3.T6) ---- */
     #inputOptions { display: flex; flex-direction: column; gap: 6px; margin: 4px 0 10px 0; }
@@ -557,12 +592,12 @@
     #inputOptions .opt output { font-variant-numeric: tabular-nums; color: var(--muted); font-size: 11px; }
     #inputOptions .opt input[type="checkbox"] { accent-color: var(--accent); justify-self: start; }
     #inputOptions .opt-select { width: auto; }
-    #inputOptions .opt-reset {
+    #inputOptions .opt-reset, #viewSection .opt-reset {
       align-self: flex-start; padding: 4px 8px; font-size: 11px; cursor: pointer;
       background: rgba(255,255,255,0.06); color: var(--text);
       border: 1px solid var(--panel-border); border-radius: 6px;
     }
-    #inputOptions .opt-reset:hover { background: rgba(255,255,255,0.12); }
+    #inputOptions .opt-reset:hover, #viewSection .opt-reset:hover { background: rgba(255,255,255,0.12); }
 
     /* ---- Altitude limits editor (Betterment-2 P2.T2) ---- */
     #altLimits { display: flex; flex-direction: column; gap: 5px; margin: 4px 0 10px 0; }
@@ -1260,7 +1295,8 @@
 
   <canvas id="attitudeIndicator" width="240" height="240" aria-label="Artificial horizon"></canvas>
 
-  <div id="radarOptions">
+  <button type="button" id="radarGearBtn" title="Radar options">⚙</button>
+  <div id="radarOptions" class="uiHidden">
     <label class="opt"><input type="checkbox" id="optRadarMapHud" checked /> Map underlay</label>
     <label class="opt"><input type="checkbox" id="optRadarCenter" checked /> Center aircraft</label>
     <label class="opt"><input type="checkbox" id="optFovHud" checked /> FOV cone</label>
@@ -1278,6 +1314,12 @@
       </div>
     </div>
     <div class="panel-body">
+      <h3 class="collapsible-head" id="viewSectionToggle">View</h3>
+      <div id="viewSection" class="collapsible-body collapsed">
+        <div id="viewModeTabs" class="view-mode-tabs"></div>
+        <div id="viewRows"></div>
+        <button type="button" id="viewResetLayout" class="opt-reset">Reset layout</button>
+      </div>
       <h3>Airspace tour guide</h3>
       <div id="tourGuideSection"></div>
       <h3>Display options</h3>

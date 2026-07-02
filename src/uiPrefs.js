@@ -12,7 +12,9 @@ export const UI_ELEMENTS = [
   // no static default: the pro/minimal HUD mode already persists in
   // kuson.hud.v1 (src/ui.js HUD_KEY) — read it live so existing users keep
   // their setting instead of being silently reset by this registry.
-  { id: "hudExtras",          label: "HUD extra rows",    group: "FLIGHT", defaultFn: () => getHudSettings().pro },
+  // externalStore: kuson.hud.v1 (via ui.setHudPro) is the sole persistence
+  // path for this id — set() below skips writing kuson.uiprefs.v1 for it.
+  { id: "hudExtras",          label: "HUD extra rows",    group: "FLIGHT", defaultFn: () => getHudSettings().pro, externalStore: true },
   { id: "altTape",            label: "Altitude tape",     group: "FLIGHT", default: true },
   // default false: matches today — ui.js starts attitudeVisible=false, shown
   // only after the user presses H (design note says "true"; hard-rule
@@ -22,8 +24,7 @@ export const UI_ELEMENTS = [
   { id: "simSpeed",           label: "Sim speed controls", group: "FLIGHT", sel: "#speedRow",                default: true },
 
   { id: "minimap",            label: "Minimap / radar",   group: "NAV",    sel: "#minimap",                 default: true },
-  // default flips to false in B11.T2 (radar floater folds into a popover)
-  { id: "radarOptions",       label: "Radar options",     group: "NAV",    sel: "#radarOptions",             default: true },
+  { id: "radarOptions",       label: "Radar options",     group: "NAV",    sel: "#radarOptions",             default: false },
   { id: "rangeRingsUi",       label: "Range rings option", group: "NAV",   sel: "label:has(#optRangeRings)", default: true },
 
   { id: "panel",              label: "Info panel",        group: "INFO",   sel: "#panel",                   default: true },
@@ -103,16 +104,39 @@ export function apply(mode) {
 }
 
 export function set(id, visible, { mode } = {}) {
-  if (!_byId.has(id)) return;
-  const prefs = getPrefs();
-  if (mode) {
-    prefs.modes[mode] = { ...prefs.modes[mode], [id]: !!visible };
-  } else {
-    prefs.global[id] = !!visible;
+  const entry = _byId.get(id);
+  if (!entry) return;
+  // externalStore ids (e.g. hudExtras) persist through their own apply fn's
+  // store (kuson.hud.v1 via ui.setHudPro) — writing kuson.uiprefs.v1 too
+  // would create a second, staler source of truth that could shadow direct
+  // changes to that store on a later load. Apply + notify only.
+  if (!entry.externalStore) {
+    const prefs = getPrefs();
+    if (mode) {
+      prefs.modes[mode] = { ...prefs.modes[mode], [id]: !!visible };
+    } else {
+      prefs.global[id] = !!visible;
+    }
+    _savePrefs(prefs);
   }
-  _savePrefs(prefs);
-  _applyOne(_byId.get(id), !!visible);
+  _applyOne(entry, !!visible);
   for (const cb of _listeners) cb(id, !!visible);
+}
+
+/**
+ * Clear only the sparse `global` overrides (View panel "Reset layout").
+ * `modes` is left untouched — it's schema-ready but unused until a later
+ * task. Re-applies every entry's now-default-or-mode-only visibility and
+ * notifies subscribers (e.g. the View panel) so checkboxes refresh.
+ */
+export function resetGlobal() {
+  const prefs = getPrefs();
+  prefs.global = {};
+  _savePrefs(prefs);
+  apply();
+  for (const entry of UI_ELEMENTS) {
+    for (const cb of _listeners) cb(entry.id, isVisible(entry.id));
+  }
 }
 
 export function toggle(id, opts = {}) {

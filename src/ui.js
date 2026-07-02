@@ -48,6 +48,12 @@ const DRONE_RULES_HTML = `
   </ul>
   <p style="opacity:0.7;font-size:11px">Always confirm against current CAAT guidance.</p>`;
 
+// B11.T2 — View panel: key hints, registry-group display order, and which
+// ids get the ⚠ prefix. See uiPrefs.js UI_ELEMENTS for the registry itself.
+const VIEW_KEY_HINTS = { altTape: "J", attitude: "H", panel: "T", controlsHint: "C", debugOverlay: "`" };
+const VIEW_GROUP_ORDER = ["FLIGHT", "NAV", "INFO", "ALERTS", "HELP"];
+const VIEW_ALERT_IDS = new Set(["alertBanner", "alertChips"]);
+
 // B8.T8 — HUD settings (pro/minimal toggle).
 // Default resolution: pro:true if any kuson./thairspace. key already exists
 // in localStorage (existing user), pro:false for a completely fresh profile.
@@ -228,6 +234,7 @@ export class UI {
     this.onGroundLayerToggle = null;
 
     this._buildPanel();
+    this._buildViewPanel();
     this._buildTourSection();
     this._buildSpeedControls();
     this._buildDisplayOptions();
@@ -366,6 +373,77 @@ export class UI {
       try { localStorage.setItem("kuson.history.collapsed", collapsed ? "1" : "0"); } catch { /* ignore */ }
       apply();
     });
+  }
+
+  // B11.T2 — View panel: one checkbox row per uiPrefs.UI_ELEMENTS registry
+  // entry, grouped under its registry `group`, plus a disabled mode-tab stub
+  // and a "Reset layout" button that clears only the sparse `global`
+  // overrides (leaves `modes` alone — that's still schema-only/unused).
+  _buildViewPanel() {
+    const tabsEl = document.getElementById("viewModeTabs");
+    const rowsEl = document.getElementById("viewRows");
+    const resetBtn = document.getElementById("viewResetLayout");
+    if (!rowsEl) return;
+
+    // Mode-tab stub: only "Auto" is active/clickable. Freestyle/Learning/
+    // Game are wired up by a later task (uiPrefs `modes` overrides already
+    // exist in the persistence schema — this is UI-only for now).
+    if (tabsEl) {
+      tabsEl.innerHTML = ["Auto", "Freestyle", "Learning", "Game"].map((label, i) =>
+        `<button type="button" class="${i === 0 ? "active" : ""}" ${i === 0 ? "" : "disabled"}>${label}</button>`
+      ).join("");
+    }
+
+    const byGroup = new Map();
+    for (const entry of uiPrefs.UI_ELEMENTS) {
+      if (!byGroup.has(entry.group)) byGroup.set(entry.group, []);
+      byGroup.get(entry.group).push(entry);
+    }
+    const rowHtml = (entry) => {
+      const warn = VIEW_ALERT_IDS.has(entry.id) ? "⚠ " : "";
+      const key = VIEW_KEY_HINTS[entry.id];
+      return `
+        <label class="view-row" data-view-id="${entry.id}">
+          <input type="checkbox" id="view_${entry.id}" />
+          <span class="view-label">${warn}${entry.label}</span>
+          ${key ? `<span class="view-key">${key}</span>` : ""}
+        </label>`;
+    };
+    rowsEl.innerHTML = VIEW_GROUP_ORDER
+      .filter((g) => byGroup.has(g))
+      .map((g) => `<div class="view-group-head">${g}</div>${byGroup.get(g).map(rowHtml).join("")}`)
+      .join("");
+
+    const checkboxFor = (id) => document.getElementById(`view_${id}`);
+    const refreshRows = () => {
+      for (const entry of uiPrefs.UI_ELEMENTS) {
+        const cb = checkboxFor(entry.id);
+        if (cb) cb.checked = uiPrefs.isVisible(entry.id);
+      }
+    };
+    refreshRows();
+
+    rowsEl.querySelectorAll("input[type=checkbox]").forEach((cb) => {
+      const id = cb.id.slice("view_".length);
+      cb.addEventListener("change", () => uiPrefs.set(id, cb.checked));
+    });
+
+    // Any other path (keys, HUD buttons, pro-chip, radar ⚙) that changes a
+    // registry id's visibility also fires this — keeps every row truthful.
+    uiPrefs.onChange(() => refreshRows());
+
+    resetBtn?.addEventListener("click", () => uiPrefs.resetGlobal());
+
+    // Collapsible header wiring (matches drone-rules pattern). Collapsed by
+    // default every load — collapse-state persistence arrives in B11.T4.
+    const toggle = document.getElementById("viewSectionToggle");
+    const body = document.getElementById("viewSection");
+    if (toggle && body) {
+      toggle.addEventListener("click", () => {
+        const collapsed = body.classList.toggle("collapsed");
+        toggle.classList.toggle("expanded", !collapsed);
+      });
+    }
   }
 
   _buildDisplayOptions() {
@@ -839,9 +917,10 @@ export class UI {
       this._refreshAirspaceList();
     });
 
-    // Telemetry-pane toggles
-    this.toggleAltBtn?.addEventListener("click", () => this.toggleAltTape());
-    this.toggleAttitudeBtn?.addEventListener("click", () => this.toggleAttitude());
+    // Telemetry-pane toggles — routed through uiPrefs so the registry (and
+    // the View-panel checkboxes) stay the single source of truth.
+    this.toggleAltBtn?.addEventListener("click", () => uiPrefs.toggle("altTape"));
+    this.toggleAttitudeBtn?.addEventListener("click", () => uiPrefs.toggle("attitude"));
     this.togglePauseBtn?.addEventListener("click", () => this._togglePauseFromButton());
     this.toggleStrictCaatBtn?.addEventListener("click", () => this._toggleStrictCaat());
     this._syncStrictCaatButton();   // reflect persisted state on load
@@ -870,6 +949,12 @@ export class UI {
         e.preventDefault();
       } else if (k === "h") {
         uiPrefs.toggle("attitude");
+        e.preventDefault();
+      } else if (k === "t") {
+        uiPrefs.toggle("panel");
+        e.preventDefault();
+      } else if (k === "c") {
+        uiPrefs.toggle("controlsHint");
         e.preventDefault();
       } else if (e.key === "`" || e.code === "Backquote") {
         uiPrefs.toggle("debugOverlay");
@@ -1146,6 +1231,14 @@ export class UI {
 
   _bindRadar() {
     const canvas = this.minimap;
+
+    // B11.T2: ⚙ folds the four radar floater checkboxes into a popover —
+    // same #radarOptions element + checkbox handlers, just gated behind the
+    // 'radarOptions' registry id (default false) instead of always-on.
+    document.getElementById("radarGearBtn")?.addEventListener("click", () => {
+      uiPrefs.toggle("radarOptions");
+    });
+
     const centerCb = document.getElementById("optRadarCenter");
     if (centerCb) {
       centerCb.checked = this.radarCenterAircraft;
@@ -1992,7 +2085,10 @@ export class UI {
     const btn = document.getElementById("hudProChip");
     if (!btn) return;
     this._applyHudMode(getHudSettings().pro);
-    btn.addEventListener("click", () => this.setHudPro(!getHudSettings().pro));
+    // Routed through uiPrefs so the View-panel 'hudExtras' checkbox hears
+    // the change via onChange (externalStore: true — kuson.hud.v1 stays the
+    // sole persistence path; see uiPrefs.js set()).
+    btn.addEventListener("click", () => uiPrefs.set("hudExtras", !getHudSettings().pro));
   }
 
   setHudPro(pro) {
