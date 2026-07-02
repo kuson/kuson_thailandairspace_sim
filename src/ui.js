@@ -568,6 +568,7 @@ export class UI {
       <label class="opt"><input type="checkbox" id="optProvinces" /> Province names</label>
       <label class="opt"><input type="checkbox" id="optVolumeGlow" /> Volume glow</label>
       <label class="opt"><input type="checkbox" id="optInteriorFade" /> Interior fade</label>
+      <label class="opt"><input type="checkbox" id="optDeclutter" /> Declutter</label>
       <label class="opt"><input type="checkbox" id="optLiveFlights" /> Show me live flights</label>
       <label class="opt">
         Flight source
@@ -628,6 +629,7 @@ export class UI {
     const pvChk = el.querySelector("#optProvinces");
     const vgChk = el.querySelector("#optVolumeGlow");
     const ifChk = el.querySelector("#optInteriorFade");
+    const dcChk = el.querySelector("#optDeclutter");
     const tnChk = el.querySelector("#optTerrain");
     const clChk = el.querySelector("#optCityLights");
     const wtChk = el.querySelector("#optWater");
@@ -636,6 +638,7 @@ export class UI {
     if (pvChk) pvChk.checked = gd.provinces;
     if (vgChk) vgChk.checked = gd.volumeGlow;
     if (ifChk) ifChk.checked = gd.interiorFade;
+    if (dcChk) dcChk.checked = gd.declutter;
     if (tnChk) tnChk.checked = gd.terrain;
     if (clChk) clChk.checked = gd.cityLights;
     if (wtChk) wtChk.checked = gd.water;
@@ -644,6 +647,7 @@ export class UI {
     pvChk?.addEventListener("change", () => this.onGroundLayerToggle?.("provinces", pvChk.checked));
     vgChk?.addEventListener("change", () => this.onGroundLayerToggle?.("volumeGlow", vgChk.checked));
     ifChk?.addEventListener("change", () => this.onGroundLayerToggle?.("interiorFade", ifChk.checked));
+    dcChk?.addEventListener("change", () => this.onGroundLayerToggle?.("declutter", dcChk.checked));
     tnChk?.addEventListener("change", () => this.onGroundLayerToggle?.("terrain", tnChk.checked));
     clChk?.addEventListener("change", () => this.onGroundLayerToggle?.("cityLights", clChk.checked));
     wtChk?.addEventListener("change", () => this.onGroundLayerToggle?.("water", wtChk.checked));

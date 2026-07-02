@@ -6,9 +6,12 @@
 // B11.T8: interiorFade (airspace interior-fill fade) defaults ON — the
 // world stays readable inside stacked volumes; the outline + fresnel rim
 // still carry the "cage" read, so OFF is the parity case per spec §0.
+// B11.T9: declutter (altitude/distance declutter laws — src/declutter.js)
+// defaults ON — OFF restores every touched layer's always-on legacy
+// behaviour byte-for-byte (the module writes nothing while off).
 const LS_KEY = "kuson.grounddetail.v1";
 
-export const DEFAULT_GROUND_DETAIL = { airports: true, rangeRings: false, provinces: true, volumeGlow: true, terrain: true, cityLights: true, water: true, interiorFade: true };
+export const DEFAULT_GROUND_DETAIL = { airports: true, rangeRings: false, provinces: true, volumeGlow: true, terrain: true, cityLights: true, water: true, interiorFade: true, declutter: true };
 
 export function getGroundDetailSettings() {
   try {

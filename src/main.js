@@ -17,6 +17,7 @@ import { installCityBeacons } from "./cities.js";
 import { installProvinceLines } from "./provinces.js";
 import { installAirportBeacons } from "./airports.js";
 import { installRangeRings } from "./rangeRings.js";
+import * as declutter from "./declutter.js";
 import { getGroundDetailSettings, setGroundDetailSettings } from "./groundSettings.js";
 import { LiveFlightsLayer } from "./liveFlights.js";
 import { getLiveFlightsSettings, setLiveFlightsSettings } from "./flightSources.js";
@@ -571,11 +572,29 @@ async function bootstrap() {
   setVolumeGlow(groundDetail.volumeGlow);
   // B11.T8: restore interior-fade state from persistence on load (default ON).
   layer.setInteriorFadeEnabled(groundDetail.interiorFade);
+  // B11.T9: altitude/distance declutter laws — see src/declutter.js. No
+  // scene-group flip (like volumeGlow/interiorFade, this is a behavioural
+  // toggle the module itself reads live via getSetting each frame); the
+  // "declutter" key in onGroundLayerToggle above needs no extra branch.
+  // provinces/airports resolve asynchronously (see installProvinceLines/
+  // installAirportBeacons .then() above) — pass live-ref getters, same
+  // shape as window.__sim.groundLayers' get airports()/get provinces().
+  const declutterLayers = declutter.install({
+    layer,
+    provinces: { ref: () => provinceLines },
+    airports: { ref: () => airportBeacons },
+    rangeRings,
+    ui,
+    liveFlights,
+    uiPrefs,
+    getSetting: () => getGroundDetailSettings().declutter,
+  });
   window.__sim.groundLayers = {
     rangeRings,
     get airports() { return airportBeacons; },
     get provinces() { return provinceLines; },
   };
+  window.__sim.declutter = declutterLayers;   // harness API (checkpoint staging)
 
   const start = await getStartLocation();
   startScreen.tick("Locating start position…");
@@ -920,6 +939,14 @@ function loop(t) {
   _safe("province-scales", () => provinceLines?.updateScales(camera, renderer));
   _safe("liveflights", () => liveFlights.update(dt, camera.position));
   _safe("liveflights-labels", () => liveFlights.updateLabelScales(camera, renderer));
+  // B11.T9: altitude/distance declutter laws (src/declutter.js) — must run
+  // AFTER province-scales/airport-scales/label-scales/range-rings/
+  // liveflights-labels above: each of those already rewrites its own
+  // material.opacity fresh every frame from its own distance/rank logic,
+  // and this pass multiplies a law factor on top of whatever they just
+  // wrote (see declutter.js file header for why that composition is safe
+  // and requires no separate restore for those layers).
+  _safe("declutter", () => declutterLayers.update(camera, drone, dt));
   _safe("ufos", () => ufos.update(dt));
   _safe("crawlers", () => crawlers.update(dt));
   _safe("shadow", () => _updatePlayerShadow(dt));
