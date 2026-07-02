@@ -1451,3 +1451,33 @@ Executed the full B5 + B6 playbook to completion (10 atomic commits) and first l
 **Branch state:** `b10-terrain-fixups-20260613` off `main` (71c38dc) with `446b40b` + `ba6130b`. Not yet merged — separate from the tagged `betterment7-complete` line.
 
 **Still open:** player-shadow-blob foreground visual (harness rAF-pause limitation, not a defect).
+
+## 2026-07-02 (g) — Facelift review: UI customization · mode grouping · graphics · declutter (B11 planning)
+
+**Operator:** Fable 5 (orchestrator; 3 parallel Explore audit subagents)
+**Start:** ~19:55 Asia/Bangkok
+**Objective:** Review the UI (show/hide customization + reskin path), per-mode UI grouping (Game/Learning/FreeStyle), graphics quality, and 3D clutter; produce the same-named report + playbook pair for autonomous B11 execution.
+
+### Findings
+- Three file:line-cited audits (UI architecture · mode system · graphics/clutter) + a 10-screenshot live-browser survey on the preview server; consolidated in `20260702_FaceliftReport.md` Part 1.
+- Headlines: interior volume fill washes the entire viewport almost everywhere over central Thailand (the #1 view problem); visibility toggles are scattered/keyboard-only/half-persisted with no registry; theming is ~80% ready (11 CSS vars) but canvas instruments + inline JS colors are hardcoded; game/learning modes leave the whole explore UI live (quick-warp chips + Ctrl+Z undo active mid-wave = HIGH conflicts); night city lights render as 2–3 giant domes, night sky empty; terrain relief reads flat (no shading response); no postprocessing; perf headroom huge (~2 ms/frame M1).
+- Bugs logged in passing (→ B11.T14): stale district label after teleport/fly-to; time-of-day select↔engine desync; attribution/panel collision; banner/game-strip stacking.
+
+### Changes applied
+- `20260702_FaceliftReport.md` — evidence + gap analysis + locked design (D1–D7).
+- `20260702_FaceliftPlaybook.md` — Betterment-11: 16 task contracts (T0–T15), binding design notes §0.5 (registry schema, theme tokens, mode profiles, interior-fill law, declutter law table, composer/night-sky/terrain-shading specs), checkpoints C1–C4, model routing (Fable orchestrator + T11 inline; Sonnet default; Haiku only on marked mechanical docs subtasks), branch-reconciliation policy in T0.
+- `state_TODO.md §3` — B11 execution row added.
+
+### Decisions
+- Cycle name **Facelift**, phase **Betterment-11**, branch `betterment11-20260702` (created at execution kickoff, not now) — because the report/playbook pair convention (Betterment/Shebang) matches, and the pending `b10-terrain-fixups-20260613` merge is handled by T0's ancestor-check policy rather than blocking planning.
+- Haiku routing restricted to mechanical docs/data-regen subtasks under orchestrator line-review — because B7 §0.1 established that frame-loop/input/shader work fails subtly below Sonnet; savings don't justify retry cost elsewhere.
+- Interior-fill fade + declutter default ON (parity rule covers the OFF state) — because the default experience is the product; C3 gates the new defaults visually.
+
+### Pending verification
+- [ ] All of B11 (implementation not started this session; C1–C4 gates defined in the playbook).
+
+### Session close
+- TaskList: none opened; audits ran as background subagents (all 3 completed).
+- Files written: `20260702_FaceliftReport.md`, `20260702_FaceliftPlaybook.md`, this journal block, `state_TODO.md` row.
+- Open follow-ups added to `state_TODO.md §3`: execute B11 per playbook. Deferred list lives in the playbook's final section.
+- Repo state: docs-only commit on `b10-terrain-fixups-20260613` (code untouched; dev server run read-only).

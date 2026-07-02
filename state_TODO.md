@@ -242,6 +242,7 @@ Operator should walk through `spec.md §6` in a real browser. Until then these a
 - [ ] Trace true Thai-Cambodian border for VTR62 polygon (currently straight-line closes through Cambodia — overstates area on that side).
 - [ ] Sample arc segments for VTD34 / VTD58 / VTD17 instead of straight-line chord between endpoints.
 - [ ] Add a smoke-test rig (Playwright or Puppeteer) covering the verification checklist in §2.
+- [ ] **2026-07-02:** Execute **Betterment-11 Facelift** — UI visibility registry + View panel + 4 themes, per-mode UI profiles + input scoping, interior-fill fade, declutter laws + focus mode, night sky/city-light constellations, gated bloom, terrain shading. Contracts + model routing in `20260702_FaceliftPlaybook.md`; evidence in `20260702_FaceliftReport.md`. See `journal.md` 2026-07-02 (g).
 
 ### Betterment-5 — Airspace de-clutter (✅ done + browser-verified 2026-06-01 (e); see `20260601_BettermentPlaybook.md` + `spec.md §13`)
 - [x] **B5.T1** — `groupKeyFor(a)` + `AIRSPACE_GROUPS` in `airspace.js` (counts: 34/13/71/21/5 = 144).
