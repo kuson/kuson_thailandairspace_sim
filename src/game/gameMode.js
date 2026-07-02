@@ -73,6 +73,16 @@ export class GameMode {
     this.state       = "IDLE";
     this._listeners  = new Map(); // event -> Set<cb>
 
+    // B11.T5: tiny subscriber list for appMode.js — invoked with the new
+    // state string at every _setState. Additive only; does not participate
+    // in the LEGAL-transition guard or any existing emit/listener path.
+    this._stateSubs  = [];
+    // B11.T5: optional guard fn wired by main.js. When set and it returns
+    // false, start() refuses (no state change) — used to block a game
+    // start while a tour is running. The guard itself is responsible for
+    // publishing the refusal alert chip.
+    this.startGuard  = null;
+
     /** @type {ScrambleWave|InterceptWave|null} */
     this._wave  = null;
     /** @type {GameScore|null} */
@@ -117,6 +127,27 @@ export class GameMode {
     this._listeners.get(event)?.forEach((cb) => cb(payload));
   }
 
+  /**
+   * B11.T5: subscribe to state-string notifications for appMode.js. Fires
+   * on every state write (both `_enter()`-gated legal transitions and the
+   * two direct-to-IDLE fallback paths already in this file). Additive only
+   * — does not replace or reorder the existing on("state", …) emitter.
+   * @param {(state: string) => void} cb
+   * @returns {Function} unsubscribe
+   */
+  onState(cb) {
+    this._stateSubs.push(cb);
+    return () => {
+      const i = this._stateSubs.indexOf(cb);
+      if (i >= 0) this._stateSubs.splice(i, 1);
+    };
+  }
+
+  /** @param {string} state */
+  _notifyState(state) {
+    for (const cb of this._stateSubs) cb(state);
+  }
+
   // ── transition guard ───────────────────────────────────────────────────────
 
   /**
@@ -131,6 +162,7 @@ export class GameMode {
     }
     this.state = next;
     this._emit("state", next);
+    this._notifyState(next);
     return true;
   }
 
@@ -138,6 +170,9 @@ export class GameMode {
 
   /** Transition IDLE → BRIEFING: show briefing card. */
   start() {
+    // B11.T5: refuse while a tour is running (guard wired in main.js;
+    // publishes the "End the tour first" chip). No state change on refusal.
+    if (this.startGuard && !this.startGuard()) return false;
     if (!this._enter("BRIEFING")) return false;
     // Reset session counters for a fresh run.
     this._waveIndex    = 1;
@@ -161,6 +196,7 @@ export class GameMode {
     this._sessionTotal = 0;
     this.state = "IDLE";
     this._emit("state", "IDLE");
+    this._notifyState("IDLE");
   }
 
   /**
@@ -294,6 +330,7 @@ export class GameMode {
     if (!this._enter("IDLE")) {
       this.state = "IDLE";
       this._emit("state", "IDLE");
+      this._notifyState("IDLE");
     }
     this.tutorial?.start();
   }
@@ -415,6 +452,7 @@ export class GameMode {
       // If guard fails just force IDLE (already handled in abort).
       this.state = "IDLE";
       this._emit("state", "IDLE");
+      this._notifyState("IDLE");
     }
   }
 

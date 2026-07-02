@@ -41,6 +41,7 @@ import { makeShadowBlob } from "./game/shadows.js";
 import { installCityLights } from "./cityLights.js";
 import { installDayNight, getDayNightSettings, setDayNightSettings } from "./daynight.js";
 import * as uiPrefs from "./uiPrefs.js";
+import * as appMode from "./appMode.js";
 
 // B7.T9: build the start-screen overlay immediately (before bootstrap runs).
 // Failure-safe: if construction throws, stub methods are returned and dismissed
@@ -284,6 +285,9 @@ const game   = new GameMode({
   weapons, aim,
   getUi: () => window.__sim.ui,
 });
+// B11.T5: appMode.js source-of-truth wiring — every game-FSM state change
+// (including tutorial's BRIEFING→IDLE hand-through) feeds notifyGameState.
+game.onState((st) => appMode.notifyGameState(st));
 
 // B9.T7: Player shadow blob — always on, no toggle, no game-state gate.
 // Terrain is sampled at ≤2 Hz (same ELEV_INTERVAL pattern as crawlers).
@@ -456,8 +460,32 @@ async function bootstrap() {
       if (!silent) {
         flightHistory.record(HISTORY_EVENT_TYPES.TOUR, drone.snapshot(), { label: "Tour complete · explore" });
       }
+      // B11.T5: onStop already fires unconditionally on every stop path
+      // (End-tour button, skipToNext's end-of-tour branch, natural finale
+      // completion, reset-during-tour's silent call) — single choke point
+      // for the appMode notification, no extra wiring needed per-path.
+      appMode.notifyTourStop();
     },
   });
+  // B11.T5: transition guards — refuse a tour start mid-mission and a
+  // mission start mid-tour. Each guard publishes an auto-retracting
+  // ADVISORY chip (mirrors the gLimit ADVISORY pattern in gLimitWatch()
+  // above) and returns false so the caller's start() short-circuits before
+  // any state change.
+  tourGuide.startGuard = () => {
+    if (game.state !== "IDLE") {
+      _publishModeGuardChip("guard-tour", "End the mission first");
+      return false;
+    }
+    return true;
+  };
+  game.startGuard = () => {
+    if (tourGuide.running) {
+      _publishModeGuardChip("guard-game", "End the tour first");
+      return false;
+    }
+    return true;
+  };
   await tourGuide.load();
   // Re-publish tourGuide on __sim now that it exists — the top-level
   // assignment captured undefined because bootstrap() is async.
@@ -623,6 +651,8 @@ const DPR_MIN = Math.max(DPR_MAX / 2, 0.5);
 let currentDPR = DPR_MAX;
 let slowFrameRun = 0;
 let fastFrameRun = 0;
+// B11.T5: edge-detector for the tutorial-appmode poll in loop() below.
+let _tutorialWasActive = false;
 
 /**
  * B8.T2 — Snapshot drone state for the audio engine each frame.
@@ -663,6 +693,24 @@ function droneStateForAudio() {
     stalled:    stalled    ?? false,
     paused:     !!drone.paused,
   };
+}
+
+// B11.T5: transition-guard refusal chip. A guard refusal is a one-shot
+// event (not a continuous per-frame condition), so unlike gLimitWatch below
+// — which retracts by re-evaluating a condition every frame — this uses a
+// setTimeout to retract + flush after ~3 s. Mirrors the same
+// alerts.publish/retract/flush + ADVISORY-tier pattern as the gLimit
+// ADVISORY just below.
+const _guardChipTimers = new Map();
+function _publishModeGuardChip(key, message) {
+  alerts.publish({ key, tier: AlertTier.ADVISORY, message });
+  alerts.flush();
+  clearTimeout(_guardChipTimers.get(key));
+  _guardChipTimers.set(key, setTimeout(() => {
+    alerts.retract(key);
+    alerts.flush();
+    _guardChipTimers.delete(key);
+  }, 3000));
 }
 
 // B10.T8: G-limit watcher — one-shot warning tone entering the 0.9-band
@@ -848,6 +896,18 @@ function loop(t) {
   _safe("aim", () => aim.update(dt));
   _safe("weapons", () => weapons.update(dt));
   _safe("tutorial", () => tutorial.update(dt));
+  // B11.T5: edge-triggered tutorial start/end notification. tutorial.js and
+  // gameMode.js's update() are out of scope for this task (inert-while-IDLE
+  // contract on the latter), so this polls the existing public `active`
+  // getter at the call site main.js already owns — rising edge = start
+  // (entered via gameMode._startTutorial's BRIEFING→IDLE hand-through),
+  // falling edge = end (tutorial.abort() or the done-dismiss handler).
+  _safe("tutorial-appmode", () => {
+    const nowActive = !!tutorial.active;
+    if (nowActive && !_tutorialWasActive) appMode.notifyTutorialStart();
+    else if (!nowActive && _tutorialWasActive) appMode.notifyTutorialEnd();
+    _tutorialWasActive = nowActive;
+  });
 
   if (ui) {
     _safe("hud", () => ui.updateHUD(dt));
@@ -897,4 +957,5 @@ window.__sim = {
   ufos, crawlers,
   daynight, cityLights, gLimitWatch,
   uiPrefs,
+  appMode,
 };

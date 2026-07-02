@@ -1,5 +1,11 @@
 // tourGuide.js — scripted airspace tour: takeoff, warps, narration, finale.
 import { geoToWorld, ORIGIN } from "./coords.js";
+// B11.T5: start() is the single choke point both UI tour-start paths
+// (startScreen's Tour choice in main.js, the Express/Full buttons in ui.js)
+// funnel through — notifying appMode here catches both without touching
+// ui.js. stop() is notified separately from main.js via the existing
+// onStop callback (this.onStop already fires on every stop path).
+import { notifyTourStart } from "./appMode.js";
 
 function distance3(a, b) {
   return Math.hypot(b.x - a.x, b.y - a.y, b.z - a.z);
@@ -18,6 +24,12 @@ export class TourGuide {
     this.camera = camera;
     this.onFlyTo = onFlyTo;
     this.onStop = onStop;
+
+    // B11.T5: optional guard fn wired by main.js. When set and it returns
+    // false, start() refuses (returns false before any state change) — used
+    // to block a tour start while a game mission is in progress. The guard
+    // itself is responsible for publishing the refusal alert chip.
+    this.startGuard = null;
 
     this.data = null;
     this.running = false;
@@ -50,6 +62,10 @@ export class TourGuide {
   }
 
   start(variantId) {
+    // B11.T5: refuse while a game mission is in progress (guard wired in
+    // main.js; publishes the "End the mission first" chip). Checked before
+    // any other state so a refusal never touches this.running/this.stops.
+    if (this.startGuard && !this.startGuard()) return false;
     const variant = this.variants[variantId];
     if (!variant?.stops?.length) return false;
     if (this.running) this.stop({ silent: true });
@@ -80,6 +96,7 @@ export class TourGuide {
 
     this._syncOverlay();
     this._runCurrentStop();
+    notifyTourStart();
     return true;
   }
 
