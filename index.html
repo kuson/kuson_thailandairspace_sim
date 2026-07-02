@@ -718,8 +718,12 @@
     #altLimits .alt-reset:disabled { opacity: 0.3; cursor: default; }
 
     /* ---- Educational panel ---- */
+    /* B11.T4: max-height stops above the fixed footer strip (28px reserved
+       top/bottom + 46px for the footer's worst-case 2-line-wrap height at
+       the 1280px floor, see #footer below) so the panel never overlaps it
+       at any viewport ≥ 1280×800. */
     #panel {
-      position: fixed; right: 14px; top: 14px; width: 360px; max-height: calc(100% - 28px);
+      position: fixed; right: 14px; top: 14px; width: 360px; max-height: calc(100% - 28px - 46px);
       background: var(--panel); border: 1px solid var(--panel-border); border-radius: 12px;
       box-shadow: var(--shadow); display: flex; flex-direction: column;
       backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
@@ -733,6 +737,26 @@
     .panel-head h2 { margin: 0; font-size: 14px; font-weight: 600; letter-spacing: 0.2px; }
     .panel-body { padding: 10px 12px; overflow: auto; }
     #panel.collapsed .panel-head { border: 0; }
+
+    /* ---- Panel groups (B11.T4): TOUR/VIEW/WORLD/TRAFFIC/FLIGHT/INFO ----
+       Reuses the .collapsible-head/.collapsible-body idiom (▶ rotate) at a
+       coarser level; group headers sit flush with the existing h3 rhythm. */
+    .panel-group { margin: 0 0 4px 0; }
+    .panel-group-head {
+      font-size: 11px; margin: 14px 0 4px 0; text-transform: uppercase; letter-spacing: 1px;
+      color: var(--muted); font-weight: 600;
+      cursor: pointer; user-select: none; display: flex; align-items: center; gap: 6px;
+    }
+    .panel-group:first-child .panel-group-head { margin-top: 0; }
+    .panel-group-head::before {
+      content: "▶"; font-size: 9px; color: var(--muted); transition: transform 0.15s;
+    }
+    .panel-group-head.expanded::before { transform: rotate(90deg); }
+    .panel-group-body.collapsed { display: none; }
+    /* B11.T4 review fix: the demoted inner View header (kept in the DOM for
+       id stability; no JS references it since the group head owns collapse)
+       would render a duplicate "VIEW" right under the group head — hide it. */
+    #viewSectionToggle { display: none; }
     button {
       background: rgba(255,255,255,0.06); color: var(--text); border: 1px solid var(--panel-border);
       border-radius: 6px; padding: 4px 10px; font-family: var(--sans); cursor: pointer; font-size: 12px;
@@ -833,8 +857,11 @@
     h3 { font-size: 11px; margin: 14px 0 4px 0; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); font-weight: 600; }
 
     /* Controls hint */
+    /* B11.T4 review fix: bottom raised 18px→48px so the collapsed pill and
+       its round ? toggle clear the fixed footer strip's 2-line worst case
+       (footer top edge ≈40px from viewport bottom at the 1280px floor). */
     #controlsHint {
-      position: fixed; left: 50%; transform: translateX(-50%); bottom: 18px;
+      position: fixed; left: 50%; transform: translateX(-50%); bottom: 48px;
       background: var(--panel); border: 1px solid var(--panel-border); border-radius: 12px;
       padding: 12px 18px; box-shadow: var(--shadow); font-family: var(--mono); font-size: 12px;
       max-width: 720px; line-height: 1.7;
@@ -867,10 +894,19 @@
     }
     #mobileTryAnyway:active { background: color-mix(in srgb, var(--accent) 30%, transparent); }
 
-    /* Footer disclaimer */
+    /* Footer disclaimer (B11.T4: single fixed strip, bottom-right, always
+       visible, outside the panel flow — text verbatim, non-negotiable per
+       claude.md §7: never truncate/ellipsize it). Small mono, muted, with a
+       background so it stays legible over the 3D view. Sits on one line at
+       typical widths (~1920px); at the narrower 1280px floor it wraps to a
+       2nd line rather than clipping — #panel's max-height below reserves
+       room for that worst case so the two never overlap. */
     #footer {
-      position: fixed; right: 14px; bottom: 6px; font-size: 10px; color: var(--muted);
-      max-width: 480px; text-align: right; line-height: 1.4; font-family: var(--mono);
+      position: fixed; right: 14px; bottom: 6px; z-index: 10;
+      font-size: 10px; color: var(--muted); font-family: var(--mono);
+      max-width: calc(100vw - 28px); text-align: right; line-height: 1.4;
+      padding: 3px 8px; border-radius: 6px;
+      background: color-mix(in srgb, var(--bg) 55%, transparent);
       pointer-events: none;
     }
 
@@ -1418,37 +1454,81 @@
       </div>
     </div>
     <div class="panel-body">
-      <h3 class="collapsible-head" id="viewSectionToggle">View</h3>
-      <div id="viewSection" class="collapsible-body collapsed">
-        <div id="themeRow"></div>
-        <div id="viewModeTabs" class="view-mode-tabs"></div>
-        <div id="viewRows"></div>
-        <button type="button" id="viewResetLayout" class="opt-reset">Reset layout</button>
+      <!-- B11.T4: panel information architecture — move-only restructure into
+           collapsible groups (TOUR/VIEW/WORLD/TRAFFIC/FLIGHT/INFO). Every
+           control below keeps its existing id + handlers; only the grouping
+           wrapper is new. Collapse state persists per group in
+           kuson.panel.v1 (src/ui.js _initPanelGroups). -->
+
+      <div class="panel-group" data-group="TOUR">
+        <h3 class="panel-group-head" data-panel-group-toggle="TOUR">Tour</h3>
+        <div class="panel-group-body" data-panel-group-body="TOUR">
+          <h3>Airspace tour guide</h3>
+          <div id="tourGuideSection"></div>
+        </div>
       </div>
-      <h3>Airspace tour guide</h3>
-      <div id="tourGuideSection"></div>
-      <h3>Display options</h3>
-      <div id="displayOptions"></div>
-      <h3 class="collapsible-head" id="liveFlightsToggle">Live flights (<span id="liveFlightsCount">0</span>)</h3>
-      <div id="liveFlightsSection" class="collapsible-body collapsed">
-        <div id="liveFlightsCard"></div>
-        <ul id="liveFlightsList"></ul>
+
+      <div class="panel-group" data-group="VIEW">
+        <h3 class="panel-group-head" data-panel-group-toggle="VIEW">View</h3>
+        <div class="panel-group-body" data-panel-group-body="VIEW">
+          <!-- Un-nested from its own collapsible-head/body (B11.T2) into the
+               group's single collapse mechanism above — id/handlers unchanged,
+               just no longer independently collapsible. -->
+          <h3 id="viewSectionToggle">View</h3>
+          <div id="viewSection">
+            <div id="themeRow"></div>
+            <div id="viewModeTabs" class="view-mode-tabs"></div>
+            <div id="viewRows"></div>
+            <button type="button" id="viewResetLayout" class="opt-reset">Reset layout</button>
+          </div>
+        </div>
       </div>
-      <h3 class="collapsible-head" id="radioLogToggle">Radio log (<span id="radioLogCount">0</span>)</h3>
-      <div id="radioLogSection" class="collapsible-body collapsed"><div id="radioLog"></div></div>
-      <h3 class="collapsible-head" id="inputOptionsToggle">Controls</h3>
-      <div id="inputOptions" class="collapsible-body collapsed"></div>
-      <h3 class="collapsible-head" id="altLimitsToggle">Altitude limits</h3>
-      <div id="altLimits" class="collapsible-body collapsed"></div>
-      <h3>Legend</h3>
-      <div id="legend"></div>
-      <h3 class="collapsible-head" id="droneRulesToggle">Thailand drone rules</h3>
-      <div id="droneRules" class="collapsible-body collapsed"></div>
-      <h3>Airspaces (click to warp to overview)</h3>
-      <div id="airspaceGroups" class="asgroups"></div>
-      <div id="quickWarpChips"></div>
-      <input type="search" id="airspaceFilter" placeholder="Filter airspaces…" autocomplete="off" />
-      <ul id="airspaceList"></ul>
+
+      <div class="panel-group" data-group="WORLD">
+        <h3 class="panel-group-head" data-panel-group-toggle="WORLD">World</h3>
+        <div class="panel-group-body" data-panel-group-body="WORLD">
+          <h3>Display options</h3>
+          <div id="displayOptions"></div>
+        </div>
+      </div>
+
+      <div class="panel-group" data-group="TRAFFIC">
+        <h3 class="panel-group-head" data-panel-group-toggle="TRAFFIC">Traffic</h3>
+        <div class="panel-group-body" data-panel-group-body="TRAFFIC">
+          <h3 class="collapsible-head" id="liveFlightsToggle">Live flights (<span id="liveFlightsCount">0</span>)</h3>
+          <div id="liveFlightsSection" class="collapsible-body collapsed">
+            <div id="liveFlightsCard"></div>
+            <ul id="liveFlightsList"></ul>
+          </div>
+          <h3 class="collapsible-head" id="radioLogToggle">Radio log (<span id="radioLogCount">0</span>)</h3>
+          <div id="radioLogSection" class="collapsible-body collapsed"><div id="radioLog"></div></div>
+        </div>
+      </div>
+
+      <div class="panel-group" data-group="FLIGHT">
+        <h3 class="panel-group-head" data-panel-group-toggle="FLIGHT">Flight</h3>
+        <div class="panel-group-body" data-panel-group-body="FLIGHT">
+          <h3 class="collapsible-head" id="inputOptionsToggle">Controls</h3>
+          <div id="inputOptions" class="collapsible-body collapsed"></div>
+          <h3 class="collapsible-head" id="altLimitsToggle">Altitude limits</h3>
+          <div id="altLimits" class="collapsible-body collapsed"></div>
+        </div>
+      </div>
+
+      <div class="panel-group" data-group="INFO">
+        <h3 class="panel-group-head" data-panel-group-toggle="INFO">Info</h3>
+        <div class="panel-group-body" data-panel-group-body="INFO">
+          <h3>Legend</h3>
+          <div id="legend"></div>
+          <h3 class="collapsible-head" id="droneRulesToggle">Thailand drone rules</h3>
+          <div id="droneRules" class="collapsible-body collapsed"></div>
+          <h3>Airspaces (click to warp to overview)</h3>
+          <div id="airspaceGroups" class="asgroups"></div>
+          <div id="quickWarpChips"></div>
+          <input type="search" id="airspaceFilter" placeholder="Filter airspaces…" autocomplete="off" />
+          <ul id="airspaceList"></ul>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -1511,8 +1591,7 @@
   </div>
 
   <div id="footer">
-    Map tiles © <a href="https://carto.com/attributions" target="_blank" rel="noopener">CARTO</a> · data © OpenStreetMap contributors (ODbL) · Airspace interpreted from AIP Thailand (CAAT).<br>
-    <strong>Educational visualization only. Not for flight planning. Data may be approximate or out of date. Consult CAAT and current AIP Thailand.</strong>
+    Map tiles © <a href="https://carto.com/attributions" target="_blank" rel="noopener">CARTO</a> · data © OpenStreetMap contributors (ODbL) · Airspace interpreted from AIP Thailand (CAAT). <strong>Educational visualization only. Not for flight planning. Data may be approximate or out of date. Consult CAAT and current AIP Thailand.</strong>
   </div>
 
   <script type="importmap">

@@ -89,6 +89,30 @@ export function setHudSettings(patch) {
   return next;
 }
 
+// B11.T4 — Panel information architecture: per-group collapsed state for the
+// #panel groups (TOUR/VIEW/WORLD/TRAFFIC/FLIGHT/INFO). Sparse {groupId: bool}
+// object under kuson.panel.v1 — mirrors the get/set-patch shape used by
+// src/groundSettings.js (kuson.grounddetail.v1) and getHudSettings above.
+// Fresh default (no stored key, or a group missing from the stored object):
+// TOUR + WORLD expanded, everything else collapsed.
+const PANEL_KEY = "kuson.panel.v1";
+const PANEL_GROUP_DEFAULTS = { TOUR: false, VIEW: true, WORLD: false, TRAFFIC: true, FLIGHT: true, INFO: true };
+// ^ value = collapsed. TOUR/WORLD start expanded (false); rest start collapsed (true).
+
+export function getPanelGroupSettings() {
+  try {
+    const raw = localStorage.getItem(PANEL_KEY);
+    if (raw !== null) return { ...PANEL_GROUP_DEFAULTS, ...JSON.parse(raw) };
+  } catch { /* private mode or bad JSON — fall through to defaults */ }
+  return { ...PANEL_GROUP_DEFAULTS };
+}
+
+export function setPanelGroupSettings(patch) {
+  const next = { ...getPanelGroupSettings(), ...patch };
+  try { localStorage.setItem(PANEL_KEY, JSON.stringify(next)); } catch { /* ignore */ }
+  return next;
+}
+
 const COMPASS_TAU = 0.14;
 
 export class UI {
@@ -245,6 +269,7 @@ export class UI {
     this._buildAltLimits();
     this._initHistoryCollapse();
     this._initRadioLogCollapse();
+    this._initPanelGroups();
     this._bindRadar();
     this._bind();
     this._scheduleHintCollapse();
@@ -454,16 +479,11 @@ export class UI {
 
     resetBtn?.addEventListener("click", () => uiPrefs.resetGlobal());
 
-    // Collapsible header wiring (matches drone-rules pattern). Collapsed by
-    // default every load — collapse-state persistence arrives in B11.T4.
-    const toggle = document.getElementById("viewSectionToggle");
-    const body = document.getElementById("viewSection");
-    if (toggle && body) {
-      toggle.addEventListener("click", () => {
-        const collapsed = body.classList.toggle("collapsed");
-        toggle.classList.toggle("expanded", !collapsed);
-      });
-    }
+    // B11.T4: the View section's own collapsible-head/body pair (B11.T2) was
+    // unified into the panel-group mechanism — #viewSectionToggle/#viewSection
+    // are now plain passthrough markup inside the VIEW group, whose header
+    // (_initPanelGroups) is the single collapse control. No per-element click
+    // wiring here anymore (that would be a second, nested collapse toggle).
   }
 
   _buildDisplayOptions() {
@@ -2894,6 +2914,36 @@ export class UI {
       collapsed = !collapsed;
       try { localStorage.setItem("kuson.radioLog.collapsed", collapsed ? "1" : "0"); } catch { /* ignore */ }
       apply();
+    });
+  }
+
+  // ── B11.T4: panel information architecture — group collapse ───────────────
+
+  /**
+   * Wire the six #panel group headers (TOUR/VIEW/WORLD/TRAFFIC/FLIGHT/INFO,
+   * static markup in index.html) to collapse/expand their bodies, restoring
+   * persisted state from kuson.panel.v1 (getPanelGroupSettings, module-level
+   * above) and writing back through setPanelGroupSettings on every click.
+   * Same apply()/addEventListener idiom as _initHistoryCollapse /
+   * _initRadioLogCollapse — one group per toggle instead of a single pair.
+   */
+  _initPanelGroups() {
+    const settings = getPanelGroupSettings();
+    document.querySelectorAll("[data-panel-group-toggle]").forEach((toggle) => {
+      const groupId = toggle.dataset.panelGroupToggle;
+      const body = document.querySelector(`[data-panel-group-body="${groupId}"]`);
+      if (!body) return;
+      let collapsed = !!settings[groupId];
+      const apply = () => {
+        body.classList.toggle("collapsed", collapsed);
+        toggle.classList.toggle("expanded", !collapsed);
+      };
+      apply();
+      toggle.addEventListener("click", () => {
+        collapsed = !collapsed;
+        setPanelGroupSettings({ [groupId]: collapsed });
+        apply();
+      });
     });
   }
 
