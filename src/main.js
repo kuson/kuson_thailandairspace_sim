@@ -644,6 +644,22 @@ async function bootstrap() {
   // call-once-after-construction pattern just above.
   inputGuard.install({ appMode, game, drone, tourGuide });
 
+  // B11.T10: focus mode — two-way wiring with the View-panel checkbox + F
+  // key (both live in ui.js, which cannot import from this entry-point
+  // module — see the closure block above `_safe`). ui.onFocusToggle is the
+  // ui.js → main.js direction (checkbox click or F key asks to flip state);
+  // focusOnChange is the main.js → ui.js direction (push the resolved state,
+  // including the appMode auto-exit path, back to the checkbox).
+  ui.onFocusToggle = () => toggleFocus();
+  focusOnChange((on) => ui.setFocusState(on));
+  ui.setFocusState(focusIsOn());   // initial paint: always OFF (session-only)
+  // HUD chip pulse (§0.5.6): ui.js's updateHUD builds the "inside" chips
+  // every frame already — hand it the live target id so it can flag the
+  // matching chip with the focus-pulse CSS class. Only meaningful while
+  // focus is ON; ui.js gates on that via getFocusOn below.
+  ui.getFocusOn = focusIsOn;
+  ui.getFocusTargetId = _currentTargetId;
+
   // B7.T9: hand off to the start-screen for mode selection.
   startScreen.ready({
     onExplore: () => { audio.unlock(); },
@@ -800,6 +816,94 @@ function gLimitWatch(dt) {
   }
 }
 
+// B11.T10 — focus mode (design §0.5.6). Session-only toggle: always starts
+// OFF, never persisted (no localStorage key anywhere in this block — see
+// the report's grep proof). A tiny closure-owned state object, mirroring
+// the size/shape guidance in the task contract ("main.js bootstrap closure
+// or a 20-line src/focusMode.js; prefer the closure if it stays small").
+const _focus = { on: false, listeners: new Set() };
+
+function focusIsOn() {
+  return _focus.on;
+}
+
+function focusOnChange(cb) {
+  _focus.listeners.add(cb);
+  return () => _focus.listeners.delete(cb);
+}
+
+function _focusNotify() {
+  for (const cb of _focus.listeners) cb(_focus.on);
+}
+
+function setFocusOn(on) {
+  const next = !!on;
+  if (next === _focus.on) return;
+  _focus.on = next;
+  if (!next) layer.setFocus(null);   // OFF → immediate exact restore
+  _focusNotify();
+}
+
+function toggleFocus() {
+  setFocusOn(!_focus.on);
+}
+
+// Auto-exit on ANY appMode change (mode OR detail) — e.g. WAVE → DEBRIEF,
+// freestyle → learning, tutorial start/end. appMode.onChange only fires on
+// an actual change (see appMode.js _transition), so this never runs on a
+// no-op tick.
+appMode.onChange(() => setFocusOn(false));
+
+/**
+ * B11.T10 — current fly-to/tour/game target airspace id, or null. Three
+ * independent sources, each already tracked elsewhere in this file / the
+ * modules it owns:
+ *   - Game wave target: game._wave is a ScrambleWave (current contact id via
+ *     its private _currentContact()) or an InterceptWave (single defended
+ *     airspace, _airspace.id, picked once at wave start) — see
+ *     src/game/scramble.js `_currentContact()` / src/game/intercept.js
+ *     `_airspace`. Only meaningful while game.state === "WAVE".
+ *   - Tour stop: tourGuide.stops[tourGuide.index]?.airspaceId while
+ *     tourGuide.running (see src/tourGuide.js — stops/index/running are
+ *     plain instance fields, no getter needed).
+ *   - Fly-to destination: ui._flyToTargetId, set by ui.markFlyToTarget(id)
+ *     the instant startFlyTo() begins (ahead of onComplete), cleared by
+ *     ui.clearFlyToTarget() — see startFlyTo() above.
+ * Priority doesn't matter here (design §0.5.6 just says "current target");
+ * in practice at most one of the three is ever live at once (tour/game are
+ * mutually exclusive via the B11.T5 transition guards, and a fly-to id is
+ * usually the same id a tour/game wave just requested).
+ */
+function _currentTargetId() {
+  if (game?.state === "WAVE" && game._wave) {
+    const w = game._wave;
+    // ScrambleWave: contacts array + index. InterceptWave: single _airspace.
+    const contact = typeof w._currentContact === "function" ? w._currentContact() : null;
+    if (contact?.id) return contact.id;
+    if (w._airspace?.id) return w._airspace.id;
+  }
+  if (tourGuide?.running) {
+    const stop = tourGuide.stops?.[tourGuide.index];
+    if (stop?.airspaceId) return stop.airspaceId;
+  }
+  if (ui?._flyToTargetId) return ui._flyToTargetId;
+  return null;
+}
+
+/**
+ * B11.T10 — kept-set = containing set ∪ current target. Recomputed every
+ * frame while focus is ON (same cadence as the T8 interior-fade pass, which
+ * already runs airspacesAt() per frame for the HUD's "inside" chips — see
+ * updateInteriorFade's doc comment). Cheap: airspacesAt is AABB-accelerated.
+ */
+function _computeFocusKeptSet() {
+  const p = drone.position;
+  const kept = new Set(layer.airspacesAt(p.x, p.y, p.z).map((a) => a.id));
+  const targetId = _currentTargetId();
+  if (targetId) kept.add(targetId);
+  return kept;
+}
+
 function _safe(label, fn) {
   try { return fn(); }
   catch (err) { console.error(`[loop:${label}]`, err); return undefined; }
@@ -931,6 +1035,15 @@ function loop(t) {
   // volumes containing the drone (outline + fresnel rim untouched). No-op
   // when the display option is off (see groundDetail.interiorFade below).
   _safe("interior-fade", () => layer.updateInteriorFade(dt, drone.position));
+
+  // B11.T10: focus mode — recomputed at the same per-frame cadence as the
+  // fade pass just above (containing volumes are already a live query this
+  // frame; the two never fight over the same volume's clone — see
+  // AirspaceLayer.setFocus doc comment). Runs AFTER interior-fade (so a
+  // freshly-faded containing volume's material is settled before focus
+  // decides what to leave alone) and BEFORE label-scales (so
+  // updateLabelScales sees the current-frame kept set, not last frame's).
+  _safe("focus-mode", () => { if (focusIsOn()) layer.setFocus(_computeFocusKeptSet()); });
 
   _safe("label-scales", () => layer.updateLabelScales(camera, renderer));
   _safe("city-scales", () => cityBeacons.updateScales(camera, renderer));

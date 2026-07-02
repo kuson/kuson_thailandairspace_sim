@@ -420,6 +420,19 @@
     .chip.cat-Prohibited { background: rgba(255,0,0,0.30); color: #ffd0d0; }
     .chip.cat-Restricted { background: rgba(160,80,255,0.25); color: #e5d6ff; }
     .chip.cat-Danger { background: rgba(255,106,31,0.25); color: #ffd5b3; }
+    /* B11.T10 — focus mode (design §0.5.6): the containing chip matching the
+       current fly-to/tour/game target pulses while focus is on. Subtle
+       opacity/glow breathing on the --accent family, ~1.6 s per cycle —
+       layered on top of whatever .cat-* background is already set (box-shadow
+       + outline don't fight the background-color the cat- rules above set). */
+    .chip.focus-pulse {
+      outline: 1px solid color-mix(in srgb, var(--accent) 70%, transparent);
+      animation: focusPulse 1.6s ease-in-out infinite;
+    }
+    @keyframes focusPulse {
+      0%, 100% { opacity: 1; box-shadow: 0 0 0 rgba(0,0,0,0); }
+      50% { opacity: 0.6; box-shadow: 0 0 8px color-mix(in srgb, var(--accent) 65%, transparent); }
+    }
 
     /* First-run intro toast explaining Easy Mode (P0.T8). */
     #easyModeIntro {

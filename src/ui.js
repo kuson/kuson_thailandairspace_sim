@@ -518,6 +518,25 @@ export class UI {
     // registry id's visibility also fires this — keeps every row truthful.
     uiPrefs.onChange(() => refreshRows());
 
+    // B11.T10 — Focus mode row, appended at the bottom of the VIEW section.
+    // Deliberately NOT a uiPrefs.UI_ELEMENTS registry entry: focus is
+    // session-only ACTION state (like identify mode or a fly-to in
+    // progress), not a persisted layout preference — it always starts OFF
+    // and is never read from or written to localStorage. Bound both ways to
+    // the live focus state via main.js's onFocusToggle/setFocusState, same
+    // shape as setLabelsVisible()/#optLabels just does for a different
+    // owner (the layer instead of the focus closure).
+    rowsEl.insertAdjacentHTML("beforeend", `
+      <label class="view-row" id="focusModeRow">
+        <input type="checkbox" id="optFocusMode" />
+        <span class="view-label">Focus mode</span>
+        <span class="view-key">F</span>
+      </label>`);
+    this._focusModeChk = document.getElementById("optFocusMode");
+    this._focusModeChk?.addEventListener("change", () => {
+      this.onFocusToggle?.();
+    });
+
     resetBtn?.addEventListener("click", () => {
       const mode = TAB_MODES[activeTab];
       if (mode) {
@@ -1066,6 +1085,16 @@ export class UI {
       } else if (e.key === "`" || e.code === "Backquote") {
         if (!inputAllowed("viewToggles")) return;
         uiPrefs.toggle("debugOverlay");
+        e.preventDefault();
+      } else if (k === "f") {
+        // B11.T10: focus mode (design §0.5.6). 'focus' is an unlisted action
+        // in inputGuard's decision table, so inputAllowed('focus') is true
+        // everywhere except while a typing challenge is open — exactly the
+        // spec's "wire in input.js" intent, minus the module (see report:
+        // input.js is input-SETTINGS, not keyboard — every other UI key
+        // lives in this listener, so 'f' joins them here instead).
+        if (!inputAllowed("focus")) return;
+        this.onFocusToggle?.();
         e.preventDefault();
       }
       // 'P' is handled inside Drone — it owns `paused`. We just listen via
@@ -2218,6 +2247,15 @@ export class UI {
     if (this._labelsChk) this._labelsChk.checked = !!visible;
   }
 
+  // B11.T10 — main.js → ui.js push for focus-mode state (F key, auto-exit on
+  // appMode change, or the checkbox's own click all funnel back through
+  // here so the checkbox never drifts from the real toggle owned by
+  // main.js's closure). Same shape as setLabelsVisible above: apply +
+  // sync the checkbox in one place.
+  setFocusState(on) {
+    if (this._focusModeChk) this._focusModeChk.checked = !!on;
+  }
+
   _applyHudMode(pro) {
     const btn = document.getElementById("hudProChip");
     if (btn) {
@@ -2571,12 +2609,21 @@ export class UI {
     const insideKey = inside.map((a) => a.id).sort().join("|");
     if (this._hudCache.insideKey !== insideKey) {
       this._hudCache.insideKey = insideKey;
+      // B11.T10: innerHTML is about to be replaced — invalidate the pulse
+      // dedup sentinel below so a same-target-id pulse still gets
+      // re-applied to the freshly-rebuilt chip nodes (the old nodes it was
+      // applied to are about to be discarded).
+      this._hudCache.pulseTargetId = undefined;
       if (inside.length === 0) {
         this.currentInside.innerHTML = `<span class="ok">Clear — not inside any cataloged airspace.</span>`;
       } else {
         this.currentInside.innerHTML = inside.map(a => {
           const cls = `cat-${a.category.replace(/\s/g,'')}`;
-          return `<span class="chip ${cls}" title="${a.description}">⚠ ${a.shortName}</span>`;
+          // B11.T10: data-id lets the focus-pulse pass below (which must run
+          // every frame, independent of this cache-gated rebuild — see its
+          // comment) find the chip for a given airspace id without a second
+          // string-parse of the label text.
+          return `<span class="chip ${cls}" data-id="${a.id}" title="${a.description}">⚠ ${a.shortName}</span>`;
         }).join(" ");
       }
       if (this.panelTitle && !this._tourRunning) {
@@ -2588,6 +2635,25 @@ export class UI {
         } else {
           this.panelTitle.textContent = inside.map((a) => a.shortName).join(" · ");
         }
+      }
+    }
+
+    // B11.T10 — HUD chip pulse (design §0.5.6): while focus is ON and a
+    // game/tour/fly-to TARGET id is among the containing chips just
+    // rendered, pulse that one chip. Runs every frame (not gated behind the
+    // insideKey cache above) because focus can toggle on/off or the target
+    // can change wave-to-wave while `inside` itself stays the same — a
+    // cache-gated write would miss those transitions. Cheap: at most a
+    // handful of chip nodes, and the common case (target unchanged from
+    // last frame) still walks the small DOM list but touches nothing.
+    if (this.currentInside) {
+      const focusOn = this.getFocusOn?.() ?? false;
+      const targetId = focusOn ? (this.getFocusTargetId?.() ?? null) : null;
+      if (this._hudCache.pulseTargetId !== targetId) {
+        this._hudCache.pulseTargetId = targetId;
+        this.currentInside.querySelectorAll(".chip[data-id]").forEach((chip) => {
+          chip.classList.toggle("focus-pulse", !!targetId && chip.dataset.id === targetId);
+        });
       }
     }
   }

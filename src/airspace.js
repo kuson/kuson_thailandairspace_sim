@@ -42,6 +42,15 @@ const FILL_FADE_MIN_OPACITY = 0.03; // floor after the factor multiply
 const FILL_FADE_IN_S = 1.5;         // entering the containing set
 const FILL_FADE_OUT_S = 2.5;        // leaving the containing set
 
+// B11.T10 — focus mode (design §0.5.6). While active, every volume NOT in
+// the kept set (containing set ∪ current fly-to/tour/game target ∪
+// highlighted) drops to these ABSOLUTE opacities — snap, not eased (focus is
+// a deliberate user action; instant response reads better here, and it
+// avoids running a second easing system alongside the T8 fade). Restores are
+// exact (pooled material references, not an approximation).
+const FOCUS_WALL_OPACITY = 0.05;
+const FOCUS_OUTLINE_OPACITY = 0.3;
+
 // B8.T9 — Fresnel edge-glow: one shared uniform object referenced by every
 // wall material's compiled shader. Toggling .value requires no recompile.
 const SHARED_GLOW_UNIFORM = { value: 1.0 };   // 1.0 = on, 0.0 = off
@@ -578,6 +587,14 @@ export class AirspaceLayer {
     this._interiorFadeEnabled = true;
     this._fadeFactor = new Map();   // volumeId -> current eased factor (1.0 = baseline)
     this._fadeMat = new Map();      // volumeId -> cloned wall material, only while factor < 1.0
+
+    // B11.T10 — focus mode (design §0.5.6). null = off. When set, holds the
+    // Set of airspace ids that stay at normal opacity; everything else dims.
+    // Session-only — never read from or written to localStorage, never
+    // populated from any persisted source.
+    this._focusKept = null;
+    this._focusWallMat = new Map();     // volumeId -> cloned dimmed wall material
+    this._focusOutlineMat = new Map();  // volumeId -> cloned dimmed outline material (shared by topLine+botLine)
   }
 
   async load(url) {
@@ -733,16 +750,37 @@ export class AirspaceLayer {
           this._fadeMat.delete(id);
           this._fadeFactor.delete(id);
         }
-        if (!fadeMat || on) {
+        // B11.T10: same exemption for a live focus-dim clone — a volume
+        // that just became highlighted must never stay pinned at
+        // FOCUS_WALL_OPACITY. setFocus() itself already treats highlighted
+        // volumes as kept, but it runs later this frame (main.js calls
+        // updateInteriorFade → the kept-set helper → setFocus after
+        // identify/setHighlighted) — without this, there'd be a one-frame
+        // window where the stale dim clone stays live.
+        const focusMat = this._focusWallMat.get(id);
+        if (on && focusMat) {
+          focusMat.dispose();
+          this._focusWallMat.delete(id);
+        }
+        if ((!fadeMat && !focusMat) || on) {
           // P6.T2: swap per-category wall material (patterned for Prohibited/
           // Restricted, shared singletons otherwise — identical to the old
           // behaviour for non-patterned categories).
           ud.wallMesh.material = on ? ud.wallMatHi : ud.wallMatNormal;
         }
       }
-      const lineMat = on ? ud.outlineMatHi : ud.outlineMatNormal;
-      if (ud.topLine) ud.topLine.material = lineMat;
-      if (ud.botLine) ud.botLine.material = lineMat;
+      const focusLineMat = this._focusOutlineMat.get(id);
+      if (on && focusLineMat) {
+        // Same exemption as the wall clone above, mirrored for the shared
+        // topLine/botLine outline material.
+        focusLineMat.dispose();
+        this._focusOutlineMat.delete(id);
+      }
+      if (!focusLineMat || on) {
+        const lineMat = on ? ud.outlineMatHi : ud.outlineMatNormal;
+        if (ud.topLine) ud.topLine.material = lineMat;
+        if (ud.botLine) ud.botLine.material = lineMat;
+      }
       // P6.T1: spawn the floating identify sprite for each highlighted
       // volume. Previously setHighlighted only ever *removed* sprites, so
       // identifyLabelsGroup stayed empty and the labels never appeared.
@@ -963,6 +1001,132 @@ export class AirspaceLayer {
       // WALL_OPACITY_NORMAL) — baseOpacity is correct for every category.
       mat.opacity = Math.max(baseOpacity * next, FILL_FADE_MIN_OPACITY);
     }
+  }
+
+  /**
+   * B11.T10 — focus mode (design §0.5.6). `keptIdSet` = the Set of airspace
+   * ids that stay at normal opacity; every other volume's wall drops to
+   * FOCUS_WALL_OPACITY and its outline to FOCUS_OUTLINE_OPACITY (both
+   * absolute, snapped instantly — not eased). Pass null to turn focus off,
+   * which restores every dimmed volume exactly (pooled material refs back,
+   * clones disposed).
+   *
+   * Called every frame from main.js while focus is ON (fresh kept set each
+   * call). Cheap even though it walks every compiled volume each time: the
+   * per-volume ensure/restore helpers below are idempotent (a volume already
+   * in the right state — already dimmed, or already at its normal material —
+   * is a Map.has() check and nothing else, no clone/dispose churn).
+   * Highlighted volumes are always treated as kept, even if the caller's set
+   * omits them (mirrors the T8 fade exemption for the same reason: the
+   * brighter highlight material must never be displaced by a dimmed clone).
+   *
+   * Composition with T8 interior-fade: containing volumes are members of the
+   * caller-supplied kept set BY DEFINITION (main.js's kept-set helper unions
+   * in the containing set), so a volume can never be simultaneously "kept by
+   * focus" == false AND "faded by T8" == true. The two clone systems
+   * (_fadeMat vs _focusWallMat) therefore never target the same volume at
+   * the same time — no last-writer-wins race between them.
+   */
+  setFocus(keptIdSet) {
+    const next = keptIdSet instanceof Set ? keptIdSet : (keptIdSet ? new Set(keptIdSet) : null);
+    this._focusKept = next;
+
+    if (!next) {
+      // Off — restore every dimmed volume exactly.
+      for (const id of [...this._focusWallMat.keys()]) this._restoreFocusWall(id);
+      for (const id of [...this._focusOutlineMat.keys()]) this._restoreFocusOutline(id);
+      return;
+    }
+
+    for (const c of this.compiled) {
+      const id = c.airspace.id;
+      const keep = next.has(id) || this._highlighted.has(id);
+      if (keep) {
+        if (this._focusWallMat.has(id)) this._restoreFocusWall(id);
+        if (this._focusOutlineMat.has(id)) this._restoreFocusOutline(id);
+      } else {
+        this._ensureFocusWall(c);
+        this._ensureFocusOutline(c);
+      }
+    }
+  }
+
+  get focusActive() {
+    return this._focusKept != null;
+  }
+
+  // Swap a compiled volume's wall mesh onto a cloned, dimmed material —
+  // same clone-on-need idiom as _ensureFadeMaterial (see its comment for why
+  // copying onBeforeCompile/customProgramCacheKey explicitly keeps the
+  // fresnel shader alive and the program cache hit). Cached so repeated
+  // frames while non-kept reuse the same instance.
+  _ensureFocusWall(c) {
+    const id = c.airspace.id;
+    let mat = this._focusWallMat.get(id);
+    if (mat) return mat;
+    const ud = c.mesh.userData;
+    const src = ud.wallMesh.material; // whichever pooled/fade material is live right now
+    mat = src.clone();
+    mat.onBeforeCompile = src.onBeforeCompile;
+    mat.customProgramCacheKey = src.customProgramCacheKey;
+    mat.opacity = FOCUS_WALL_OPACITY;
+    mat.needsUpdate = true;
+    this._focusWallMat.set(id, mat);
+    ud.wallMesh.material = mat;
+    return mat;
+  }
+
+  // Restore the pooled (or fade) material and drop the clone.
+  _restoreFocusWall(id) {
+    const mat = this._focusWallMat.get(id);
+    if (!mat) return;
+    const c = this._compiledById.get(id);
+    if (c) {
+      const ud = c.mesh.userData;
+      // Restore priority: an active T8 fade clone (if one started while
+      // focused — e.g. the drone entered this now-kept volume) wins first;
+      // otherwise fall back to the normal pooled highlight/normal material.
+      const fadeMat = this._fadeMat.get(id);
+      const wasHighlighted = this._highlighted.has(id);
+      ud.wallMesh.material = fadeMat ?? (wasHighlighted ? ud.wallMatHi : ud.wallMatNormal);
+    }
+    mat.dispose();
+    this._focusWallMat.delete(id);
+  }
+
+  // Outline materials are pooled per (color, baseOpacity, highlight) via
+  // OUTLINE_MAT_POOL — same clone-on-need idiom, applied to whichever of
+  // topLine/botLine's material is currently live. Both lines share one
+  // outline material reference (see buildVolumeMesh), so one clone covers
+  // both meshes.
+  _ensureFocusOutline(c) {
+    const id = c.airspace.id;
+    let mat = this._focusOutlineMat.get(id);
+    if (mat) return mat;
+    const ud = c.mesh.userData;
+    const src = ud.topLine.material; // topLine + botLine share the same material reference
+    mat = src.clone();
+    mat.opacity = FOCUS_OUTLINE_OPACITY;
+    mat.needsUpdate = true;
+    this._focusOutlineMat.set(id, mat);
+    if (ud.topLine) ud.topLine.material = mat;
+    if (ud.botLine) ud.botLine.material = mat;
+    return mat;
+  }
+
+  _restoreFocusOutline(id) {
+    const mat = this._focusOutlineMat.get(id);
+    if (!mat) return;
+    const c = this._compiledById.get(id);
+    if (c) {
+      const ud = c.mesh.userData;
+      const wasHighlighted = this._highlighted.has(id);
+      const restoreMat = wasHighlighted ? ud.outlineMatHi : ud.outlineMatNormal;
+      if (ud.topLine) ud.topLine.material = restoreMat;
+      if (ud.botLine) ud.botLine.material = restoreMat;
+    }
+    mat.dispose();
+    this._focusOutlineMat.delete(id);
   }
 
   airspacesAt(x, y, z) {
@@ -1208,6 +1372,17 @@ export class AirspaceLayer {
     const ndc = new THREE.Vector3();
     const entries = [];
     for (const sp of this._labelSprites) {
+      // B11.T10: focus mode — labels only for the kept set (containing ∪
+      // current target ∪ highlighted), checked FIRST so focus wins over
+      // both the military-hide rule below and the declutter cap/multiply
+      // that runs later in the placement loop.
+      if (this._focusKept) {
+        const id = sp.userData.airspaceId;
+        if (!this._focusKept.has(id) && !this._highlighted.has(id)) {
+          sp.visible = false;
+          continue;
+        }
+      }
       const owner = this._compiledById.get(sp.userData.airspaceId);
       // Hidden military airspace → label stays off.
       if (owner && !this._isActive(owner)) {
