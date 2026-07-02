@@ -1162,7 +1162,7 @@ export class Drone {
       // sightseeing the orbit, doesn't fight the tour's drone control because
       // it only swaps camera placement, not body position.
       if (k === "v") {
-        if (!inputAllowed("identify")) { e.preventDefault(); return; }
+        if (!inputAllowed("viewToggles")) { e.preventDefault(); return; }
         this.toggleViewPerson();
         e.preventDefault();
         return;
