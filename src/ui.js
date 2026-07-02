@@ -20,7 +20,7 @@ import { MinimapTileCache } from "./ground.js";
 import { getInputSettings, setInputSettings, DEFAULT_INPUT_SETTINGS } from "./input.js";
 import { getAudioSettings, setAudioSettings } from "./audio.js";
 import * as uiPrefs from "./uiPrefs.js";
-import { theme, applyTheme, canvasAlpha, THEMES } from "./theme.js";
+import { theme, applyTheme, canvasAlpha, THEMES, onThemeChange } from "./theme.js";
 
 // Betterment-2 P3.T3: glyph per history event type for the collapsible list.
 const HISTORY_GLYPHS = {
@@ -224,6 +224,9 @@ export class UI {
     this.radarCenterAircraft = true;
     this._minimapTiles = new MinimapTileCache(7);
     this._hudCache = {};
+    // Theme swap must repaint guarded canvas draws (the compass caches its
+    // last drawn heading) — reuse the existing force-repaint idiom.
+    onThemeChange(() => { this._hudCache = {}; });
     this._adminCache = null;
     this._lastGeoKey = "";
     this._flyToTargetId = null;
