@@ -123,7 +123,9 @@ function _onEscapeCapture(e) {
 
   // A confirm card (abort-mission / end-tour) open takes priority over
   // everything below it — Escape dismisses the card (Continue semantics).
-  if (_confirmCard) {
+  // Must test open-ness, not existence: the node is lazily built once and
+  // stays truthy forever, which would dead-end every later Escape here.
+  if (_confirmCard && !_confirmCard.hasAttribute("hidden")) {
     e.preventDefault();
     e.stopPropagation();
     _dismissConfirmCard();
