@@ -277,10 +277,8 @@ export class GameMode {
           e.preventDefault();
           e.stopImmediatePropagation();
           this._beginWave();
-        } else if (e.key === "Escape") {
-          e.preventDefault();
-          e.stopImmediatePropagation();
-          this._cancelBriefing();
+        // Escape is handled by inputGuard.js's unified ladder (B11.T7),
+        // which calls _cancelBriefing() directly — see src/inputGuard.js.
         } else if (e.key === "1") {
           e.preventDefault();
           e.stopImmediatePropagation();
@@ -552,10 +550,8 @@ export class GameMode {
           e.preventDefault();
           e.stopImmediatePropagation();
           this._nextWaveDebrief();
-        } else if (e.key === "Escape") {
-          e.preventDefault();
-          e.stopImmediatePropagation();
-          this._endDebrief();
+        // Escape is handled by inputGuard.js's unified ladder (B11.T7),
+        // which calls _endDebrief() directly — see src/inputGuard.js.
         }
       };
       window.addEventListener("keydown", this._debriefKeyListener, true);
@@ -684,10 +680,8 @@ export class GameMode {
           e.preventDefault();
           e.stopImmediatePropagation();
           this._nextWaveDebrief();
-        } else if (e.key === "Escape") {
-          e.preventDefault();
-          e.stopImmediatePropagation();
-          this._endDebrief();
+        // Escape is handled by inputGuard.js's unified ladder (B11.T7),
+        // which calls _endDebrief() directly — see src/inputGuard.js.
         }
       };
       window.addEventListener("keydown", this._debriefKeyListener, true);

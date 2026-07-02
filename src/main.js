@@ -43,6 +43,7 @@ import { installDayNight, getDayNightSettings, setDayNightSettings } from "./day
 import * as uiPrefs from "./uiPrefs.js";
 import * as appMode from "./appMode.js";
 import * as uiProfiles from "./uiProfiles.js";
+import * as inputGuard from "./inputGuard.js";
 
 // B7.T9: build the start-screen overlay immediately (before bootstrap runs).
 // Failure-safe: if construction throws, stub methods are returned and dismissed
@@ -612,6 +613,11 @@ async function bootstrap() {
       setLabels: (v) => ui.setLabelsVisible(v),
     },
   });
+
+  // B11.T7: per-mode action guards + unified Escape ladder. Wired last, once
+  // appMode/game/drone/tourGuide all exist — mirrors uiProfiles.install's
+  // call-once-after-construction pattern just above.
+  inputGuard.install({ appMode, game, drone, tourGuide });
 
   // B7.T9: hand off to the start-screen for mode selection.
   startScreen.ready({

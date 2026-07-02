@@ -22,6 +22,7 @@ import { getAudioSettings, setAudioSettings } from "./audio.js";
 import * as uiPrefs from "./uiPrefs.js";
 import * as uiProfiles from "./uiProfiles.js";
 import { theme, applyTheme, canvasAlpha, THEMES, onThemeChange } from "./theme.js";
+import { inputAllowed } from "./inputGuard.js";
 
 // Betterment-2 P3.T3: glyph per history event type for the collapsible list.
 const HISTORY_GLYPHS = {
@@ -1002,8 +1003,8 @@ export class UI {
       this.onReset();
       this._refreshAirspaceList();
     });
-    this.undoBtn?.addEventListener("click", () => this.onUndo?.());
-    this.redoBtn?.addEventListener("click", () => this.onRedo?.());
+    this.undoBtn?.addEventListener("click", () => { if (inputAllowed("historyUndo")) this.onUndo?.(); });
+    this.redoBtn?.addEventListener("click", () => { if (inputAllowed("historyUndo")) this.onRedo?.(); });
     this.airspaceFilter?.addEventListener("input", () => {
       this._listFilter = this.airspaceFilter.value.trim().toLowerCase();
       this._refreshAirspaceList();
@@ -1025,9 +1026,11 @@ export class UI {
       if (tag === "INPUT" || tag === "TEXTAREA") return;
       const k = e.key.toLowerCase();
       if (k === "u") {
+        if (!inputAllowed("layerToggles")) return;
         this.toggleUnits();
         e.preventDefault();
       } else if (k === "m") {
+        if (!inputAllowed("layerToggles")) return;
         this.toggleMapPrimary();
         e.preventDefault();
       } else if (k === "+" || k === "=") {
@@ -1037,18 +1040,23 @@ export class UI {
         this.zoomRadar(1.25);
         e.preventDefault();
       } else if (k === "j") {
+        if (!inputAllowed("viewToggles")) return;
         uiPrefs.toggle("altTape");
         e.preventDefault();
       } else if (k === "h") {
+        if (!inputAllowed("viewToggles")) return;
         uiPrefs.toggle("attitude");
         e.preventDefault();
       } else if (k === "t") {
+        if (!inputAllowed("viewToggles")) return;
         uiPrefs.toggle("panel");
         e.preventDefault();
       } else if (k === "c") {
+        if (!inputAllowed("viewToggles")) return;
         uiPrefs.toggle("controlsHint");
         e.preventDefault();
       } else if (e.key === "`" || e.code === "Backquote") {
+        if (!inputAllowed("viewToggles")) return;
         uiPrefs.toggle("debugOverlay");
         e.preventDefault();
       }
@@ -2126,6 +2134,10 @@ export class UI {
   // Never silently no-ops — a refused click always surfaces a toast naming
   // the reason. See doc/flyto_state_machine.md §5 for the contract.
   _requestFlyTo(id, opts = {}) {
+    if (!inputAllowed("warp")) {
+      this._showFlyToToast("Not available right now.");
+      return;
+    }
     if (this._tourRunning) {
       this._showFlyToToast("Tour in progress — end the tour to fly to a volume.");
       return;

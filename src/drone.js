@@ -9,6 +9,7 @@ import { isMilitaryAirspace } from "./airspace.js";
 import { AGL as terrainAGL, elevationAt } from "./terrain.js";
 import { worldToGeo } from "./coords.js";
 import { simState } from "./simState.js";
+import { inputAllowed } from "./inputGuard.js";
 
 const KMH_TO_MS = 1 / 3.6;
 const BOOST_FACTOR = 3;
@@ -1139,6 +1140,7 @@ export class Drone {
       if (e.repeat) return;
       const k = e.key.toLowerCase();
       if (k === "i") {
+        if (!inputAllowed("identify")) { e.preventDefault(); return; }
         // Identify is suppressed while the tour is running — the tour owns the
         // highlight/narration loop and identify would race with it.
         if (this.flightLocked) {
@@ -1160,6 +1162,7 @@ export class Drone {
       // sightseeing the orbit, doesn't fight the tour's drone control because
       // it only swaps camera placement, not body position.
       if (k === "v") {
+        if (!inputAllowed("identify")) { e.preventDefault(); return; }
         this.toggleViewPerson();
         e.preventDefault();
         return;
@@ -1167,6 +1170,7 @@ export class Drone {
       // 'P' = pause/resume simulation (drone, tour, flyTo). UI also wires a
       // Pause button in the telemetry HUD that mirrors this.
       if (k === "p") {
+        if (!inputAllowed("pause")) { e.preventDefault(); return; }
         this.paused = !this.paused;
         this.onPauseChange?.(this.paused);
         e.preventDefault();
@@ -1193,6 +1197,7 @@ export class Drone {
       // Note: the playbook P0.T6 spec said "M", but M was already bound to
       // ui.toggleMapPrimary; K was the next unused mnemonic ("Kinematic").
       if (k === "k") {
+        if (!inputAllowed("viewToggles")) { e.preventDefault(); return; }
         EasyMode.enabled = !EasyMode.enabled;
         this.setSpeedPreset(this.speedPresetId);
         e.preventDefault();
