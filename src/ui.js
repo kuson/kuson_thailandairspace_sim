@@ -20,6 +20,7 @@ import { MinimapTileCache } from "./ground.js";
 import { getInputSettings, setInputSettings, DEFAULT_INPUT_SETTINGS } from "./input.js";
 import { getAudioSettings, setAudioSettings } from "./audio.js";
 import * as uiPrefs from "./uiPrefs.js";
+import * as uiProfiles from "./uiProfiles.js";
 import { theme, applyTheme, canvasAlpha, THEMES, onThemeChange } from "./theme.js";
 
 // Betterment-2 P3.T3: glyph per history event type for the collapsible list.
@@ -405,9 +406,17 @@ export class UI {
   }
 
   // B11.T2 — View panel: one checkbox row per uiPrefs.UI_ELEMENTS registry
-  // entry, grouped under its registry `group`, plus a disabled mode-tab stub
-  // and a "Reset layout" button that clears only the sparse `global`
-  // overrides (leaves `modes` alone — that's still schema-only/unused).
+  // entry, grouped under its registry `group`, plus a mode-tab switcher
+  // (B11.T6) and a "Reset layout" button.
+  //
+  // Tabs: Auto previews/edits the persisted `global` bucket (today's
+  // pre-T6 behavior — a click routes through uiPrefs.set(id, v), which
+  // while a profile mode is actually live routes to the SESSION layer per
+  // the T6 routing rule; that's intentional "live" behavior, see the
+  // routing-rule comment in uiPrefs.js set()). Freestyle/Learning/Game
+  // preview/edit that mode's persisted `modes[mode]` bucket via
+  // uiProfiles.effectiveFor(mode) / uiPrefs.set(id, v, {mode}) — independent
+  // of whatever mode is actually live right now.
   _buildViewPanel() {
     const tabsEl = document.getElementById("viewModeTabs");
     const rowsEl = document.getElementById("viewRows");
@@ -433,14 +442,26 @@ export class UI {
       }
     }
 
-    // Mode-tab stub: only "Auto" is active/clickable. Freestyle/Learning/
-    // Game are wired up by a later task (uiPrefs `modes` overrides already
-    // exist in the persistence schema — this is UI-only for now).
-    if (tabsEl) {
-      tabsEl.innerHTML = ["Auto", "Freestyle", "Learning", "Game"].map((label, i) =>
-        `<button type="button" class="${i === 0 ? "active" : ""}" ${i === 0 ? "" : "disabled"}>${label}</button>`
+    // B11.T6: mode tabs — Auto/Freestyle/Learning/Game all clickable now.
+    // TAB_MODES maps a tab index to the uiPrefs `modes` key it edits; Auto
+    // (index 0) has no mode key — it edits `global`.
+    const TAB_LABELS = ["Auto", "Freestyle", "Learning", "Game"];
+    const TAB_MODES = [null, "freestyle", "learning", "game"];
+    let activeTab = 0;
+    const renderTabs = () => {
+      if (!tabsEl) return;
+      tabsEl.innerHTML = TAB_LABELS.map((label, i) =>
+        `<button type="button" class="${i === activeTab ? "active" : ""}" data-tab-index="${i}">${label}</button>`
       ).join("");
-    }
+      tabsEl.querySelectorAll("button[data-tab-index]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          activeTab = Number(btn.dataset.tabIndex);
+          renderTabs();
+          refreshRows();
+        });
+      });
+    };
+    renderTabs();
 
     const byGroup = new Map();
     for (const entry of uiPrefs.UI_ELEMENTS) {
@@ -463,24 +484,47 @@ export class UI {
       .join("");
 
     const checkboxFor = (id) => document.getElementById(`view_${id}`);
+    // Auto (index 0): effective global state (uiPrefs.isVisible, no mode arg
+    // — session-aware, "what's on screen right now"). Freestyle/Learning/
+    // Game: that mode's persisted-override preview (uiProfiles.effectiveFor
+    // — session-free, "what does this mode's saved layout look like").
     const refreshRows = () => {
+      const mode = TAB_MODES[activeTab];
+      const map = mode ? uiProfiles.effectiveFor(mode) : null;
       for (const entry of uiPrefs.UI_ELEMENTS) {
         const cb = checkboxFor(entry.id);
-        if (cb) cb.checked = uiPrefs.isVisible(entry.id);
+        if (cb) cb.checked = mode ? map[entry.id] : uiPrefs.isVisible(entry.id);
       }
     };
     refreshRows();
 
     rowsEl.querySelectorAll("input[type=checkbox]").forEach((cb) => {
       const id = cb.id.slice("view_".length);
-      cb.addEventListener("change", () => uiPrefs.set(id, cb.checked));
+      cb.addEventListener("change", () => {
+        const mode = TAB_MODES[activeTab];
+        if (mode) {
+          uiPrefs.set(id, cb.checked, { mode });
+        } else {
+          // Auto tab: plain set() — while a profile mode is actually live
+          // this routes to the SESSION layer instead of persisting global
+          // (uiPrefs.js set()'s B11.T6 routing rule). Intentional.
+          uiPrefs.set(id, cb.checked);
+        }
+      });
     });
 
     // Any other path (keys, HUD buttons, pro-chip, radar ⚙) that changes a
     // registry id's visibility also fires this — keeps every row truthful.
     uiPrefs.onChange(() => refreshRows());
 
-    resetBtn?.addEventListener("click", () => uiPrefs.resetGlobal());
+    resetBtn?.addEventListener("click", () => {
+      const mode = TAB_MODES[activeTab];
+      if (mode) {
+        uiPrefs.resetMode(mode);
+      } else {
+        uiPrefs.resetGlobal();
+      }
+    });
 
     // B11.T4: the View section's own collapsible-head/body pair (B11.T2) was
     // unified into the panel-group mechanism — #viewSectionToggle/#viewSection
@@ -623,8 +667,13 @@ export class UI {
       this._refreshAirspaceList();
     });
 
+    // B11.T6: cache the checkbox on the instance so setLabelsVisible() (the
+    // layersApi setter target — see uiProfiles.js's `layers.labels` handling)
+    // can sync its checked state from outside this closure, same shape as
+    // setHudPro()/_applyHudMode() syncing #hudProChip.
+    this._labelsChk = labels;
     labels.addEventListener("change", () => {
-      this.layer.setLabelsVisible(labels.checked);
+      this.setLabelsVisible(labels.checked);
     });
     heights.addEventListener("change", () => {
       this.layer.setShowHeights(heights.checked);
@@ -2137,6 +2186,16 @@ export class UI {
   setHudPro(pro) {
     const next = setHudSettings({ pro });
     this._applyHudMode(next.pro);
+  }
+
+  // B11.T6 — layersApi.setLabels target (see main.js/uiProfiles.js): applies
+  // the 3D airspace-labels layer AND syncs the #optLabels checkbox UI state,
+  // same shape as setHudPro()/#hudProChip above. Reused by the checkbox's
+  // own change handler too, so both call sites (user click, profile
+  // enter/exit) stay in sync through one place.
+  setLabelsVisible(visible) {
+    this.layer.setLabelsVisible(visible);
+    if (this._labelsChk) this._labelsChk.checked = !!visible;
   }
 
   _applyHudMode(pro) {

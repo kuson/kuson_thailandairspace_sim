@@ -42,6 +42,7 @@ import { installCityLights } from "./cityLights.js";
 import { installDayNight, getDayNightSettings, setDayNightSettings } from "./daynight.js";
 import * as uiPrefs from "./uiPrefs.js";
 import * as appMode from "./appMode.js";
+import * as uiProfiles from "./uiProfiles.js";
 
 // B7.T9: build the start-screen overlay immediately (before bootstrap runs).
 // Failure-safe: if construction throws, stub methods are returned and dismissed
@@ -598,6 +599,20 @@ async function bootstrap() {
   // default hides now that every registry element exists in the DOM.
   uiPrefs.init({ ui, debugOverlay });
 
+  // B11.T6: per-mode UI profiles — layersApi binds the 3D airspace-labels
+  // layer through ui.setLabelsVisible() (applies + syncs the #optLabels
+  // checkbox; see src/ui.js), the same reusable setter the checkbox's own
+  // change handler calls. install() subscribes to appMode.onChange and
+  // drives uiPrefs' session layer for every learning/game transition.
+  uiProfiles.install({
+    appMode,
+    uiPrefs,
+    layersApi: {
+      getLabels: () => layer.labelsGroup.visible,
+      setLabels: (v) => ui.setLabelsVisible(v),
+    },
+  });
+
   // B7.T9: hand off to the start-screen for mode selection.
   startScreen.ready({
     onExplore: () => { audio.unlock(); },
@@ -958,4 +973,5 @@ window.__sim = {
   daynight, cityLights, gLimitWatch,
   uiPrefs,
   appMode,
+  uiProfiles,
 };

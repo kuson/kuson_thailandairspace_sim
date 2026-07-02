@@ -38,7 +38,6 @@ export class TourGuide {
     this.index = 0;
     this._dwellT = 0;
     this._phase = "idle";
-    this._savedLabels = null;
     this._onPhaseDone = null;
 
     // Cinematic orbit during dwell — slow look-around so each stop reveals
@@ -89,11 +88,11 @@ export class TourGuide {
       this.drone.onIdentifyToggle?.(false);
     }
 
-    if (this._savedLabels === null) {
-      this._savedLabels = this.layer.labelsGroup.visible;
-    }
-    this.layer.setLabelsVisible(true);
-
+    // B11.T6: the ad-hoc save/enable-labels flip that used to live here was
+    // removed — the learning profile's `layers.labels: true` (uiProfiles.js)
+    // now turns labels on in reaction to notifyTourStart() below, and
+    // restores them on notifyTourStop() (fired from onStop below) via the
+    // same profile's exit path. See src/uiProfiles.js.
     this._syncOverlay();
     this._runCurrentStop();
     notifyTourStart();
@@ -104,10 +103,6 @@ export class TourGuide {
     this.running = false;
     this._phase = "idle";
     this.flyTo.cancel();
-    if (this._savedLabels !== null) {
-      this.layer.setLabelsVisible(this._savedLabels);
-      this._savedLabels = null;
-    }
     this.drone.flightLocked = false;
     this.layer.clearHighlights();
     this._hideOverlay();
