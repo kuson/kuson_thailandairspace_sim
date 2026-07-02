@@ -562,9 +562,15 @@ async function bootstrap() {
     else if (key === "terrain") { ground.setTerrainEnabled(on); }
     else if (key === "cityLights") { cityLights.setEnabled(on); }
     else if (key === "water") { ground.setWaterEnabled(on); }
+    // B11.T8: interior-fill fade — same shape as volumeGlow (no scene group;
+    // the layer owns the per-volume clone lifecycle). Toggling off restores
+    // any active clones immediately (see setInteriorFadeEnabled).
+    else if (key === "interiorFade") { layer.setInteriorFadeEnabled(on); }
   };
   // Restore glow state from persistence on load.
   setVolumeGlow(groundDetail.volumeGlow);
+  // B11.T8: restore interior-fade state from persistence on load (default ON).
+  layer.setInteriorFadeEnabled(groundDetail.interiorFade);
   window.__sim.groundLayers = {
     rangeRings,
     get airports() { return airportBeacons; },
@@ -901,6 +907,11 @@ function loop(t) {
   // P4.T5: pulse authorisation-airspace outlines at 1 Hz so the user sees
   // the volume that's currently capping their altitude.
   _safe("geofence-flash", () => layer.tickGeofenceFlash(dt));
+
+  // B11.T8: interior-fill fade — eases wall-mesh opacity toward 0.15x for
+  // volumes containing the drone (outline + fresnel rim untouched). No-op
+  // when the display option is off (see groundDetail.interiorFade below).
+  _safe("interior-fade", () => layer.updateInteriorFade(dt, drone.position));
 
   _safe("label-scales", () => layer.updateLabelScales(camera, renderer));
   _safe("city-scales", () => cityBeacons.updateScales(camera, renderer));

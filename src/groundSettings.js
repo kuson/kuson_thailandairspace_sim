@@ -3,9 +3,12 @@
 // glow. One object under kuson.grounddetail.v1; mirrors
 // get/setLiveFlightsSettings. Defaults: airports + provinces on, range
 // rings off (rings overlay the map → opt-in), volumeGlow on.
+// B11.T8: interiorFade (airspace interior-fill fade) defaults ON — the
+// world stays readable inside stacked volumes; the outline + fresnel rim
+// still carry the "cage" read, so OFF is the parity case per spec §0.
 const LS_KEY = "kuson.grounddetail.v1";
 
-export const DEFAULT_GROUND_DETAIL = { airports: true, rangeRings: false, provinces: true, volumeGlow: true, terrain: true, cityLights: true, water: true };
+export const DEFAULT_GROUND_DETAIL = { airports: true, rangeRings: false, provinces: true, volumeGlow: true, terrain: true, cityLights: true, water: true, interiorFade: true };
 
 export function getGroundDetailSettings() {
   try {

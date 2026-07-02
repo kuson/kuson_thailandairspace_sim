@@ -30,6 +30,18 @@ const HIGHLIGHT_OPACITY = 0.18;
 const WALL_OPACITY_NORMAL = 0.18;
 const WALL_OPACITY_HIGHLIGHT = 0.42;
 
+// B11.T8 — interior-fill fade (spec §0.5.5). The wall mesh (buildVolumeMesh)
+// is a single ExtrudeGeometry that bakes floor + ceiling caps AND the side
+// walls into one BufferGeometry with one material (buildLidFaces() runs
+// unconditionally in three's ExtrudeGeometry, before buildSideFaces(); no
+// separate floor mesh exists) — fading wallMesh.material's opacity fades
+// walls AND floors together, by construction. Outline (topLine/botLine) and
+// the fresnel rim (baked into the wall shader itself) are never touched.
+const FILL_FADE_TARGET = 0.15;      // multiplier applied to the base opacity
+const FILL_FADE_MIN_OPACITY = 0.03; // floor after the factor multiply
+const FILL_FADE_IN_S = 1.5;         // entering the containing set
+const FILL_FADE_OUT_S = 2.5;        // leaving the containing set
+
 // B8.T9 — Fresnel edge-glow: one shared uniform object referenced by every
 // wall material's compiled shader. Toggling .value requires no recompile.
 const SHARED_GLOW_UNIFORM = { value: 1.0 };   // 1.0 = on, 0.0 = off
@@ -558,6 +570,14 @@ export class AirspaceLayer {
     this._identifySprites = new Map();
     // P2.T8 — id → compiled, for O(1) owner lookup during label declutter.
     this._compiledById = new Map();
+
+    // B11.T8 — interior-fill fade (spec §0.5.5). Per-volume eased scalar,
+    // 1.0 (opaque, steady state) → FILL_FADE_TARGET while the drone is
+    // inside. Outline + fresnel rim are never touched — they carry the
+    // "cage" read regardless of fade state. See updateInteriorFade().
+    this._interiorFadeEnabled = true;
+    this._fadeFactor = new Map();   // volumeId -> current eased factor (1.0 = baseline)
+    this._fadeMat = new Map();      // volumeId -> cloned wall material, only while factor < 1.0
   }
 
   async load(url) {
@@ -687,14 +707,38 @@ export class AirspaceLayer {
     for (const c of this.compiled) {
       const on = this._isActive(c) && next.has(c.airspace.id);
       const ud = c.mesh.userData;
+      const id = c.airspace.id;
       // P2.T7 — walls are always visible; highlight swaps to the brighter
       // shared material instead of toggling visibility. Outline material
       // swaps for the same reason (pool entries are mutation-shared).
+      //
+      // B11.T8: this runs every frame (clearHighlights() → setHighlighted([])
+      // fires whenever nothing is highlighted — the common case). A blind
+      // `wallMesh.material = ...` here would stomp the interior-fade clone
+      // every frame and make the fade invisible outside identify/tour mode.
+      // So: while a fade clone is live AND the volume is not (becoming)
+      // highlighted, leave wallMesh.material pointing at the clone —
+      // updateInteriorFade() re-derives its opacity from `this._highlighted`
+      // fresh every call, so the base-opacity swap still takes effect next
+      // pass. If the volume IS (becoming) highlighted, the exemption means
+      // the clone must go away immediately — restore the pooled highlight
+      // material now rather than show a stale faded look.
       if (ud.wallMesh) {
-        // P6.T2: swap per-category wall material (patterned for Prohibited/
-        // Restricted, shared singletons otherwise — identical to the old
-        // behaviour for non-patterned categories).
-        ud.wallMesh.material = on ? ud.wallMatHi : ud.wallMatNormal;
+        const fadeMat = this._fadeMat.get(id);
+        if (on && fadeMat) {
+          // Exemption takes effect immediately: drop the clone (don't wait
+          // for this._highlighted to reflect `next` — it's stale mid-loop)
+          // and fall through to the normal pooled-material assignment below.
+          fadeMat.dispose();
+          this._fadeMat.delete(id);
+          this._fadeFactor.delete(id);
+        }
+        if (!fadeMat || on) {
+          // P6.T2: swap per-category wall material (patterned for Prohibited/
+          // Restricted, shared singletons otherwise — identical to the old
+          // behaviour for non-patterned categories).
+          ud.wallMesh.material = on ? ud.wallMatHi : ud.wallMatNormal;
+        }
       }
       const lineMat = on ? ud.outlineMatHi : ud.outlineMatNormal;
       if (ud.topLine) ud.topLine.material = lineMat;
@@ -782,6 +826,143 @@ export class AirspaceLayer {
 
   get identifySprites() {
     return [...this._identifySprites.values()];
+  }
+
+  /**
+   * B11.T8 — display-option gate for interior-fill fade. Mirrors
+   * setVolumeGlow's shape (persistence lives in main.js via
+   * groundSettings.js; this only flips the runtime behaviour). Turning OFF
+   * immediately restores every active clone to its pooled material and
+   * clears both fade maps — the next updateInteriorFade() call is then a
+   * true no-op, matching legacy (pre-B11.T8) behaviour byte-for-byte: no
+   * material is read or written while disabled.
+   */
+  setInteriorFadeEnabled(on) {
+    this._interiorFadeEnabled = !!on;
+    if (!this._interiorFadeEnabled) {
+      for (const id of [...this._fadeMat.keys()]) this._restoreFadeMaterial(id);
+      this._fadeFactor.clear();
+    }
+  }
+
+  get interiorFadeEnabled() {
+    return this._interiorFadeEnabled;
+  }
+
+  /** Inspection hook for the C3 material/program-count check (B11.T8). */
+  get activeFadeMaterialCount() {
+    return this._fadeMat.size;
+  }
+
+  // Swap a compiled volume's wall mesh onto a cloned material, cached so
+  // repeated fade frames reuse the same instance. clone() copies every
+  // Material.copy()-enumerated property (opacity, color, vertexColors,
+  // transparent, side, depthWrite/Test, …) faithfully, but three's base
+  // Material.copy() does NOT copy onBeforeCompile / customProgramCacheKey
+  // (verified against three@0.170.0 src/materials/Material.js — copy() is a
+  // fixed property list that never references either). Both are plain own-
+  // instance properties on the pooled source material (set once by
+  // applyWallShader at module load), so we copy them across explicitly —
+  // this is what keeps the fresnel rim shader alive on the clone and keeps
+  // customProgramCacheKey() returning the SAME string as the source, so
+  // WebGLPrograms.acquireProgram() resolves to the already-compiled program
+  // (verified against three@0.170.0 src/renderers/webgl/WebGLPrograms.js —
+  // the cache key array includes material.customProgramCacheKey() plus a
+  // fixed set of copied fields; nothing here diverges from the source).
+  // Net effect: cloning changes material INSTANCE count, never SHADER
+  // PROGRAM count.
+  _ensureFadeMaterial(c) {
+    const id = c.airspace.id;
+    let mat = this._fadeMat.get(id);
+    if (mat) return mat;
+    const ud = c.mesh.userData;
+    const src = ud.wallMesh.material; // whichever pooled material is live right now (normal or highlight)
+    mat = src.clone();
+    mat.onBeforeCompile = src.onBeforeCompile;
+    mat.customProgramCacheKey = src.customProgramCacheKey;
+    mat.needsUpdate = true;
+    this._fadeMat.set(id, mat);
+    ud.wallMesh.material = mat;
+    return mat;
+  }
+
+  // Restore the pooled material and drop the clone (steady-state material
+  // count returns to baseline — no leaked instances once every volume is
+  // back at factor 1.0 or fade is toggled off).
+  _restoreFadeMaterial(id) {
+    const mat = this._fadeMat.get(id);
+    if (!mat) return;
+    const c = this._compiledById.get(id);
+    if (c) {
+      const ud = c.mesh.userData;
+      const wasHighlighted = this._highlighted.has(id);
+      ud.wallMesh.material = wasHighlighted ? ud.wallMatHi : ud.wallMatNormal;
+    }
+    mat.dispose();
+    this._fadeMat.delete(id);
+  }
+
+  /**
+   * B11.T8 — per-frame interior-fill fade pass (spec §0.5.5). Reuses
+   * airspacesAt() — the EXACT source the HUD "inside" chips already call
+   * (src/ui.js updateHUD, `this.layer.airspacesAt(p.x, p.y, p.z)`) — so the
+   * fade's containing set never diverges from what the HUD reports.
+   *
+   * Highlighted volumes (identify / tour) are exempt while highlighted:
+   * their target stays 1.0 even if they contain the drone, so the
+   * brighter highlight material is never displaced by a fade clone. Once
+   * unhighlighted, if still inside, the next call eases them toward
+   * FILL_FADE_TARGET normally.
+   */
+  updateInteriorFade(dt, pos) {
+    if (!this._interiorFadeEnabled) return;
+
+    const insideIds = new Set(this.airspacesAt(pos.x, pos.y, pos.z).map((a) => a.id));
+
+    for (const c of this.compiled) {
+      const id = c.airspace.id;
+      const wantFaded = insideIds.has(id) && !this._highlighted.has(id);
+      const target = wantFaded ? FILL_FADE_TARGET : 1.0;
+      const cur = this._fadeFactor.has(id) ? this._fadeFactor.get(id) : 1.0;
+
+      if (cur === target) {
+        if (target === 1.0 && this._fadeMat.has(id)) this._restoreFadeMaterial(id);
+        if (target === 1.0) this._fadeFactor.delete(id);
+        continue;
+      }
+
+      // Rate is scaled by the full logical range (1.0 - FILL_FADE_TARGET) so
+      // an uninterrupted 1.0->target traversal takes exactly FILL_FADE_IN_S
+      // seconds (and target->1.0 takes exactly FILL_FADE_OUT_S), matching
+      // spec §0.5.5 literally rather than approximately. A fade interrupted
+      // partway through (e.g. re-enter before the leave-ease finishes) covers
+      // the remaining distance proportionally faster — standard tween
+      // semantics, not a special case.
+      const rateS = target < cur ? FILL_FADE_IN_S : FILL_FADE_OUT_S;
+      const fullRange = 1.0 - FILL_FADE_TARGET;
+      const step = (fullRange * dt) / Math.max(rateS, 1e-6);
+      let next;
+      if (target < cur) {
+        next = Math.max(target, cur - step);
+      } else {
+        next = Math.min(target, cur + step);
+      }
+      this._fadeFactor.set(id, next);
+
+      if (next >= 1.0) {
+        if (this._fadeMat.has(id)) this._restoreFadeMaterial(id);
+        this._fadeFactor.delete(id);
+        continue;
+      }
+
+      const mat = this._ensureFadeMaterial(c);
+      const baseOpacity = this._highlighted.has(id) ? WALL_OPACITY_HIGHLIGHT : WALL_OPACITY_NORMAL;
+      // Patterned categories (Prohibited/Restricted/DangerMil) share the
+      // same normal/highlight opacity constants as the singleton materials
+      // (wallMatFor sets opacity: highlight ? WALL_OPACITY_HIGHLIGHT :
+      // WALL_OPACITY_NORMAL) — baseOpacity is correct for every category.
+      mat.opacity = Math.max(baseOpacity * next, FILL_FADE_MIN_OPACITY);
+    }
   }
 
   airspacesAt(x, y, z) {
