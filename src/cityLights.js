@@ -55,6 +55,7 @@ attribute float aSize;
 attribute vec3 aColor;
 uniform float uPixelRatio;
 varying vec3 vColor;
+varying float vFade;
 void main() {
   vec4 mvPos = modelViewMatrix * vec4(position, 1.0);
   // aSize is a baked screen-pixel diameter (generator output) — scale only
@@ -62,6 +63,14 @@ void main() {
   // near-camera points cannot recur as the city-dome bug.
   gl_PointSize = min(aSize * uPixelRatio, 24.0);
   vColor = aColor;
+  // Spread compensation (C4 fix): a distant city's 30–220 additive points
+  // converge onto a handful of pixels and stack to a blown-white blob (the
+  // T12 constellation redesign multiplied per-city point count ~75×). Fade
+  // PER-POINT alpha with view distance so the cluster's summed energy stays
+  // roughly constant: near (points spread over many pixels) full alpha, far
+  // (points converged) ~6% — ≈30 overlapping points then sum to ≲1.8.
+  float distKm = -mvPos.z / 1000.0;
+  vFade = mix(1.0, 0.06, smoothstep(6.0, 70.0, distKm));
   gl_Position = projectionMatrix * mvPos;
   #include <logdepthbuf_vertex>
 }
@@ -73,6 +82,7 @@ const _fragmentShader = /* glsl */`
 uniform sampler2D uTex;
 uniform float uOpacity;
 varying vec3 vColor;
+varying float vFade;
 void main() {
   #include <logdepthbuf_fragment>
   // The glow texture is a white radial gradient used ONLY as a soft-edge
@@ -82,7 +92,7 @@ void main() {
   // invisible. Take the colour from the per-point aColor attribute (varying
   // vColor) and the falloff from the texture alpha only.
   float mask = texture2D(uTex, gl_PointCoord).a;
-  gl_FragColor = vec4(vColor, mask * uOpacity);
+  gl_FragColor = vec4(vColor, mask * uOpacity * vFade);
 }
 `;
 

@@ -64,7 +64,11 @@ export function setGfxSettings(patch) {
 // construction, zero overlay cost). Threshold 0.62 catches the warm light
 // carpet, beacons, tracers and the T12 moon/stars; dusk (nf ≈ 0.5) gets a
 // gentle scaled glow on the bright horizon, signed off visually at C4.
-export const BLOOM = { strength: 0.55, radius: 0.4, threshold: 0.62 };
+// C4 retune: threshold 0.62 also caught volume fresnel rims + the dusk haze
+// band and, combined with the pre-fix city-cluster saturation, detonated
+// horizon-wide white blobs. 0.80 releases the rims; saturated light cores,
+// the moon and tracers still cross it.
+export const BLOOM = { strength: 0.4, radius: 0.4, threshold: 0.8 };
 
 /**
  * @param {{ renderer: THREE.WebGLRenderer, scene: THREE.Scene, camera: THREE.Camera }} deps
