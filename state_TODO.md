@@ -96,7 +96,36 @@
 - [x] 2-min mixed session — IDLE→BRIEFING→WAVE→abort→IDLE→explore; console zero errors + zero warnings throughout.
 - [x] City lights live-hardware visual — FIXED + verified (see §0d).
 - [ ] Player shadow blob live-hardware visual — deferred to foreground session (harness rAF pause).
-- [ ] Merge `betterment7-20260612` → main + tag `betterment7-complete` — user decision (still unmerged).
+- [x] Merge `betterment7-20260612` → main + tag `betterment7-complete` — DONE 2026-06-13 (user-confirmed fast-forward; see journal S243 note).
+
+---
+
+## 0f. Betterment-11 — Facelift (2026-07-02/03, autonomous orchestration, gates C1–C4 passed)
+
+> Playbook: `20260702_FaceliftPlaybook.md`. Journal: 2026-07-02/03 (h). Branch `betterment11-20260702` (off main @ cab0722).
+
+- [x] **B11.T0 Reconciliation + baselines** — main ff'd 71c38dc→cab0722 + pushed; branch pushed; 6 baseline PNGs + notes in `.scratch/facelift_20260702/`.
+- [x] **B11.T1 uiPrefs registry** (`d2fa09a`) — 20 ids, sparse `kuson.uiprefs.v1`, keys route through registry; attitude default corrected to parity.
+- [x] **B11.T2 View panel + ⚙ radar popover** (`b6c24f0`) — rows w/ key hints, T/C keys added, reset, floaters folded (radarOptions default false).
+- [x] **B11.T3 Themes ×4** (`3aef79f`, `e8f2634`) — classic byte-identical; canvas palettes; 53 literals → color-mix; contrast ≥4.5:1.
+- [x] **B11.T4 Panel IA + disclaimer footer** (`52b1c89`, design-reviewed) — 6 groups, `kuson.panel.v1`, footer verbatim + wraps.
+- [x] **C1 gate** — 0/921,600 px parity vs pre-B11 worktree; theme-swap repaint bug found+fixed (`02e4019`).
+- [x] **B11.T5 appMode** (`9f08c27`) — mode/detail source of truth + transition guards w/ chips; exact emission sequence verified live.
+- [x] **B11.T6 uiProfiles** (`21a5fc6`) — session layer, wave/briefing/debrief/learning profiles, per-mode overrides win, exact-restore proven.
+- [x] **B11.T7 Input scoping + Escape ladder** (`14f3ac8`, `fb3aae1`, `98c253a`) — 79-cell matrix; V=viewToggles; C2 fixed ladder deadlock + overlay CSS.
+- [x] **C2 gate** — WAVE input storm state-frozen; both confirm cards round-trip; briefing Esc closes.
+- [x] **B11.T8 Interior-fill fade** (`4a75653`) — 0.15× (clamp 0.03) in 1.5 s/out 2.5 s; clone lifecycle; program-delta 0; WORLD toggle default ON.
+- [x] **B11.T9 Declutter laws** (`6018486`) — LAWS table @4 Hz under owner passes; tick 0.043 ms; master toggle default ON. (Executor died at session limit; orchestrator reviewed+committed.)
+- [x] **B11.T10 Focus mode** (`f88543e`) — F key session-only; 143 non-kept dim/restore exact; auto-exit on mode change.
+- [x] **C3 gate** — staged declutter ladder exact; defaults-off parity hash `5733134d` bit-identical vs pre-B11.
+- [x] **B11.T11 Gated bloom overlay** (`73733ba`, Fable-inline) — legacy-frame overlay architecture (linear chain measurably broke translucent compositing); night-gated; day 0-px diff.
+- [x] **B11.T12 Night pack** (`f32829c`) — 3,160-point city constellations (seeded generator, byte-identical re-runs) + 1,200-star dome + moon; day byte-identical.
+- [x] **B11.T13 Terrain hillshade** (`00d6786`) — elevation-grid normals baked to vertex colors; OFF = byte-identical build; live rebuild ~32 ms.
+- [x] **B11.T14 Bug sweep** (`340fbd0`) — district-label jump refresh; daynight two-way sync + eager init; alert/TARGET-strip stacking; placeLabel/pill clearance. Footer arithmetic verified.
+- [x] **C4 gate** — repros pass; night-blowout found+fixed (`9880eef`: spread-compensated point alpha + bloom retune); day 1.65 ms / night-all-ON 3.77 ms ≤ 4 ms; defaults-OFF bit-parity; B5–B10 smokes green; console clean of B11 errors.
+- [x] **B11.T15 Docs** — spec §3.19 + §6 rows; journal (h); this block; README.
+- [ ] Merge `betterment11-20260702` → main + tag `betterment11-complete` — **user decision** (per B7 precedent).
+- [ ] Foreground-session visuals: focus-mode chip pulse; player shadow blob (carried from §0e).
 
 ---
 
@@ -242,7 +271,8 @@ Operator should walk through `spec.md §6` in a real browser. Until then these a
 - [ ] Trace true Thai-Cambodian border for VTR62 polygon (currently straight-line closes through Cambodia — overstates area on that side).
 - [ ] Sample arc segments for VTD34 / VTD58 / VTD17 instead of straight-line chord between endpoints.
 - [ ] Add a smoke-test rig (Playwright or Puppeteer) covering the verification checklist in §2.
-- [ ] **2026-07-02:** Execute **Betterment-11 Facelift** — UI visibility registry + View panel + 4 themes, per-mode UI profiles + input scoping, interior-fill fade, declutter laws + focus mode, night sky/city-light constellations, gated bloom, terrain shading. Contracts + model routing in `20260702_FaceliftPlaybook.md`; evidence in `20260702_FaceliftReport.md`. See `journal.md` 2026-07-02 (g).
+- [x] **2026-07-02:** Execute **Betterment-11 Facelift** — DONE 2026-07-03, gates C1–C4 passed; see §0f + `journal.md` (h). Branch `betterment11-20260702` pushed; merge = user decision.
+- [ ] Root-cause the pre-existing `THREE PlaneGeometry computeBoundingSphere NaN` console errors fired by large teleports before terrain streams in (reproduced on pre-B11 main — suspect a plane/blob geometry built from NaN elevation during the gap; see journal (h) known-deferred).
 
 ### Betterment-5 — Airspace de-clutter (✅ done + browser-verified 2026-06-01 (e); see `20260601_BettermentPlaybook.md` + `spec.md §13`)
 - [x] **B5.T1** — `groupKeyFor(a)` + `AIRSPACE_GROUPS` in `airspace.js` (counts: 34/13/71/21/5 = 144).

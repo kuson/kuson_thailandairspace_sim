@@ -59,6 +59,10 @@ Aircraft also drift in a **wind field** (Realistic mode only); the minimap draws
 | `U` | Toggle units (metric ↔ aeronautical kt/ft/NM) |
 | `M` | Toggle map-primary view (orthographic radar fills viewport; 3D scene becomes a small inset) |
 | `+` / `-` | Zoom the radar in/out (alongside mouse scroll) |
+| `T` / `C` | Toggle the info panel / the controls hint (both routed through the View registry) |
+| `F` | **Focus mode** — dim every airspace volume except the ones you're inside plus the current fly-to/tour/game target. Session-only; exits on mode change |
+| `` ` `` (backquote) | Debug overlay (renderer stats + frame time) |
+| `Esc` | One step at a time: dismiss confirm card → typing challenge → abort-mission confirm (wave) → close briefing/debrief → end-tour confirm |
 | HUD 1× / … / 100× | Sim-speed multiplier — and the aircraft-preset row doubles as the `1`–`5` selector |
 
 > **Note on key choices:** the standard drone convention `R` = Return-to-Home is used (the playbook's draft `H` was already the horizon toggle), and `K` toggles Easy↔Realistic (`M` was already map-primary). Both are shown in the in-app help.
@@ -77,6 +81,10 @@ Aircraft also drift in a **wind field** (Realistic mode only); the minimap draws
 | Altitude warnings | Each aircraft has an **operational** (service ceiling) and **regulated** (legal) limit. The advisor shows a single banner + a chip on the altitude tape: amber *approaching* a ceiling, red *over* it (`OUT OF REGULATED RANGE — descend to …`). Edit per-aircraft limits in Settings → **Altitude limits**. Warnings always show; they don't push you down (see CAAT toggle). |
 | **CAAT: OFF/ON** toggle (HUD, bottom of telemetry) | Strict CAAT enforcement. **Default OFF** = advisory only, so the tour and jets fly unrestricted. **ON** = the Mavic 3 is clamped to 120 m AGL in controlled airspace and no-fly zones snap you back. Persists across reloads. |
 | Settings → **Ground detail** | Tile-zoom preset: Low (z10) / Med (z12) / High (z12) / Ultra (z13) / **Auto** (alt-adaptive). |
+| Panel → **VIEW** section | Show/hide every HUD and panel element (20 checkboxes with key hints, persisted), per-mode tabs (Auto/Freestyle/Learning/Game), **Reset layout**, and a **Theme** select — Classic / Daylight / NVG / Amber reskin the whole interface incl. the canvas instruments. |
+| Panel → **WORLD** toggles (B11) | **Interior fade** (volume fills drop to 15% while you're inside — the world stays readable in a CTR), **Declutter** (labels/beacons/rings fade by range + altitude), **Terrain shading** (hillshade relief on tiles), **Enhanced graphics** (night bloom on city lights). All default ON; turning them off restores the pre-Facelift render exactly. |
+| Game / tour interface | During a SCRAMBLE/INTERCEPT wave the explore UI (panel, warp chips, history, identify) hides automatically and restores exactly on exit; per-mode visibility is editable in VIEW's mode tabs. Warp, undo and identify keys are blocked mid-wave. |
+| Night (Time of day → Night) | Data-generated city-light carpet (3,160 points across 42 cities), 1,200-star sky, moon opposite the sun, and gated bloom — all fade with the day/night cycle. |
 | **▶ FLIGHT HISTORY** strip | Collapsible (default collapsed) — a count badge; expand for the last 100 course/location/mode/preset/RTH/boundary changes (newest first). A camera view change is **not** logged. Undo/redo jumps between logged points. |
 | Panel → **Express tour (~5 min)** | Guided Bangkok takeoff → capital-region CTR/TMA/R/P/D highlights → Welcome to Explore, with a slow camera orbit at each stop. |
 | Panel → **Full country tour (~22 min)** | Nationwide rotorcraft-relevant volumes (major airports, royal zones, islands, training areas, rules recap). |
