@@ -22,6 +22,7 @@ import { getAudioSettings, setAudioSettings } from "./audio.js";
 import * as uiPrefs from "./uiPrefs.js";
 import * as uiProfiles from "./uiProfiles.js";
 import { theme, applyTheme, canvasAlpha, THEMES, onThemeChange } from "./theme.js";
+import { getGfxSettings } from "./gfx.js";
 import { inputAllowed } from "./inputGuard.js";
 
 // Betterment-2 P3.T3: glyph per history event type for the collapsible list.
@@ -588,6 +589,7 @@ export class UI {
       <label class="opt"><input type="checkbox" id="optVolumeGlow" /> Volume glow</label>
       <label class="opt"><input type="checkbox" id="optInteriorFade" /> Interior fade</label>
       <label class="opt"><input type="checkbox" id="optDeclutter" /> Declutter</label>
+      <label class="opt"><input type="checkbox" id="optEnhancedGfx" /> Enhanced graphics</label>
       <label class="opt"><input type="checkbox" id="optLiveFlights" /> Show me live flights</label>
       <label class="opt">
         Flight source
@@ -649,6 +651,10 @@ export class UI {
     const vgChk = el.querySelector("#optVolumeGlow");
     const ifChk = el.querySelector("#optInteriorFade");
     const dcChk = el.querySelector("#optDeclutter");
+    // B11.T11: enhanced graphics gate — own key (kuson.gfx.v1), not part of
+    // kuson.grounddetail.v1, so it gets its own callback rather than
+    // onGroundLayerToggle.
+    const gfxChk = el.querySelector("#optEnhancedGfx");
     const tnChk = el.querySelector("#optTerrain");
     const clChk = el.querySelector("#optCityLights");
     const wtChk = el.querySelector("#optWater");
@@ -658,6 +664,7 @@ export class UI {
     if (vgChk) vgChk.checked = gd.volumeGlow;
     if (ifChk) ifChk.checked = gd.interiorFade;
     if (dcChk) dcChk.checked = gd.declutter;
+    if (gfxChk) gfxChk.checked = getGfxSettings().composer;
     if (tnChk) tnChk.checked = gd.terrain;
     if (clChk) clChk.checked = gd.cityLights;
     if (wtChk) wtChk.checked = gd.water;
@@ -667,6 +674,7 @@ export class UI {
     vgChk?.addEventListener("change", () => this.onGroundLayerToggle?.("volumeGlow", vgChk.checked));
     ifChk?.addEventListener("change", () => this.onGroundLayerToggle?.("interiorFade", ifChk.checked));
     dcChk?.addEventListener("change", () => this.onGroundLayerToggle?.("declutter", dcChk.checked));
+    gfxChk?.addEventListener("change", () => this.onGfxToggle?.(gfxChk.checked));
     tnChk?.addEventListener("change", () => this.onGroundLayerToggle?.("terrain", tnChk.checked));
     clChk?.addEventListener("change", () => this.onGroundLayerToggle?.("cityLights", clChk.checked));
     wtChk?.addEventListener("change", () => this.onGroundLayerToggle?.("water", wtChk.checked));

@@ -42,6 +42,7 @@ import { makeShadowBlob } from "./game/shadows.js";
 import { installCityLights } from "./cityLights.js";
 import { installDayNight, getDayNightSettings, setDayNightSettings } from "./daynight.js";
 import * as uiPrefs from "./uiPrefs.js";
+import { installGfx, getGfxSettings } from "./gfx.js";
 import * as appMode from "./appMode.js";
 import * as uiProfiles from "./uiProfiles.js";
 import * as inputGuard from "./inputGuard.js";
@@ -93,6 +94,10 @@ document.getElementById("app").appendChild(renderer.domElement);
 renderer.domElement.style.width = "100%";
 renderer.domElement.style.height = "100%";
 const debugOverlay = installDebugOverlay(renderer);
+// B11.T11: gated postprocessing (RenderPass → UnrealBloom → OutputPass).
+// gfx.render() IS the frame's final draw — legacy direct render when the
+// gate is off or construction failed (see src/gfx.js).
+const gfx = installGfx({ renderer, scene, camera });
 
 // Renderer / camera sizing. In map-primary mode the 3D scene shrinks to a
 // fixed inset (matched to the CSS box for #app in index.html); otherwise it
@@ -108,6 +113,7 @@ function applyRendererSize() {
   camera.aspect = w / h;
   camera.updateProjectionMatrix();
   renderer.setSize(w, h, false);
+  gfx.resize(w, h);
   // Make the canvas styled-size follow regardless of devicePixelRatio scaling.
   renderer.domElement.style.width = "100%";
   renderer.domElement.style.height = "100%";
@@ -554,6 +560,11 @@ async function bootstrap() {
   // Betterment-6: ground-detail layer toggles — persist + flip the scene group.
   // B8.T9: volumeGlow routes through here too; calls setVolumeGlow (no scene
   // group — the shared uniform in airspace.js handles all wall materials).
+  // B11.T11: enhanced-graphics gate — persists its own key (kuson.gfx.v1)
+  // inside gfx.setEnabled; OFF switches the very next frame to the legacy
+  // direct render call. Bloom is night-gated (see gfx.js BLOOM note).
+  ui.onGfxToggle = (on) => gfx.setEnabled(on);
+  gfx.setNightSource(() => daynight.getNightFactor());
   ui.onGroundLayerToggle = (key, on) => {
     setGroundDetailSettings({ [key]: on });
     if (key === "airports") { if (airportBeacons) airportBeacons.group.visible = on; }
@@ -595,6 +606,7 @@ async function bootstrap() {
     get provinces() { return provinceLines; },
   };
   window.__sim.declutter = declutterLayers;   // harness API (checkpoint staging)
+  window.__sim.gfx = gfx;                      // harness API (B11.T11)
 
   const start = await getStartLocation();
   startScreen.tick("Locating start position…");
@@ -1085,7 +1097,7 @@ function loop(t) {
     _safe("hud", () => ui.updateHUD(dt));
     _safe("minimap", () => ui.drawMinimap());
   }
-  _safe("render", () => renderer.render(scene, camera));
+  _safe("render", () => gfx.render());
   _safe("debug-overlay", () => debugOverlay.update());
   rafId = requestAnimationFrame(loop);
 }
