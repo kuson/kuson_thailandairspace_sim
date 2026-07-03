@@ -40,6 +40,7 @@ import { installStartScreen } from "./startScreen.js";
 import { installAudio } from "./audio.js";
 import { makeShadowBlob } from "./game/shadows.js";
 import { installCityLights } from "./cityLights.js";
+import { installNightSky } from "./nightSky.js";
 import { installDayNight, getDayNightSettings, setDayNightSettings } from "./daynight.js";
 import * as uiPrefs from "./uiPrefs.js";
 import { installGfx, getGfxSettings } from "./gfx.js";
@@ -149,6 +150,11 @@ const cityBeacons = installCityBeacons(scene, { y: 200, topN: 24 });
 // B10.T5: night city + airport lights — built immediately; daynight exists above.
 const cityLights = installCityLights({ scene, daynight, camera, renderer });
 cityLights.setEnabled(getGroundDetailSettings().cityLights);
+// B11.T12: star field + moon — gated by nightFactor alone, no new WORLD
+// toggle (the "City lights" checkbox above keeps governing cityLights only;
+// stars+moon are part of the night sky itself, same as the sky dome's own
+// colour already responding to nightFactor with no separate toggle).
+const nightSky = installNightSky({ scene, daynight, camera, skyRig });
 
 // Betterment-6: ground orientation layers (airports / range rings / province
 // names), each independently toggleable + persisted (kuson.grounddetail.v1).
@@ -1012,6 +1018,9 @@ function loop(t) {
   _safe("daynight", () => daynight.update(dt));
   // B10.T5: city lights opacity — reads nightFactor that daynight just wrote.
   _safe("citylights", () => cityLights.update());
+  // B11.T12: star field + moon — reads nightFactor + the live sun direction
+  // that sky-follow/daynight just updated this frame.
+  _safe("nightsky", () => nightSky.update());
   // B10.T6: water clock — shimmer scrolls only while the loop renders.
   _safe("water", () => ground.tickWater(dt));
 

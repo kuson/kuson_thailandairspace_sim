@@ -1,0 +1,303 @@
+{
+  "cities": [
+    {
+      "lat": 13.7563,
+      "lon": 100.5018,
+      "name": "Bangkok",
+      "prominence": 3,
+      "weight": 1.0
+    },
+    {
+      "lat": 18.7883,
+      "lon": 98.9853,
+      "name": "Chiang Mai",
+      "prominence": 3,
+      "weight": 1.0
+    },
+    {
+      "lat": 7.8804,
+      "lon": 98.3923,
+      "name": "Phuket",
+      "prominence": 3,
+      "weight": 1.0
+    },
+    {
+      "lat": 7.0086,
+      "lon": 100.4747,
+      "name": "Hat Yai",
+      "prominence": 2,
+      "weight": 0.5
+    },
+    {
+      "lat": 12.9236,
+      "lon": 100.8825,
+      "name": "Pattaya",
+      "prominence": 2,
+      "weight": 0.5
+    },
+    {
+      "lat": 16.4322,
+      "lon": 102.8236,
+      "name": "Khon Kaen",
+      "prominence": 2,
+      "weight": 0.5
+    },
+    {
+      "lat": 14.9799,
+      "lon": 102.0978,
+      "name": "Nakhon Ratchasima",
+      "prominence": 2,
+      "weight": 0.5
+    },
+    {
+      "lat": 17.4138,
+      "lon": 102.7873,
+      "name": "Udon Thani",
+      "prominence": 2,
+      "weight": 0.5
+    },
+    {
+      "lat": 19.9105,
+      "lon": 99.8406,
+      "name": "Chiang Rai",
+      "prominence": 2,
+      "weight": 0.5
+    },
+    {
+      "lat": 12.5684,
+      "lon": 99.9577,
+      "name": "Hua Hin",
+      "prominence": 2,
+      "weight": 0.5
+    },
+    {
+      "lat": 9.1382,
+      "lon": 99.3217,
+      "name": "Surat Thani",
+      "prominence": 2,
+      "weight": 0.5
+    },
+    {
+      "lat": 8.0863,
+      "lon": 98.9063,
+      "name": "Krabi",
+      "prominence": 2,
+      "weight": 0.5
+    },
+    {
+      "lat": 15.2448,
+      "lon": 104.8473,
+      "name": "Ubon Ratchathani",
+      "prominence": 2,
+      "weight": 0.5
+    },
+    {
+      "lat": 7.1986,
+      "lon": 100.5959,
+      "name": "Songkhla",
+      "prominence": 2,
+      "weight": 0.5
+    },
+    {
+      "lat": 14.3692,
+      "lon": 100.5877,
+      "name": "Ayutthaya",
+      "prominence": 2,
+      "weight": 0.5
+    },
+    {
+      "lat": 12.68,
+      "lon": 101.005,
+      "name": "U-Tapao",
+      "prominence": 1,
+      "weight": 0.0
+    },
+    {
+      "lat": 17.0072,
+      "lon": 99.8231,
+      "name": "Sukhothai",
+      "prominence": 1,
+      "weight": 0.0
+    },
+    {
+      "lat": 12.2436,
+      "lon": 102.5151,
+      "name": "Trat",
+      "prominence": 1,
+      "weight": 0.0
+    },
+    {
+      "lat": 17.8783,
+      "lon": 102.7417,
+      "name": "Nong Khai",
+      "prominence": 1,
+      "weight": 0.0
+    },
+    {
+      "lat": 18.2783,
+      "lon": 99.4869,
+      "name": "Lampang",
+      "prominence": 1,
+      "weight": 0.0
+    },
+    {
+      "lat": 19.3019,
+      "lon": 97.9694,
+      "name": "Mae Hong Son",
+      "prominence": 1,
+      "weight": 0.0
+    },
+    {
+      "lat": 16.8211,
+      "lon": 100.2659,
+      "name": "Phitsanulok",
+      "prominence": 1,
+      "weight": 0.0
+    },
+    {
+      "lat": 9.9619,
+      "lon": 98.6386,
+      "name": "Ranong",
+      "prominence": 1,
+      "weight": 0.0
+    },
+    {
+      "lat": 8.4304,
+      "lon": 99.9633,
+      "name": "Nakhon Si Thammarat",
+      "prominence": 1,
+      "weight": 0.0
+    },
+    {
+      "lat": 17.486,
+      "lon": 101.7224,
+      "name": "Loei",
+      "prominence": 1,
+      "weight": 0.0
+    },
+    {
+      "lat": 17.1545,
+      "lon": 104.1348,
+      "name": "Sakon Nakhon",
+      "prominence": 1,
+      "weight": 0.0
+    },
+    {
+      "lat": 14.993,
+      "lon": 103.1029,
+      "name": "Buriram",
+      "prominence": 1,
+      "weight": 0.0
+    },
+    {
+      "lat": 16.054,
+      "lon": 103.652,
+      "name": "Roi Et",
+      "prominence": 1,
+      "weight": 0.0
+    },
+    {
+      "lat": 13.1119,
+      "lon": 99.9407,
+      "name": "Phetchaburi",
+      "prominence": 1,
+      "weight": 0.0
+    },
+    {
+      "lat": 16.8839,
+      "lon": 99.1258,
+      "name": "Tak",
+      "prominence": 1,
+      "weight": 0.0
+    },
+    {
+      "lat": 13.599,
+      "lon": 100.5998,
+      "name": "Samut Prakan",
+      "prominence": 1,
+      "weight": 0.0
+    },
+    {
+      "lat": 12.6833,
+      "lon": 101.2372,
+      "name": "Rayong",
+      "prominence": 2,
+      "weight": 0.5
+    },
+    {
+      "lat": 13.3611,
+      "lon": 100.9847,
+      "name": "Chonburi",
+      "prominence": 1,
+      "weight": 0.0
+    },
+    {
+      "lat": 15.703,
+      "lon": 100.1372,
+      "name": "Nakhon Sawan",
+      "prominence": 1,
+      "weight": 0.0
+    },
+    {
+      "lat": 14.0227,
+      "lon": 99.5328,
+      "name": "Kanchanaburi",
+      "prominence": 1,
+      "weight": 0.0
+    },
+    {
+      "lat": 14.882,
+      "lon": 103.496,
+      "name": "Surin",
+      "prominence": 1,
+      "weight": 0.0
+    },
+    {
+      "lat": 6.541,
+      "lon": 101.28,
+      "name": "Yala",
+      "prominence": 2,
+      "weight": 0.5
+    },
+    {
+      "lat": 6.4254,
+      "lon": 101.8253,
+      "name": "Narathiwat",
+      "prominence": 1,
+      "weight": 0.0
+    },
+    {
+      "lat": 10.493,
+      "lon": 99.18,
+      "name": "Chumphon",
+      "prominence": 1,
+      "weight": 0.0
+    },
+    {
+      "lat": 11.8126,
+      "lon": 99.7957,
+      "name": "Prachuap Khiri Khan",
+      "prominence": 1,
+      "weight": 0.0
+    },
+    {
+      "lat": 18.7756,
+      "lon": 100.773,
+      "name": "Nan",
+      "prominence": 1,
+      "weight": 0.0
+    },
+    {
+      "lat": 12.6113,
+      "lon": 102.1039,
+      "name": "Chanthaburi",
+      "prominence": 1,
+      "weight": 0.0
+    }
+  ],
+  "meta": {
+    "count": 42,
+    "description": "Thai city roster for B11.T12 night-sky city-light-constellation generation. Derived 1:1 from src/cities.js THAI_CITIES (kept in sync manually — cities.js is source of truth for beacon labels; this file is the data input for scripts/gen_city_lights.py). weight is prominence (1-3) normalised to 0..1 via (prominence-1)/2.",
+    "source": "src/cities.js THAI_CITIES"
+  }
+}
