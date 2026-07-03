@@ -9,9 +9,12 @@
 // B11.T9: declutter (altitude/distance declutter laws — src/declutter.js)
 // defaults ON — OFF restores every touched layer's always-on legacy
 // behaviour byte-for-byte (the module writes nothing while off).
+// B11.T13: terrainShade (elevation-grid hillshade baked into detail-tile
+// vertex colors) defaults ON — OFF is byte-identical to pre-T13 tile build
+// (no vertex-color attribute allocated, no extra elevationAt sampling).
 const LS_KEY = "kuson.grounddetail.v1";
 
-export const DEFAULT_GROUND_DETAIL = { airports: true, rangeRings: false, provinces: true, volumeGlow: true, terrain: true, cityLights: true, water: true, interiorFade: true, declutter: true };
+export const DEFAULT_GROUND_DETAIL = { airports: true, rangeRings: false, provinces: true, volumeGlow: true, terrain: true, cityLights: true, water: true, interiorFade: true, declutter: true, terrainShade: true };
 
 export function getGroundDetailSettings() {
   try {

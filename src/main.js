@@ -163,6 +163,10 @@ const groundDetail = getGroundDetailSettings();
 // B10.T2: restore terrain-relief state before any tile builds (bootstrap
 // triggers the first updateAround, so a plain property write is safe here).
 ground.terrainEnabled = groundDetail.terrain;
+// B11.T13: restore hillshade state before any tile builds — same plain
+// property write as terrainEnabled above (no tiles exist yet, so no rebuild
+// is needed or triggered).
+ground.terrainShadeEnabled = groundDetail.terrainShade;
 // B10.T6: restore water-shimmer gate (shared uniform — instant, no rebuild).
 ground.setWaterEnabled(groundDetail.water);
 const rangeRings = installRangeRings(scene);
@@ -578,6 +582,7 @@ async function bootstrap() {
     else if (key === "provinces") { if (provinceLines) provinceLines.group.visible = on; }
     else if (key === "volumeGlow") { setVolumeGlow(on); }
     else if (key === "terrain") { ground.setTerrainEnabled(on); }
+    else if (key === "terrainShade") { ground.setTerrainShadeEnabled(on); }
     else if (key === "cityLights") { cityLights.setEnabled(on); }
     else if (key === "water") { ground.setWaterEnabled(on); }
     // B11.T8: interior-fill fade — same shape as volumeGlow (no scene group;

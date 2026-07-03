@@ -37,6 +37,23 @@ const MINIMAP_TILE_CACHE_MAX = 256;
 const SEGS_DETAIL = 24;
 const SEGS_BASE = 24;
 
+// B11.T13 hillshade — central-difference sample delta in DEGREES, matched to
+// data/terrain.json's DEM cell size (dLat = dLon = 0.008333333333333333, a
+// 30 arc-sec grid — see terrain.json "dLat"/"dLon"). Sampling at exactly one
+// DEM cell means each central-difference pair straddles real, independent
+// grid samples rather than interpolating within the same bilinear cell
+// (which would flatten the gradient toward zero at sub-cell deltas).
+const SHADE_DELTA_DEG = 1 / 120; // 0.008333... deg ≈ 30 arc-sec, matches terrain.json
+
+// Sun direction for the hillshade normal dot-product — NW-from-above, so
+// NW-facing slopes (uphill toward the sun) read brighter than SE-facing
+// slopes. Normalized once at module load (not per-vertex).
+const SUN_NW = new THREE.Vector3(-0.5, 0.8, -0.5).normalize();
+
+// Scratch vectors reused across every vertex of every tile build — no
+// per-vertex allocation (matches the daynight.js module-scratch idiom).
+const _shadeN = new THREE.Vector3();
+
 // B10.T6 water shimmer — ONE uniforms object shared by every tile material
 // (uTime ticked once per frame from the main loop via tickWater; uWaterOn is
 // the runtime gate — toggling never recompiles, the uGlowOn precedent).
@@ -84,6 +101,50 @@ function applyWaterShader(mat) {
   return mat;
 }
 
+// B11.T13 hillshade — pure function of (lat, lon) only, via the shared
+// elevationAt() grid. Deliberately takes NO tile-local state (no mesh
+// center, no tile x/y/z) so two neighbouring tiles sampling the same
+// boundary lat/lon always compute the identical normal and shade — this is
+// what makes shading seam-continuous across tile edges by construction,
+// not by post-hoc blending.
+//
+// Central differences at ±SHADE_DELTA_DEG (one DEM cell) in lat and lon;
+// geo deltas are converted to METRES via geoToWorld — the same projection
+// every other distance in this module already goes through — so the
+// gradient (dz/dx, dz/dz) is in metres-of-rise per metre-of-run, matching
+// the rest of the codebase's unit convention.
+function computeShade(lat, lon) {
+  const eE = elevationAt(lat, lon + SHADE_DELTA_DEG);
+  const eW = elevationAt(lat, lon - SHADE_DELTA_DEG);
+  const eN = elevationAt(lat + SHADE_DELTA_DEG, lon);
+  const eS = elevationAt(lat - SHADE_DELTA_DEG, lon);
+
+  // Metres-per-degree at this latitude, via the same equirectangular
+  // projection geoToWorld uses (dLon scaled by cos(lat_ref); dLat constant).
+  // Two geoToWorld() calls straddling the center give exact run distances.
+  const wE = geoToWorld(lat, lon + SHADE_DELTA_DEG);
+  const wW = geoToWorld(lat, lon - SHADE_DELTA_DEG);
+  const wN = geoToWorld(lat + SHADE_DELTA_DEG, lon);
+  const wS = geoToWorld(lat - SHADE_DELTA_DEG, lon);
+  const runX = wE.x - wW.x;   // metres spanned by the lon± pair (east-west)
+  const runZ = wS.z - wN.z;   // metres spanned by the lat± pair (north-south)
+
+  // Central-difference slope. World Z is south-positive (coords.js), so
+  // "dz/dz" here is elevation-change per metre of world-Z run: (S - N)/runZ
+  // matches the (east - west)/runX convention (later sample minus earlier
+  // sample, divided by the run in the same direction the world axis grows).
+  const dzdx = (eE - eW) / runX;
+  const dzdz = (eS - eN) / runZ;
+
+  // Heightfield normal: negative gradient components, unit-length. THREE's
+  // Vector3.normalize() no-ops safely on the eC==flat, dzdx=dzdz=0 case
+  // (returns (0,1,0) exactly since x=0,z=0 already normalized).
+  _shadeN.set(-dzdx, 1, -dzdz).normalize();
+
+  const raw = 0.75 + 0.4 * _shadeN.dot(SUN_NW);
+  return raw < 0.75 ? 0.75 : raw > 1.15 ? 1.15 : raw;
+}
+
 export class DynamicGround {
   /**
    * @param {object} opts
@@ -110,6 +171,11 @@ export class DynamicGround {
     // persistence before any tiles build. OFF ⇒ 1×1 flat tiles,
     // byte-identical to pre-B10 geometry.
     this.terrainEnabled = true;
+    // B11.T13: kuson.grounddetail.v1.terrainShade — main.js sets this from
+    // persistence before any tiles build. OFF ⇒ HARD PARITY with pre-T13:
+    // no vertex-color attribute allocated, no extra elevationAt() calls, no
+    // vertexColors flag on the material (see _buildMesh's segs>1 branch).
+    this.terrainShadeEnabled = true;
     this._lastWorld = null;     // last updateAround() position, for rebuilds
   }
 
@@ -183,6 +249,10 @@ export class DynamicGround {
       : new THREE.PlaneGeometry(width, height);
     geo.rotateX(-Math.PI / 2);
 
+    // B11.T13: HARD PARITY — this flag is read once per tile build; when
+    // false, the shade branch below never runs (no attribute allocation, no
+    // extra elevationAt() calls beyond the existing displacement sample).
+    const shadeOn = segs > 1 && this.terrainShadeEnabled;
     if (segs > 1) {
       // CPU displacement: vertex local + mesh centre → geo → elevation.
       // Before loadTerrain resolves elevationAt returns 0 (flat tiles);
@@ -190,13 +260,23 @@ export class DynamicGround {
       const pos = geo.attributes.position;
       const n = pos.count;
       const sea = new Float32Array(n);
+      // B11.T13: r=g=b=shade per vertex, gated by shadeOn (see computeShade —
+      // pure fn of lat/lon via the shared elevation grid, so seam-continuous
+      // across tile boundaries by construction).
+      const shade = shadeOn ? new Float32Array(n * 3) : null;
       for (let i = 0; i < n; i++) {
         const g = worldToGeo(pos.getX(i) + cx, pos.getZ(i) + cz);
         const elev = elevationAt(g.lat, g.lon);
         pos.setY(i, elev);
         sea[i] = elev <= 0.5 ? 1.0 : 0.0;   // consumed by the water shader (B10.T6)
+        if (shadeOn) {
+          const s = computeShade(g.lat, g.lon);
+          const j = i * 3;
+          shade[j] = s; shade[j + 1] = s; shade[j + 2] = s;
+        }
       }
       geo.setAttribute("aSea", new THREE.BufferAttribute(sea, 1));
+      if (shadeOn) geo.setAttribute("color", new THREE.BufferAttribute(shade, 3));
       geo.computeVertexNormals();
     }
     const mat = new THREE.MeshBasicMaterial({
@@ -208,6 +288,14 @@ export class DynamicGround {
       polygonOffset: isDetail,
       polygonOffsetFactor: isDetail ? -2 : 0,
       polygonOffsetUnits: isDetail ? -2 : 0,
+      // B11.T13: only tiles that actually carry a "color" vertex attribute
+      // opt into vertexColors — off-tiles (shadeOn false) get no flag, so
+      // their material is bit-for-bit the pre-T13 MeshBasicMaterial config.
+      // No material pool exists in this file (each tile already owns a
+      // dedicated material instance — see _buildMesh), so shaded/unshaded
+      // tiles trivially never share a material; this flag is the only
+      // material-side change the toggle makes.
+      ...(shadeOn ? { vertexColors: true } : {}),
     });
     // B10.T6: sea-shimmer inject (gated by uWaterOn + the aSea attribute;
     // tiles without aSea — terrain OFF — read attribute default 0 = land).
@@ -260,6 +348,16 @@ export class DynamicGround {
     on = !!on;
     if (on === this.terrainEnabled) return;
     this.terrainEnabled = on;
+    this._rebuildTiles();
+  }
+
+  /** B11.T13: hillshade toggle (kuson.grounddetail.v1.terrainShade). Same
+   *  shape as setTerrainEnabled — a rebuild is required because the shade
+   *  values are baked into a vertex-color BufferAttribute at build time. */
+  setTerrainShadeEnabled(on) {
+    on = !!on;
+    if (on === this.terrainShadeEnabled) return;
+    this.terrainShadeEnabled = on;
     this._rebuildTiles();
   }
 

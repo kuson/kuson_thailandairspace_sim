@@ -581,6 +581,7 @@ export class UI {
         </select>
       </label>
       <label class="opt"><input type="checkbox" id="optTerrain" /> Terrain relief</label>
+      <label class="opt"><input type="checkbox" id="optTerrainShade" /> Terrain shading</label>
       <label class="opt"><input type="checkbox" id="optCityLights" /> City lights</label>
       <label class="opt"><input type="checkbox" id="optWater" /> Water shimmer</label>
       <label class="opt"><input type="checkbox" id="optAirports" /> Airport markers</label>
@@ -656,6 +657,7 @@ export class UI {
     // onGroundLayerToggle.
     const gfxChk = el.querySelector("#optEnhancedGfx");
     const tnChk = el.querySelector("#optTerrain");
+    const tsChk = el.querySelector("#optTerrainShade");
     const clChk = el.querySelector("#optCityLights");
     const wtChk = el.querySelector("#optWater");
     if (apChk) apChk.checked = gd.airports;
@@ -666,6 +668,7 @@ export class UI {
     if (dcChk) dcChk.checked = gd.declutter;
     if (gfxChk) gfxChk.checked = getGfxSettings().composer;
     if (tnChk) tnChk.checked = gd.terrain;
+    if (tsChk) tsChk.checked = gd.terrainShade;
     if (clChk) clChk.checked = gd.cityLights;
     if (wtChk) wtChk.checked = gd.water;
     apChk?.addEventListener("change", () => this.onGroundLayerToggle?.("airports", apChk.checked));
@@ -676,6 +679,7 @@ export class UI {
     dcChk?.addEventListener("change", () => this.onGroundLayerToggle?.("declutter", dcChk.checked));
     gfxChk?.addEventListener("change", () => this.onGfxToggle?.(gfxChk.checked));
     tnChk?.addEventListener("change", () => this.onGroundLayerToggle?.("terrain", tnChk.checked));
+    tsChk?.addEventListener("change", () => this.onGroundLayerToggle?.("terrainShade", tsChk.checked));
     clChk?.addEventListener("change", () => this.onGroundLayerToggle?.("cityLights", clChk.checked));
     wtChk?.addEventListener("change", () => this.onGroundLayerToggle?.("water", wtChk.checked));
 
