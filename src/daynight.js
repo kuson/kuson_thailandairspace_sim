@@ -2,7 +2,10 @@
 // Drives fog colour, hemi/sun light, tile tint, and sky-dome uniforms.
 //
 // API: installDayNight({ scene, skyRig, hemi, sun, groundTiles })
-//   → { update(dt), setMode(m), getNightFactor() }
+//   → { update(dt), setMode(m), getMode(), getNightFactor(), onModeChange }
+//   onModeChange is a settable property (fn(mode)) — fires at the end of
+//   setMode(), for every caller, so a UI control can stay in sync without
+//   owning a second copy of "current mode" (B11.T14 bug b fix).
 //
 // Modes: "day" | "dusk" | "night" | "auto"
 //   auto = Asia/Bangkok wall-clock hours/24.
@@ -441,16 +444,38 @@ export function installDayNight({ scene, skyRig, hemi, sun, groundTiles }) {
     _nightFactor = 0;
   }
 
+  // B11.T14 fix (bug b, part 1): setMode() previously had no way to notify
+  // callers of a mode change, so the WORLD-panel dropdown (ui.js #optTimeOfDay)
+  // only reflected the engine mode when the CHANGE CAME FROM THE DROPDOWN
+  // ITSELF. Any other caller (debug console, game trigger, future code) left
+  // the select showing the old value. onModeChange is the single hook every
+  // mode-change path (including the dropdown's own handler) now funnels
+  // through, so ui.js can register once and stay correct regardless of
+  // call site — the dropdown becomes a pure reflection of engine state
+  // instead of a second, independently-mutated copy of it.
+  let _onModeChange = null;
+
   function setMode(m) {
     _mode   = m;
     _t      = _modeToT(m);
     _applied = false;  // force re-apply
     setDayNightSettings({ mode: m });
+    _onModeChange?.(m);
+  }
+
+  function getMode() {
+    return _mode;
   }
 
   function getNightFactor() {
     return _nightFactor;
   }
 
-  return { update, setMode, getNightFactor };
+  return {
+    update,
+    setMode,
+    getMode,
+    getNightFactor,
+    set onModeChange(fn) { _onModeChange = fn; },
+  };
 }

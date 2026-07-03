@@ -143,6 +143,18 @@ scene.add(ground.group);
 // B10.T4: day/dusk/night cycle controller — created immediately (right after
 // the ground it tints) so the initial persisted mode applies on frame one.
 const daynight = installDayNight({ scene, skyRig, hemi, sun, groundTiles: ground });
+// B11.T14 fix (bug b, part 2): scene.fog / hemi / sun above are constructed
+// with hardcoded DAY colours (0xa6cdee / 0xc6d8f0,0x394a3a / 0xfff2d8 — byte-
+// for-byte daynight.js's own FOG_DAY/HEMI_*_DAY/SUN_COL_DAY), and update()
+// was previously only ever invoked from inside loop() (below), which starts
+// on the FIRST requestAnimationFrame AFTER bootstrap()'s async chain (load
+// airspaces → terrain → tour data → build UI → locate start position) —
+// several seconds on a slow load. The persisted mode reaches the DOM select
+// synchronously (ui.js reads it while building the panel), so during that
+// gap the dropdown could already read "Night" while the scene still shows
+// its construction-time DAY defaults. Calling update() once, synchronously,
+// right here makes the comment above literally true instead of aspirational.
+daynight.update();
 
 // Thai city beacons (Phase 2 P2.T5). Top 18 by prominence × proximity so a
 // satellite-style view doesn't read as a wall of labels.
@@ -543,6 +555,12 @@ async function bootstrap() {
   ui.onTimeOfDayChange = (m) => {
     daynight.setMode(m);
   };
+  // B11.T14 fix (bug b, part 1): mirror engine mode → dropdown for EVERY
+  // setMode() caller, not just the dropdown's own change handler. Safe from
+  // feedback loops — ui.setTimeOfDay() does a plain `select.value = m`
+  // assignment, which never fires a native "change" event, so this can't
+  // re-trigger onTimeOfDayChange → setMode → onModeChange in a loop.
+  daynight.onModeChange = (m) => { ui.setTimeOfDay?.(m); };
 
   ui.onMapPrimaryChange = (on) => {
     mapPrimary = on;

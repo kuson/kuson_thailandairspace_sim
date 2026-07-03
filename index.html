@@ -397,8 +397,19 @@
     #historyList li .h-label { overflow: hidden; text-overflow: ellipsis; }
     #currentInside { margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--panel-border); font-size: 11px; line-height: 1.5; }
     #currentInside .ok { color: var(--ok); }
+    /* B11.T14 fix (bug e): raised 52px→72px. #controlsHint (T4: bottom:48px)
+       and #placeLabel are both left:50%+translateX(-50%) — same horizontal
+       axis. Collapsed, #controlsHint's own box shrinks to ~0 width (its body
+       is display:none and #controlsToggle is position:absolute, out of
+       flow), but the visible "?" toggle pill (top:-8px; right:-8px; 22x22)
+       is pulled up-and-out of that near-zero box and lands at y=[-8px..14px]
+       relative to the (already tiny) parent — at the 1280x800 floor that's
+       46-68px above the viewport bottom, which crossed placeLabel's own
+       52-68px band at bottom:52px. 72px clears the toggle's top edge with a
+       4px margin at that floor; T4's footer clearance (#controlsHint itself
+       at bottom:48px) is untouched. */
     #placeLabel {
-      position: fixed; left: 50%; transform: translateX(-50%); bottom: 52px;
+      position: fixed; left: 50%; transform: translateX(-50%); bottom: 72px;
       font-family: var(--mono); font-size: 12px; color: var(--text);
       text-align: center; line-height: 1.35; max-width: min(520px, calc(100vw - 40px));
       pointer-events: none;

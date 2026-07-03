@@ -232,6 +232,7 @@ export class UI {
     onThemeChange(() => { this._hudCache = {}; });
     this._adminCache = null;
     this._lastGeoKey = "";
+    this._lastAdminPos = null; // { x, z } world-metres, for teleport-jump detection
     this._flyToTargetId = null;
     this._listFilter = "";
     this._tourRunning = false;
@@ -1231,7 +1232,18 @@ export class UI {
       || document.getElementById("windRow")
       || document.getElementById("hud");
     if (!anchor) return;
-    const top = Math.round(anchor.getBoundingClientRect().bottom + 6);
+    let top = Math.round(anchor.getBoundingClientRect().bottom + 6);
+    // B11.T14 fix (bug d): both #alertBanner and the game-wave TARGET strip
+    // (#gameObjective, built by game/scramble.js) are top-center, fixed
+    // position — during a scramble wave they can stack/overlap. Neither
+    // element knows about the other, so read the strip's actual rendered
+    // box (not a hardcoded guess — its content/width vary) and push the
+    // alert stack below it whenever it's visible.
+    const strip = document.getElementById("gameObjective");
+    if (strip && !strip.hidden) {
+      const stripBottom = Math.round(strip.getBoundingClientRect().bottom + 6);
+      if (stripBottom > top) top = stripBottom;
+    }
     banner.style.top = `${top}px`;
     const chips = this.alertChips;
     if (chips && !chips.hidden) {
@@ -2350,7 +2362,26 @@ export class UI {
     this._updateRadarLabel();
   }
 
-  _updateAdmin(geo) {
+  _updateAdmin(geo, worldX, worldZ) {
+    // B11.T14 fix (bug a): a teleport/fly-to/tour/warp lands far outside the
+    // ~100 m grid the geo key is quantised to, but ALSO the label must not
+    // keep showing the departure point's stale text while the async geocode
+    // for the new key is in flight (lookupAdmin() is throttled ~1 req/s —
+    // see geocode.js MIN_INTERVAL_MS). Frame-to-frame world-position delta
+    // is the common choke point for every jump source (flyTo completion,
+    // quick-warp chip, tour stop jump, game warp, direct position set) since
+    // they all just move this.drone.position — no need to hook each call site.
+    if (this._lastAdminPos) {
+      const dx = worldX - this._lastAdminPos.x;
+      const dz = worldZ - this._lastAdminPos.z;
+      if (Math.hypot(dx, dz) > 5000) {
+        this._lastGeoKey = ""; // force re-resolve below even if new key round-trips to same 3-decimal bucket
+        this._adminCache = null;
+        this._hudCache.admin = null; // drop stale text now — don't wait for the async callback
+      }
+    }
+    this._lastAdminPos = { x: worldX, z: worldZ };
+
     const key = `${geo.lat.toFixed(3)},${geo.lon.toFixed(3)}`;
     if (key === this._lastGeoKey) return;
     this._lastGeoKey = key;
@@ -2376,7 +2407,7 @@ export class UI {
     const compass = bearingToCompass(headingDeg);
     const hov = this.drone.hover ? " · HOVER" : "";
 
-    this._updateAdmin(geo);
+    this._updateAdmin(geo, p.x, p.z);
 
     const latlonText = formatLatLon(geo.lat, geo.lon);
     if (this._hudCache.latlon !== latlonText) {
