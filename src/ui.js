@@ -254,6 +254,7 @@ export class UI {
     this._minimapBake = null;
     this._bakeCenter = { x: 0, z: 0 };
     this._bakeSig = null;
+    this._heatLayer2d = null;
 
     // U-toggle: 'metric' shows m/km/h; 'aero' shows ft/kt/NM
     this.unitSystem = "metric";
@@ -2887,6 +2888,7 @@ export class UI {
    * @param {(()=>{ x:number, z:number }[])|null} fn  Called each radar draw; returns array of world positions, or null/empty.
    */
   setGameBlipProvider(fn) { this._gameBlipProvider = fn ?? null; }
+  setHeatLayer2d(layer) { this._heatLayer2d = layer; }
 
   /** B9.T5: draw game-entity blips (red triangles) from the registered provider. */
   _drawGameBlips(ctx, cx, cy, wx, wz, SCALE) {
@@ -3004,6 +3006,8 @@ export class UI {
       ctx.drawImage(b.canvas, 0, 0);
       ctx.restore();
     }
+
+    this._heatLayer2d?.draw(ctx, { cx, cy, wx, wz, scale: SCALE });
 
     // Betterment-4.1: live-flight blips (toggle in radar options).
     this._drawLiveFlightBlips(ctx, cx, cy, wx, wz, SCALE);
