@@ -24,6 +24,7 @@ export function createCollector({
   let status = { state: "off", detail: "" };
   let wakeLock = null;
   let removeVisibilityListener = null;
+  let visibilityHandler = null;
 
   function setStatus(next) {
     status = next;
@@ -44,31 +45,31 @@ export function createCollector({
     }
   }
 
-  function shouldRecord(settings) {
-    if (!settings.recordingOn) {
-      setStatus({ state: "off", detail: "" });
-      return false;
-    }
-    if (settings.writer !== "browser") {
+  /** Re-evaluate gates; release wake lock when not actively recording. */
+  async function refreshStatus() {
+    const settings = getSettings();
+    if (!settings.recordingOn || settings.writer !== "browser") {
+      releaseWakeLock();
       setStatus({ state: "off", detail: "" });
       return false;
     }
     if (!isLiveFlightsEnabled()) {
+      releaseWakeLock();
       setStatus({ state: "blocked", detail: "Enable Live Flights to record" });
       return false;
     }
     if (isDocumentHidden()) {
+      releaseWakeLock();
       setStatus({ state: "paused", detail: "paused (tab asleep)" });
       return false;
     }
+    setStatus({ state: "recording", detail: "" });
+    if (!wakeLock) await acquireWakeLock();
     return true;
   }
 
   async function splatPositions(list) {
-    const settings = getSettings();
-    if (!shouldRecord(settings)) return;
-
-    setStatus({ state: "recording", detail: "" });
+    if (!(await refreshStatus())) return;
 
     const bId = bucketId(now());
     const records = [];
@@ -89,17 +90,8 @@ export function createCollector({
     if (records.length) await store.incrementMany(records);
   }
 
-  function onVisibilityChange() {
-    const settings = getSettings();
-    if (!settings.recordingOn || settings.writer !== "browser") return;
-    if (isDocumentHidden()) {
-      setStatus({ state: "paused", detail: "paused (tab asleep)" });
-    } else if (isLiveFlightsEnabled()) {
-      setStatus({ state: "recording", detail: "" });
-    }
-  }
-
-  removeVisibilityListener = addVisibilityListener(onVisibilityChange);
+  visibilityHandler = () => { void refreshStatus(); };
+  removeVisibilityListener = addVisibilityListener(visibilityHandler);
 
   return {
     async handlePositions(list) {
@@ -112,12 +104,7 @@ export function createCollector({
 
     async setRecording(on) {
       if (on) {
-        const settings = getSettings();
-        if (settings.recordingOn && settings.writer === "browser") {
-          await acquireWakeLock();
-        }
-        if (!shouldRecord(settings)) return;
-        setStatus({ state: "recording", detail: "" });
+        await refreshStatus();
       } else {
         releaseWakeLock();
         setStatus({ state: "off", detail: "" });

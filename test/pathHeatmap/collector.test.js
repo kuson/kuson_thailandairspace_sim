@@ -54,4 +54,45 @@ describe("collector", () => {
     const cells = await store.sumRange({ fromBucket: 0, toBucket: 1e12 });
     assert.equal(cells.size, 0);
   });
+
+  it("visibility resume re-evaluates to blocked when live off", async () => {
+    let hidden = true;
+    let liveOn = true;
+    const listeners = new Set();
+    const c = createCollector({
+      store: createMemoryStore(),
+      getSettings: () => ({ recordingOn: true, writer: "browser" }),
+      isLiveFlightsEnabled: () => liveOn,
+      now: () => 1_700_000_000_000,
+      requestWakeLock: async () => null,
+      isDocumentHidden: () => hidden,
+      addVisibilityListener: (fn) => {
+        listeners.add(fn);
+        return () => listeners.delete(fn);
+      },
+    });
+    await c.handlePositions([flight()]);
+    assert.equal(c.getStatus().state, "paused");
+    liveOn = false;
+    hidden = false;
+    for (const fn of listeners) fn();
+    assert.equal(c.getStatus().state, "blocked");
+    assert.equal(c.getStatus().detail, "Enable Live Flights to record");
+  });
+
+  it("setRecording does not acquire wake lock when blocked", async () => {
+    let wakeLockCalls = 0;
+    const c = createCollector({
+      store: createMemoryStore(),
+      getSettings: () => ({ recordingOn: true, writer: "browser" }),
+      isLiveFlightsEnabled: () => false,
+      requestWakeLock: async () => {
+        wakeLockCalls++;
+        return { release: async () => {} };
+      },
+    });
+    await c.setRecording(true);
+    assert.equal(wakeLockCalls, 0);
+    assert.equal(c.getStatus().state, "blocked");
+  });
 });
