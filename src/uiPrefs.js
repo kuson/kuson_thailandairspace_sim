@@ -39,6 +39,7 @@ export const UI_ELEMENTS = [
   { id: "flightHistory",      label: "Flight history",    group: "INFO",   sel: "#historyBlock",             default: true },
   { id: "identifyCard",       label: "Identify card",     group: "INFO",   sel: "#identifyPanel",            default: true },
   { id: "liveFlightsSection", label: "Live flights",      group: "INFO",   sel: "#liveFlightsSection",       default: true },
+  { id: "trafficHeat",        label: "Traffic heat",      group: "INFO",   sel: "#trafficHeatBlock",         default: true },
   { id: "radioLog",           label: "Radio log",         group: "INFO",   sel: "#radioLog",                 default: true },
 
   { id: "alertBanner",        label: "Alert banner",      group: "ALERTS", sel: "#alertBanner",              default: true },

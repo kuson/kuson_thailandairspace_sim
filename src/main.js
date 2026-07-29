@@ -21,6 +21,7 @@ import * as declutter from "./declutter.js";
 import { getGroundDetailSettings, setGroundDetailSettings } from "./groundSettings.js";
 import { LiveFlightsLayer } from "./liveFlights.js";
 import { getLiveFlightsSettings, setLiveFlightsSettings } from "./flightSources.js";
+import { createPathHeatmapModule, setPathHeatmapSettings } from "./pathHeatmap/index.js";
 import { FollowController } from "./followController.js";
 import { RigidBody, QuadrotorModel, FixedWingModel } from "./physics.js";
 import { SimMode, SimModeMachine } from "./simMode.js";
@@ -574,7 +575,6 @@ async function bootstrap() {
   liveFlights.setIntervalMs(lfSettings.intervalMs);
   if (lfSettings.proxyBase) liveFlights.setProxyBase(lfSettings.proxyBase);
   liveFlights.onStatusChange = (s) => ui.setLiveFlightsStatus(s);
-  ui.onLiveFlightsToggle = (on) => { setLiveFlightsSettings({ enabled: on }); liveFlights.setEnabled(on); };
   ui.onFlightSourceChange = (id) => { setLiveFlightsSettings({ source: id }); liveFlights.setSource(id); };
   ui.onFlightIntervalChange = (ms) => { setLiveFlightsSettings({ intervalMs: ms }); liveFlights.setIntervalMs(ms); };
   ui.onSelectFlight = (icao) => { liveFlights.selectedId = icao || null; };
@@ -583,6 +583,54 @@ async function bootstrap() {
     if (fl) { liveFlights.selectedId = icao; follow.setTarget(fl); }
   };
   follow.onChange = (fl) => ui.setFollowing?.(fl ? fl.id : null);
+
+  const pathHeatmap = await createPathHeatmapModule({
+    scene,
+    liveFlights,
+    ui,
+    getLiveEnabled: () => liveFlights.isEnabled(),
+  });
+  ui.onLiveFlightsToggle = (on) => {
+    setLiveFlightsSettings({ enabled: on });
+    liveFlights.setEnabled(on);
+    void pathHeatmap.onLiveFlightsChange();
+  };
+  ui.onHeatRecordToggle = (on) => {
+    setPathHeatmapSettings({ recordingOn: on });
+    void pathHeatmap.applySettings();
+  };
+  ui.onHeatWriterChange = (writer) => {
+    setPathHeatmapSettings({ writer });
+    void pathHeatmap.applySettings();
+  };
+  ui.onHeatWindowChange = (preset) => {
+    setPathHeatmapSettings({ viewPreset: preset });
+    void pathHeatmap.applySettings();
+  };
+  ui.onHeatCustomRangeChange = (from, to) => {
+    setPathHeatmapSettings({ viewPreset: "custom", customFrom: from, customTo: to });
+    void pathHeatmap.applySettings();
+  };
+  ui.onHeat2dToggle = (on) => {
+    setPathHeatmapSettings({ show2d: on });
+    void pathHeatmap.applySettings();
+  };
+  ui.onHeat3dToggle = (on) => {
+    setPathHeatmapSettings({ show3d: on });
+    void pathHeatmap.applySettings();
+  };
+  ui.onHeatOpacityChange = (opacity) => {
+    setPathHeatmapSettings({ opacity });
+    void pathHeatmap.applySettings();
+  };
+  ui.onHeatClear = () => {
+    if (!window.confirm("Clear all recorded traffic heat data? This cannot be undone.")) return;
+    void pathHeatmap.clearData();
+  };
+  ui.onHeatImportFiles = () => {
+    const el = document.getElementById("heatStatus");
+    if (el) el.textContent = "Traffic heat: sidecar import lands next";
+  };
   if (lfSettings.enabled) liveFlights.setEnabled(true);
 
   // Betterment-6: ground-detail layer toggles — persist + flip the scene group.

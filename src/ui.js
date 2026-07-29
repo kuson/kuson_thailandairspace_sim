@@ -9,6 +9,7 @@ import { getDayNightSettings } from "./daynight.js";
 import { elevationAt, isLoaded as terrainLoaded } from "./terrain.js";
 import { SPEED_PRESETS } from "./drone.js";
 import { getLiveFlightsSettings } from "./flightSources.js";
+import { getPathHeatmapSettings } from "./pathHeatmap/settings.js";
 import { airlineLogo, chipColor, etaFor, fmtEta, enrichRoute, aircraftPhoto, altColor } from "./flightEnrich.js";
 import { FlightMode, EasyMode } from "./modes.js";
 import { lookupAdmin } from "./geocode.js";
@@ -615,6 +616,37 @@ export class UI {
         </select>
       </label>
       <div id="liveFlightsStatus" class="opt" style="opacity:.75;font-size:11px">Live flights: off</div>
+      <div id="trafficHeatBlock">
+        <div class="opt" style="margin-top:6px;font-size:11px;opacity:.6;text-transform:uppercase;letter-spacing:.06em">Traffic heat</div>
+        <label class="opt"><input type="checkbox" id="optHeatRecord" /> Record traffic heat</label>
+        <label class="opt">Writer
+          <select id="optHeatWriter" class="opt-select">
+            <option value="browser">This browser</option>
+            <option value="sidecar">Sidecar import</option>
+          </select>
+        </label>
+        <label class="opt">Window
+          <select id="optHeatWindow" class="opt-select">
+            <option value="1h">Last 1h</option>
+            <option value="6h">Last 6h</option>
+            <option value="24h">Last 24h</option>
+            <option value="7d">Last 7d</option>
+            <option value="all">All recorded</option>
+            <option value="custom">Custom…</option>
+          </select>
+        </label>
+        <div id="heatCustomRange" class="opt" style="display:none">
+          <input type="datetime-local" id="optHeatFrom" />
+          <input type="datetime-local" id="optHeatTo" />
+        </div>
+        <label class="opt"><input type="checkbox" id="optHeat2d" /> Show on radar</label>
+        <label class="opt"><input type="checkbox" id="optHeat3d" /> Show 3D heat plane</label>
+        <label class="opt">Opacity <input type="range" id="optHeatOpacity" min="10" max="100" value="65" /></label>
+        <button type="button" id="optHeatClear" class="opt">Clear heat data</button>
+        <button type="button" id="optHeatImport" class="opt">Import sidecar shards…</button>
+        <input type="file" id="optHeatImportFile" accept=".jsonl,.json,application/json" multiple hidden />
+        <div id="heatStatus" class="opt" style="opacity:.75;font-size:11px">Traffic heat: off</div>
+      </div>
       <div class="opt" style="margin-top:6px;font-size:11px;opacity:.6;text-transform:uppercase;letter-spacing:.06em">Sound</div>
       <label class="opt">
         Volume
@@ -697,6 +729,63 @@ export class UI {
     liveChk?.addEventListener("change", () => this.onLiveFlightsToggle?.(liveChk.checked));
     liveSrc?.addEventListener("change", () => this.onFlightSourceChange?.(liveSrc.value));
     liveIvl?.addEventListener("change", () => this.onFlightIntervalChange?.(Number(liveIvl.value)));
+
+    const heat = getPathHeatmapSettings();
+    const heatRec = el.querySelector("#optHeatRecord");
+    const heatWriter = el.querySelector("#optHeatWriter");
+    const heatWindow = el.querySelector("#optHeatWindow");
+    const heatCustomRange = el.querySelector("#heatCustomRange");
+    const heatFrom = el.querySelector("#optHeatFrom");
+    const heatTo = el.querySelector("#optHeatTo");
+    const heat2d = el.querySelector("#optHeat2d");
+    const heat3d = el.querySelector("#optHeat3d");
+    const heatOpacity = el.querySelector("#optHeatOpacity");
+    const heatClear = el.querySelector("#optHeatClear");
+    const heatImport = el.querySelector("#optHeatImport");
+    const heatImportFile = el.querySelector("#optHeatImportFile");
+    const msToLocal = (ms) => {
+      if (ms == null) return "";
+      const d = new Date(ms);
+      const p = (n) => String(n).padStart(2, "0");
+      return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+    };
+    const localToMs = (s) => {
+      if (!s) return null;
+      const t = Date.parse(s);
+      return Number.isFinite(t) ? t : null;
+    };
+    if (heatRec) heatRec.checked = heat.recordingOn;
+    if (heatWriter) heatWriter.value = heat.writer;
+    if (heatWindow) heatWindow.value = heat.viewPreset;
+    if (heatCustomRange) heatCustomRange.style.display = heat.viewPreset === "custom" ? "" : "none";
+    if (heatFrom) heatFrom.value = msToLocal(heat.customFrom);
+    if (heatTo) heatTo.value = msToLocal(heat.customTo);
+    if (heat2d) heat2d.checked = heat.show2d;
+    if (heat3d) heat3d.checked = heat.show3d;
+    if (heatOpacity) heatOpacity.value = String(Math.round(heat.opacity * 100));
+    heatRec?.addEventListener("change", () => this.onHeatRecordToggle?.(heatRec.checked));
+    heatWriter?.addEventListener("change", () => this.onHeatWriterChange?.(heatWriter.value));
+    heatWindow?.addEventListener("change", () => {
+      if (heatCustomRange) heatCustomRange.style.display = heatWindow.value === "custom" ? "" : "none";
+      this.onHeatWindowChange?.(heatWindow.value);
+    });
+    const emitCustomRange = () => {
+      this.onHeatCustomRangeChange?.(localToMs(heatFrom?.value), localToMs(heatTo?.value));
+    };
+    heatFrom?.addEventListener("change", emitCustomRange);
+    heatTo?.addEventListener("change", emitCustomRange);
+    heat2d?.addEventListener("change", () => this.onHeat2dToggle?.(heat2d.checked));
+    heat3d?.addEventListener("change", () => this.onHeat3dToggle?.(heat3d.checked));
+    heatOpacity?.addEventListener("input", () => {
+      this.onHeatOpacityChange?.(Number(heatOpacity.value) / 100);
+    });
+    heatClear?.addEventListener("click", () => this.onHeatClear?.());
+    heatImport?.addEventListener("click", () => heatImportFile?.click());
+    heatImportFile?.addEventListener("change", () => {
+      const files = heatImportFile.files ? [...heatImportFile.files] : [];
+      heatImportFile.value = "";
+      if (files.length) this.onHeatImportFiles?.(files);
+    });
 
     military.addEventListener("change", () => {
       this.layer.setMilitaryVisible(military.checked);
@@ -793,6 +882,24 @@ export class UI {
       case "error": txt = "Live flights: source unreachable"; break;
       default: txt = "Live flights: off";
     }
+    el.textContent = txt;
+  }
+
+  setHeatStatus({ collector, cellsInView, settings } = {}) {
+    const el = document.getElementById("heatStatus");
+    if (!el) return;
+    let txt = "Traffic heat: ";
+    if (!settings?.recordingOn) {
+      txt += "off";
+    } else {
+      switch (collector?.state) {
+        case "recording": txt += "recording"; break;
+        case "paused": txt += "paused (tab asleep)"; break;
+        case "blocked": txt += "blocked — enable Live Flights"; break;
+        default: txt += "off";
+      }
+    }
+    if (cellsInView > 0) txt += ` · ${cellsInView} cells in view`;
     el.textContent = txt;
   }
 

@@ -297,6 +297,7 @@ export class LiveFlightsLayer {
   }
 
   getStatus() { return { ...this._status }; }
+  isEnabled() { return this._enabled; }
 
   dispose() {
     this.setEnabled(false);
