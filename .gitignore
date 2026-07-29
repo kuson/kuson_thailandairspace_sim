@@ -5,3 +5,4 @@ scripts/.terrain_cache/
 __pycache__/
 *.pyc
 *.pyo
+data/path_heatmap_shards/*.jsonl

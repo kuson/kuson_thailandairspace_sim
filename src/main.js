@@ -627,9 +627,13 @@ async function bootstrap() {
     if (!window.confirm("Clear all recorded traffic heat data? This cannot be undone.")) return;
     void pathHeatmap.clearData();
   };
-  ui.onHeatImportFiles = () => {
+  ui.onHeatImportFiles = async (files) => {
+    const texts = await Promise.all([...files].map((f) => f.text()));
+    const { imported, skipped } = await pathHeatmap.importShardTexts(texts);
     const el = document.getElementById("heatStatus");
-    if (el) el.textContent = "Traffic heat: sidecar import lands next";
+    if (el) {
+      el.textContent = `Traffic heat: imported ${imported} records, skipped ${skipped} lines`;
+    }
   };
   if (lfSettings.enabled) liveFlights.setEnabled(true);
 

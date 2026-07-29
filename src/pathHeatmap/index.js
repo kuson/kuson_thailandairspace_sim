@@ -5,6 +5,7 @@ import { BBOX, gridSize, bucketId } from "./gridMath.js";
 import { getPathHeatmapSettings, setPathHeatmapSettings } from "./settings.js";
 import { HeatLayer2D } from "./layer2d.js";
 import { HeatLayer3D } from "./layer3d.js";
+import { parseShardText, mergeRecords } from "./importShards.js";
 
 const REBAKE_INTERVAL_MS = 60_000;
 
@@ -134,6 +135,21 @@ export async function createPathHeatmapModule({ scene, liveFlights, ui, getLiveE
     await refreshBake({ force: true });
   }
 
+  async function importShardTexts(texts) {
+    let imported = 0;
+    let skipped = 0;
+    const allRecords = [];
+    for (const text of texts) {
+      const parsed = parseShardText(text);
+      skipped += parsed.skipped;
+      imported += parsed.records.length;
+      allRecords.push(...parsed.records);
+    }
+    if (allRecords.length) await mergeRecords(store, allRecords);
+    await refreshBake({ force: true });
+    return { imported, skipped };
+  }
+
   async function onLiveFlightsChange() {
     await collector.setRecording(getPathHeatmapSettings().recordingOn);
     await collector.refreshStatus();
@@ -151,6 +167,7 @@ export async function createPathHeatmapModule({ scene, liveFlights, ui, getLiveE
     applySettings,
     refreshBake: () => refreshBake({ force: true }),
     clearData,
+    importShardTexts,
     onLiveFlightsChange,
     dispose() {
       if (rebakeTimer) clearTimeout(rebakeTimer);
