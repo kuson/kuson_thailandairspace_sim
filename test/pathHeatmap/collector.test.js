@@ -97,6 +97,23 @@ describe("collector", () => {
     assert.equal(c.getStatus().state, "blocked");
   });
 
+  it("refreshStatus is public and updates paused state", async () => {
+    let hidden = true;
+    const c = createCollector({
+      store: createMemoryStore(),
+      getSettings: () => ({ recordingOn: true, writer: "browser" }),
+      isLiveFlightsEnabled: () => true,
+      requestWakeLock: async () => null,
+      isDocumentHidden: () => hidden,
+      addVisibilityListener: () => () => {},
+    });
+    await c.refreshStatus();
+    assert.equal(c.getStatus().state, "paused");
+    hidden = false;
+    await c.refreshStatus();
+    assert.equal(c.getStatus().state, "recording");
+  });
+
   it("discards in-flight wake lock when tab backgrounds during acquire", async () => {
     let hidden = false;
     let resolveAcquire;

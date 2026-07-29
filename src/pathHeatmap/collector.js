@@ -123,6 +123,8 @@ export function createCollector({
       return { ...status };
     },
 
+    refreshStatus,
+
     async setRecording(on) {
       if (on) {
         await refreshStatus();

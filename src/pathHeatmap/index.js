@@ -94,7 +94,7 @@ export async function createPathHeatmapModule({ scene, liveFlights, ui, getLiveE
     const cellCounts = await store.sumRange(win);
     cellsInView = cellCounts.size;
     const density = bakeDensity(cellCounts, { cols, rows });
-    const rgba = densityToRgba(density, settings.opacity);
+    const rgba = densityToRgba(density, 1);
     lastBake = { rgba, cols, rows };
     pushToLayers();
     updateUiStatus();
@@ -118,7 +118,9 @@ export async function createPathHeatmapModule({ scene, liveFlights, ui, getLiveE
     }).catch(() => {});
   };
 
-  const onVisibilityChange = () => updateUiStatus();
+  const onVisibilityChange = () => {
+    void collector.refreshStatus().then(() => updateUiStatus());
+  };
   document.addEventListener("visibilitychange", onVisibilityChange);
 
   async function applySettings() {
@@ -134,6 +136,7 @@ export async function createPathHeatmapModule({ scene, liveFlights, ui, getLiveE
 
   async function onLiveFlightsChange() {
     await collector.setRecording(getPathHeatmapSettings().recordingOn);
+    await collector.refreshStatus();
     updateUiStatus();
   }
 
