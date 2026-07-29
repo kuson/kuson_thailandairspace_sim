@@ -1,0 +1,13 @@
+{
+  "bbox": { "lamin": 5.5, "lomin": 97, "lamax": 20.5, "lomax": 106 },
+  "cellDeg": 0.02,
+  "bucketSec": 300,
+  "fl100Ft": 10000,
+  "fl290Ft": 29000,
+  "queryCenters": [
+    { "lat": 16.0, "lon": 100.5 },
+    { "lat": 9.0, "lon": 100.0 }
+  ],
+  "queryRadiusNm": 250,
+  "adsbxBase": "https://api.airplanes.live"
+}
