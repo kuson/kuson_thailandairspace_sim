@@ -114,6 +114,25 @@ describe("collector", () => {
     assert.equal(c.getStatus().state, "recording");
   });
 
+  it("sets error state when incrementMany fails", async () => {
+    const store = createMemoryStore();
+    store.incrementMany = async () => { throw new Error("quota exceeded"); };
+    const c = createCollector({
+      store,
+      getSettings: () => ({ recordingOn: true, writer: "browser" }),
+      isLiveFlightsEnabled: () => true,
+      now: () => 1_700_000_000_000,
+      requestWakeLock: async () => null,
+    });
+    try {
+      await c.handlePositions([flight()]);
+    } catch {
+      /* expected */
+    }
+    assert.equal(c.getStatus().state, "error");
+    assert.match(c.getStatus().detail, /quota/);
+  });
+
   it("discards in-flight wake lock when tab backgrounds during acquire", async () => {
     let hidden = false;
     let resolveAcquire;

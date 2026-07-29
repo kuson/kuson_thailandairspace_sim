@@ -1539,4 +1539,4 @@ Executed the full B5 + B6 playbook to completion (10 atomic commits) and first l
 
 **Commits (in order):** `40cb68e` T1 grid · `1492602` T2 store · `002e1fa` IDB batch · `8a64864` T3 collector · `7936517`/`de50731` collector fixes · `203bc08` T4 bake · `81c3174`/`884f317` T5 2D · `ebc3493` T6 3D · `7e92164` T7 façade · `ec2fcbb` opacity/status · `964e8d6` T8 sidecar · this docs commit (T9).
 
-**End HEAD:** `964e8d6` (pre-docs; T9 docs commit follows on same branch).
+**End HEAD:** `8bf5bff` on `betterment11-20260702` (fix wave: `31ea243` C1/C2, `8bf5bff` I1–I4).

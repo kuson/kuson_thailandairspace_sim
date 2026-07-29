@@ -148,10 +148,11 @@ function createIdbStore(db) {
     sumRange({ fromBucket, toBucket }) {
       const cells = new Map();
       return idbRunTx(db, "readonly", (os) => {
-        const req = os.getAll();
+        const index = os.index("byBucket");
+        const range = IDBKeyRange.bound(fromBucket, toBucket);
+        const req = index.getAll(range);
         req.onsuccess = () => {
           for (const rec of req.result) {
-            if (rec.bucketId < fromBucket || rec.bucketId > toBucket) continue;
             const ck = cellCoordKey(rec.cellX, rec.cellY);
             cells.set(ck, (cells.get(ck) ?? 0) + rec.count);
           }

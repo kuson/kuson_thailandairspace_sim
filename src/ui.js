@@ -885,19 +885,33 @@ export class UI {
     el.textContent = txt;
   }
 
-  setHeatStatus({ collector, cellsInView, settings } = {}) {
+  setHeatStatus({ collector, cellsInView, settings, storeError, storeBackend, importNote } = {}) {
     const el = document.getElementById("heatStatus");
     if (!el) return;
     let txt = "Traffic heat: ";
+    if (importNote) {
+      el.textContent = `${txt}${importNote}`;
+      return;
+    }
     if (!settings?.recordingOn) {
-      txt += "off";
+      if (collector?.state === "error") {
+        txt += `error — ${collector?.detail || "write failed"}`;
+      } else {
+        txt += "off";
+      }
+    } else if (settings.writer === "sidecar") {
+      txt += "sidecar mode (import shards)";
     } else {
       switch (collector?.state) {
         case "recording": txt += "recording"; break;
         case "paused": txt += "paused (tab asleep)"; break;
         case "blocked": txt += "blocked — enable Live Flights"; break;
+        case "error": txt += `error — ${collector?.detail || "write failed"}`; break;
         default: txt += "off";
       }
+    }
+    if (storeBackend === "memory" && storeError) {
+      txt += ` · storage warning (${storeError})`;
     }
     if (cellsInView > 0) txt += ` · ${cellsInView} cells in view`;
     el.textContent = txt;

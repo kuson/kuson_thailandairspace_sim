@@ -108,7 +108,16 @@ export function createCollector({
         count: 1,
       });
     }
-    if (records.length) await store.incrementMany(records);
+    if (records.length) {
+      try {
+        await store.incrementMany(records);
+      } catch (err) {
+        invalidateAcquires();
+        releaseWakeLock();
+        setStatus({ state: "error", detail: String(err?.message ?? err) });
+        throw err;
+      }
+    }
   }
 
   visibilityHandler = () => { void refreshStatus(); };
@@ -125,13 +134,15 @@ export function createCollector({
 
     refreshStatus,
 
-    async setRecording(on) {
+    async setRecording(on, { preserveError = false } = {}) {
       if (on) {
         await refreshStatus();
       } else {
         invalidateAcquires();
         releaseWakeLock();
-        setStatus({ state: "off", detail: "" });
+        if (!preserveError || status.state !== "error") {
+          setStatus({ state: "off", detail: "" });
+        }
       }
     },
 
