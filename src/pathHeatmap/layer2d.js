@@ -1,6 +1,6 @@
 import { geoToWorld as defaultGeoToWorld } from "../coords.js";
 
-/** SW/NE corners of a lat/lon bbox → world-metre axis-aligned bounds. */
+/** NW/SE corners of a lat/lon bbox → world-metre axis-aligned bounds. */
 export function worldBoundsFromBbox(bbox, geoToWorld = defaultGeoToWorld) {
   const nw = geoToWorld(bbox.lamax, bbox.lomin);
   const se = geoToWorld(bbox.lamin, bbox.lomax);
@@ -18,6 +18,7 @@ export class HeatLayer2D {
     this._opacity = Math.max(0, Math.min(1, n));
   }
 
+  // Bake density row0=south; layer2d stores north-up (canvas row0 = lamax).
   setImageData(imageData, meta) {
     if (!imageData || !meta) {
       this.clear();
@@ -29,7 +30,13 @@ export class HeatLayer2D {
     }
     this._canvas.width = cols;
     this._canvas.height = rows;
-    this._canvas.getContext("2d").putImageData(imageData, 0, 0);
+    const ctx = this._canvas.getContext("2d");
+    ctx.clearRect(0, 0, cols, rows);
+    ctx.save();
+    ctx.translate(0, rows);
+    ctx.scale(1, -1);
+    ctx.putImageData(imageData, 0, 0);
+    ctx.restore();
     this._bounds = worldBoundsFromBbox({ lamin, lomin, lamax, lomax });
   }
 
