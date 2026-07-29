@@ -755,6 +755,7 @@ export class UI {
       return Number.isFinite(t) ? t : null;
     };
     if (heatRec) heatRec.checked = heat.recordingOn;
+    this._heatRecChk = heatRec || null;
     if (heatWriter) heatWriter.value = heat.writer;
     if (heatWindow) heatWindow.value = heat.viewPreset;
     if (heatCustomRange) heatCustomRange.style.display = heat.viewPreset === "custom" ? "" : "none";
@@ -888,6 +889,9 @@ export class UI {
   setHeatStatus({ collector, cellsInView, settings, storeError, storeBackend, importNote } = {}) {
     const el = document.getElementById("heatStatus");
     if (!el) return;
+    if (this._heatRecChk && settings && typeof settings.recordingOn === "boolean") {
+      this._heatRecChk.checked = settings.recordingOn;
+    }
     let txt = "Traffic heat: ";
     if (importNote) {
       el.textContent = `${txt}${importNote}`;

@@ -1540,3 +1540,17 @@ Executed the full B5 + B6 playbook to completion (10 atomic commits) and first l
 **Commits (in order):** `40cb68e` T1 grid · `1492602` T2 store · `002e1fa` IDB batch · `8a64864` T3 collector · `7936517`/`de50731` collector fixes · `203bc08` T4 bake · `81c3174`/`884f317` T5 2D · `ebc3493` T6 3D · `7e92164` T7 façade · `ec2fcbb` opacity/status · `964e8d6` T8 sidecar · this docs commit (T9).
 
 **End HEAD:** `3adbb09` on `betterment11-20260702` (fix wave: `31ea243` C1/C2, `7803701` I1–I4).
+
+---
+
+## 2026-07-29 (j) — Traffic heat reload/error follow-up · STATUS: FIXED
+
+**Session:** Investigated the reload/failure report after local merge to `main`. Root cause was a **UI state desync** in the Traffic heat error path: when recording was turned off after a write/import failure, the module persisted `recordingOn: false` and updated the status line, but the `Record traffic heat` checkbox could remain visually checked.
+
+**Fix landed:** cache the `#optHeatRecord` control in `ui.js` and sync it from `setHeatStatus()` whenever `settings.recordingOn` changes, so the panel reflects the real module state after errors/recovery.
+
+**Verification:** `node --check src/ui.js` · `node --check src/main.js` · `node --check src/pathHeatmap/index.js` · `node --test test/pathHeatmap/*.test.js` → **31/31 PASS**.
+
+**Manual re-check:** with an error path forced, the status line and the checkbox should now agree (`error` + unchecked recorder, or `recording` + checked recorder).
+
+**End HEAD:** this follow-up commit on `main`.
