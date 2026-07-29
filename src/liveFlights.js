@@ -256,6 +256,7 @@ export class LiveFlightsLayer {
     this._inFlight = null;
     this._status = { count: 0, lastUpdated: 0, state: "idle", sourceId: this._sourceId };
     this.onStatusChange = null;
+    this.onPositions = null;
   }
 
   // ---------------- public controls ----------------
@@ -371,6 +372,7 @@ export class LiveFlightsLayer {
       if (seen.has(f.id)) continue;
       if (++f.missedPolls >= DESPAWN_POLLS) f.dead = true;
     }
+    this.onPositions?.(list);
   }
 
   _worldVel(nf) {
