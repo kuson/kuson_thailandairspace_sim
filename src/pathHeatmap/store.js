@@ -8,6 +8,27 @@ function cellCoordKey(cellX, cellY) {
   return `${cellX}:${cellY}`;
 }
 
+/** Merge batch rows sharing a recordKey — IDB incrementMany uses this before get→put. */
+export function aggregateIncrementRecords(records) {
+  const merged = new Map();
+  for (const rec of records) {
+    const key = recordKey(rec.bucketId, rec.cellX, rec.cellY, rec.altBin);
+    const existing = merged.get(key);
+    if (existing) {
+      existing.count += rec.count;
+    } else {
+      merged.set(key, {
+        bucketId: rec.bucketId,
+        cellX: rec.cellX,
+        cellY: rec.cellY,
+        altBin: rec.altBin,
+        count: rec.count,
+      });
+    }
+  }
+  return [...merged.values()];
+}
+
 function createStoreApi(backend, ops) {
   return {
     backend,
@@ -104,8 +125,9 @@ function idbRunTx(db, mode, fn) {
 function createIdbStore(db) {
   return createStoreApi("idb", {
     incrementMany(records) {
+      const merged = aggregateIncrementRecords(records);
       return idbRunTx(db, "readwrite", (os) => {
-        for (const rec of records) {
+        for (const rec of merged) {
           const key = recordKey(rec.bucketId, rec.cellX, rec.cellY, rec.altBin);
           const getReq = os.get(key);
           getReq.onsuccess = () => {

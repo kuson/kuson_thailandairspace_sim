@@ -1,7 +1,25 @@
 // test/pathHeatmap/store.test.js
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { createMemoryStore } from "../../src/pathHeatmap/store.js";
+import {
+  aggregateIncrementRecords,
+  createMemoryStore,
+} from "../../src/pathHeatmap/store.js";
+
+describe("aggregateIncrementRecords", () => {
+  it("merges duplicate recordKey rows before IDB get→put", () => {
+    const merged = aggregateIncrementRecords([
+      { bucketId: 1, cellX: 10, cellY: 20, altBin: 2, count: 1 },
+      { bucketId: 1, cellX: 10, cellY: 20, altBin: 2, count: 1 },
+      { bucketId: 5, cellX: 10, cellY: 20, altBin: 2, count: 3 },
+    ]);
+    assert.equal(merged.length, 2);
+    const bucket1 = merged.find((r) => r.bucketId === 1);
+    const bucket5 = merged.find((r) => r.bucketId === 5);
+    assert.equal(bucket1.count, 2);
+    assert.equal(bucket5.count, 3);
+  });
+});
 
 describe("memory heat store", () => {
   it("increments and sums range", async () => {
