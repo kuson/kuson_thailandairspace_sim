@@ -21,7 +21,7 @@ import * as declutter from "./declutter.js";
 import { getGroundDetailSettings, setGroundDetailSettings } from "./groundSettings.js";
 import { LiveFlightsLayer } from "./liveFlights.js";
 import { getLiveFlightsSettings, setLiveFlightsSettings } from "./flightSources.js";
-import { createPathHeatmapModule, setPathHeatmapSettings } from "./pathHeatmap/index.js";
+import { createPathHeatmapModule, getPathHeatmapSettings, setPathHeatmapSettings } from "./pathHeatmap/index.js";
 import { FollowController } from "./followController.js";
 import { RigidBody, QuadrotorModel, FixedWingModel } from "./physics.js";
 import { SimMode, SimModeMachine } from "./simMode.js";
@@ -613,26 +613,39 @@ async function bootstrap() {
   };
   ui.onHeat2dToggle = (on) => {
     setPathHeatmapSettings({ show2d: on });
-    void pathHeatmap.applySettings();
+    pathHeatmap.applyDisplayOnly();
   };
   ui.onHeat3dToggle = (on) => {
     setPathHeatmapSettings({ show3d: on });
-    void pathHeatmap.applySettings();
+    pathHeatmap.applyDisplayOnly();
   };
   ui.onHeatOpacityChange = (opacity) => {
     setPathHeatmapSettings({ opacity });
-    void pathHeatmap.applySettings();
+    pathHeatmap.applyDisplayOnly();
   };
   ui.onHeatClear = () => {
     if (!window.confirm("Clear all recorded traffic heat data? This cannot be undone.")) return;
     void pathHeatmap.clearData();
   };
   ui.onHeatImportFiles = async (files) => {
-    const texts = await Promise.all([...files].map((f) => f.text()));
-    const { imported, skipped } = await pathHeatmap.importShardTexts(texts);
-    const el = document.getElementById("heatStatus");
-    if (el) {
-      el.textContent = `Traffic heat: imported ${imported} records, skipped ${skipped} lines`;
+    try {
+      const texts = await Promise.all([...files].map((f) => f.text()));
+      const { imported, skipped } = await pathHeatmap.importShardTexts(texts);
+      const st = pathHeatmap.getStatus();
+      ui.setHeatStatus?.({
+        collector: st.collector,
+        cellsInView: st.cellsInView,
+        settings: getPathHeatmapSettings(),
+        importNote: `imported ${imported} records, skipped ${skipped} lines`,
+      });
+    } catch (err) {
+      const st = pathHeatmap.getStatus();
+      ui.setHeatStatus?.({
+        collector: st.collector,
+        cellsInView: st.cellsInView,
+        settings: getPathHeatmapSettings(),
+        importNote: `import failed — ${String(err?.message ?? err)}`,
+      });
     }
   };
   if (lfSettings.enabled) liveFlights.setEnabled(true);

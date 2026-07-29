@@ -8,6 +8,7 @@ import { HeatLayer3D } from "./layer3d.js";
 import { parseShardText, mergeRecords } from "./importShards.js";
 
 const REBAKE_INTERVAL_MS = 60_000;
+const PRUNE_INTERVAL_MS = 3_600_000;
 
 export async function createPathHeatmapModule({ scene, liveFlights, ui, getLiveEnabled }) {
   const store = await openHeatStore();
@@ -20,6 +21,7 @@ export async function createPathHeatmapModule({ scene, liveFlights, ui, getLiveE
   let cellsInView = 0;
   let rebakeTimer = null;
   let lastRebakeAt = 0;
+  let lastPruneAt = 0;
   let lastWindowKey = "";
 
   const collector = createCollector({
@@ -28,11 +30,14 @@ export async function createPathHeatmapModule({ scene, liveFlights, ui, getLiveE
     isLiveFlightsEnabled: getLiveEnabled,
   });
 
-  function updateUiStatus() {
+  function updateUiStatus(extra = {}) {
     ui.setHeatStatus?.({
       collector: collector.getStatus(),
       cellsInView,
       settings: getPathHeatmapSettings(),
+      storeError: store.error,
+      storeBackend: store.backend,
+      ...extra,
     });
   }
 
@@ -71,6 +76,15 @@ export async function createPathHeatmapModule({ scene, liveFlights, ui, getLiveE
     }
   }
 
+  async function maybePrune(now = Date.now()) {
+    const settings = getPathHeatmapSettings();
+    if (settings.retentionDays <= 0) return;
+    if (now - lastPruneAt < PRUNE_INTERVAL_MS) return;
+    lastPruneAt = now;
+    const cutoff = bucketId(now - settings.retentionDays * 864e5);
+    await store.pruneOlderThan(cutoff);
+  }
+
   async function refreshBake({ force = false } = {}) {
     const settings = getPathHeatmapSettings();
     const windowKey = JSON.stringify([settings.viewPreset, settings.customFrom, settings.customTo]);
@@ -81,6 +95,7 @@ export async function createPathHeatmapModule({ scene, liveFlights, ui, getLiveE
     }
     lastWindowKey = windowKey;
     lastRebakeAt = now;
+    await maybePrune(now);
 
     const win = resolveWindow(settings, now);
     if (!win) {
@@ -116,13 +131,22 @@ export async function createPathHeatmapModule({ scene, liveFlights, ui, getLiveE
     void collector.handlePositions(list).then(() => {
       if (getPathHeatmapSettings().recordingOn) scheduleThrottledRebake();
       updateUiStatus();
-    }).catch(() => {});
+    }).catch(async () => {
+      setPathHeatmapSettings({ recordingOn: false });
+      await collector.setRecording(false, { preserveError: true });
+      updateUiStatus();
+    });
   };
 
   const onVisibilityChange = () => {
     void collector.refreshStatus().then(() => updateUiStatus());
   };
   document.addEventListener("visibilitychange", onVisibilityChange);
+
+  function applyDisplayOnly() {
+    pushToLayers();
+    updateUiStatus();
+  }
 
   async function applySettings() {
     const settings = getPathHeatmapSettings();
@@ -138,14 +162,12 @@ export async function createPathHeatmapModule({ scene, liveFlights, ui, getLiveE
   async function importShardTexts(texts) {
     let imported = 0;
     let skipped = 0;
-    const allRecords = [];
     for (const text of texts) {
       const parsed = parseShardText(text);
       skipped += parsed.skipped;
       imported += parsed.records.length;
-      allRecords.push(...parsed.records);
+      if (parsed.records.length) await mergeRecords(store, parsed.records);
     }
-    if (allRecords.length) await mergeRecords(store, allRecords);
     await refreshBake({ force: true });
     return { imported, skipped };
   }
@@ -158,6 +180,7 @@ export async function createPathHeatmapModule({ scene, liveFlights, ui, getLiveE
 
   const settings = getPathHeatmapSettings();
   if (settings.retentionDays > 0) {
+    lastPruneAt = Date.now();
     const cutoff = bucketId(Date.now() - settings.retentionDays * 864e5);
     await store.pruneOlderThan(cutoff);
   }
@@ -165,6 +188,7 @@ export async function createPathHeatmapModule({ scene, liveFlights, ui, getLiveE
 
   return {
     applySettings,
+    applyDisplayOnly,
     refreshBake: () => refreshBake({ force: true }),
     clearData,
     importShardTexts,

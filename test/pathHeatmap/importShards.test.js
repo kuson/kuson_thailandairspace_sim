@@ -56,4 +56,19 @@ describe("mergeRecords", () => {
     const cells = await store.sumRange({ fromBucket: 0, toBucket: 10 });
     assert.equal(cells.size, 0);
   });
+
+  it("mergeRecords handles large batches without array spread", async () => {
+    const store = createMemoryStore();
+    const batch = Array.from({ length: 150_000 }, (_, i) => ({
+      bucketId: 1,
+      cellX: i % 500,
+      cellY: 0,
+      altBin: 1,
+      count: 1,
+    }));
+    await mergeRecords(store, batch);
+    const cells = await store.sumRange({ fromBucket: 1, toBucket: 1 });
+    assert.equal(cells.size, 500);
+    assert.equal([...cells.values()].reduce((a, b) => a + b, 0), 150_000);
+  });
 });

@@ -18,7 +18,8 @@ export class HeatLayer2D {
     this._opacity = Math.max(0, Math.min(1, n));
   }
 
-  // Bake density row0=south; layer2d stores north-up (canvas row0 = lamax).
+  // Bake row0=south (lamin); store south-first via putImageData (ignores transforms).
+  // North-up display applies translate+scale(1,-1) at blit time in draw().
   setImageData(imageData, meta) {
     if (!imageData || !meta) {
       this.clear();
@@ -32,11 +33,7 @@ export class HeatLayer2D {
     this._canvas.height = rows;
     const ctx = this._canvas.getContext("2d");
     ctx.clearRect(0, 0, cols, rows);
-    ctx.save();
-    ctx.translate(0, rows);
-    ctx.scale(1, -1);
     ctx.putImageData(imageData, 0, 0);
-    ctx.restore();
     this._bounds = worldBoundsFromBbox({ lamin, lomin, lamax, lomax });
   }
 
@@ -54,7 +51,14 @@ export class HeatLayer2D {
     const ph = (maxZ - minZ) / scale;
     ctx.save();
     ctx.globalAlpha = this._opacity;
-    ctx.drawImage(this._canvas, px, py, pw, ph);
+    ctx.translate(px, py + ph);
+    ctx.scale(1, -1);
+    ctx.drawImage(this._canvas, 0, 0, pw, ph);
     ctx.restore();
   }
+}
+
+/** Bake row index (south-first) → north-up blit row (0 = top). */
+export function bakeRowToNorthUpRow(bakeRow, rows) {
+  return rows - 1 - bakeRow;
 }

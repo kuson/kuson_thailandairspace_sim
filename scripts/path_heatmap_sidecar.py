@@ -12,8 +12,6 @@ from datetime import date
 from pathlib import Path
 
 FT_TO_M = 0.3048
-FL100_M = 10000 * FT_TO_M
-FL290_M = 29000 * FT_TO_M
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 DEFAULT_CONFIG = SCRIPT_DIR / "path_heatmap_config.json"
@@ -24,12 +22,12 @@ def load_config(path):
         return json.load(f)
 
 
-def alt_bin_from_alt_m(alt_m, on_ground):
+def alt_bin_from_alt_m(alt_m, on_ground, fl100_m, fl290_m):
     if on_ground or not isinstance(alt_m, (int, float)) or not math.isfinite(alt_m):
         return 0
-    if alt_m < FL100_M:
+    if alt_m < fl100_m:
         return 1
-    if alt_m < FL290_M:
+    if alt_m < fl290_m:
         return 2
     return 3
 
@@ -60,17 +58,30 @@ def normalize_ac(ac):
     return {"lat": ac["lat"], "lon": ac["lon"], "altM": alt_ft * FT_TO_M, "onGround": on_ground}
 
 
+def aggregate_records(records):
+    merged = {}
+    for rec in records:
+        key = (rec["bucketId"], rec["cellX"], rec["cellY"], rec["altBin"])
+        if key in merged:
+            merged[key]["count"] += rec["count"]
+        else:
+            merged[key] = dict(rec)
+    return list(merged.values())
+
+
 def splat_positions(ac_list, config, now_ms):
     bbox = config["bbox"]
     cell_deg = config["cellDeg"]
     bucket_sec = config["bucketSec"]
+    fl100_m = config.get("fl100Ft", 10000) * FT_TO_M
+    fl290_m = config.get("fl290Ft", 29000) * FT_TO_M
     b_id = bucket_id(now_ms, bucket_sec)
     records = []
     for ac in ac_list:
         nf = normalize_ac(ac)
         if not nf:
             continue
-        alt_bin = alt_bin_from_alt_m(nf["altM"], nf["onGround"])
+        alt_bin = alt_bin_from_alt_m(nf["altM"], nf["onGround"], fl100_m, fl290_m)
         if alt_bin == 0:
             continue
         cell = lat_lon_to_cell(nf["lat"], nf["lon"], bbox, cell_deg)
@@ -123,7 +134,7 @@ def append_records(out_dir, records):
 def run_once(config, out_dir):
     now_ms = int(time.time() * 1000)
     ac_list = poll_once(config)
-    records = splat_positions(ac_list, config, now_ms)
+    records = aggregate_records(splat_positions(ac_list, config, now_ms))
     path = append_records(out_dir, records)
     print(f"{len(ac_list)} aircraft → {len(records)} splats" + (f" → {path}" if path else ""))
     return len(records)
