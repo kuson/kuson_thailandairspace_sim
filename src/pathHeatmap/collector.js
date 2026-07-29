@@ -23,11 +23,17 @@ export function createCollector({
 }) {
   let status = { state: "off", detail: "" };
   let wakeLock = null;
+  let acquireGen = 0;
+  let refreshChain = Promise.resolve();
   let removeVisibilityListener = null;
   let visibilityHandler = null;
 
   function setStatus(next) {
     status = next;
+  }
+
+  function invalidateAcquires() {
+    acquireGen++;
   }
 
   function releaseWakeLock() {
@@ -37,35 +43,50 @@ export function createCollector({
     }
   }
 
-  async function acquireWakeLock() {
+  async function tryAcquireWakeLock() {
+    if (wakeLock) return;
+    const gen = ++acquireGen;
     try {
-      wakeLock = await requestWakeLock();
+      const lock = await requestWakeLock();
+      if (gen !== acquireGen || status.state !== "recording") {
+        lock?.release?.().catch(() => {});
+        return;
+      }
+      wakeLock = lock;
     } catch {
       /* wake lock unavailable — keep recording */
     }
   }
 
-  /** Re-evaluate gates; release wake lock when not actively recording. */
-  async function refreshStatus() {
+  async function refreshStatusImpl() {
     const settings = getSettings();
     if (!settings.recordingOn || settings.writer !== "browser") {
+      invalidateAcquires();
       releaseWakeLock();
       setStatus({ state: "off", detail: "" });
       return false;
     }
     if (!isLiveFlightsEnabled()) {
+      invalidateAcquires();
       releaseWakeLock();
       setStatus({ state: "blocked", detail: "Enable Live Flights to record" });
       return false;
     }
     if (isDocumentHidden()) {
+      invalidateAcquires();
       releaseWakeLock();
       setStatus({ state: "paused", detail: "paused (tab asleep)" });
       return false;
     }
     setStatus({ state: "recording", detail: "" });
-    if (!wakeLock) await acquireWakeLock();
+    await tryAcquireWakeLock();
     return true;
+  }
+
+  function refreshStatus() {
+    const run = refreshChain.then(refreshStatusImpl);
+    refreshChain = run.catch(() => {});
+    return run;
   }
 
   async function splatPositions(list) {
@@ -106,12 +127,14 @@ export function createCollector({
       if (on) {
         await refreshStatus();
       } else {
+        invalidateAcquires();
         releaseWakeLock();
         setStatus({ state: "off", detail: "" });
       }
     },
 
     dispose() {
+      invalidateAcquires();
       releaseWakeLock();
       removeVisibilityListener?.();
       removeVisibilityListener = null;

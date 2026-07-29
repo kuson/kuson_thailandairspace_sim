@@ -76,6 +76,7 @@ describe("collector", () => {
     liveOn = false;
     hidden = false;
     for (const fn of listeners) fn();
+    await refreshStatusSettled(listeners);
     assert.equal(c.getStatus().state, "blocked");
     assert.equal(c.getStatus().detail, "Enable Live Flights to record");
   });
@@ -95,4 +96,42 @@ describe("collector", () => {
     assert.equal(wakeLockCalls, 0);
     assert.equal(c.getStatus().state, "blocked");
   });
+
+  it("discards in-flight wake lock when tab backgrounds during acquire", async () => {
+    let hidden = false;
+    let resolveAcquire;
+    let staleLockReleased = false;
+    const listeners = new Set();
+    const c = createCollector({
+      store: createMemoryStore(),
+      getSettings: () => ({ recordingOn: true, writer: "browser" }),
+      isLiveFlightsEnabled: () => true,
+      now: () => 1_700_000_000_000,
+      requestWakeLock: () => new Promise((resolve) => {
+        resolveAcquire = () => resolve({
+          release: async () => { staleLockReleased = true; },
+        });
+      }),
+      isDocumentHidden: () => hidden,
+      addVisibilityListener: (fn) => {
+        listeners.add(fn);
+        return () => listeners.delete(fn);
+      },
+    });
+    const ingest = c.handlePositions([flight()]);
+    await new Promise((r) => setImmediate(r));
+    hidden = true;
+    for (const fn of listeners) fn();
+    await refreshStatusSettled(listeners);
+    resolveAcquire();
+    await ingest;
+    assert.equal(c.getStatus().state, "paused");
+    assert.equal(staleLockReleased, true);
+  });
 });
+
+/** Drain visibility-triggered refreshStatus queue. */
+async function refreshStatusSettled(listeners) {
+  await new Promise((r) => setImmediate(r));
+  await new Promise((r) => setImmediate(r));
+}
