@@ -112,6 +112,7 @@ When you fly the Mavic 3 in Realistic Mode, a full CAAT-flavoured systems stack 
 - **HUD (top-left):** lat/lon, **Amphoe + Province** (Nominatim), AMSL + AGL altitude, heading compass, speed, vertical speed, wind, battery/link/next chips, mode chip, inside-airspace chips, the collapsible flight-history strip, and the **CAAT** toggle.
 - **Alerts:** a single prioritized banner (no-fly > authorisation > RTH > over-regulated > over-operational > approaching > advisory) with lower-priority alerts shown as chips beneath it — one banner at a time, never a stack.
 - **Minimap (bottom-left):** top-down radar with optional basemap underlay, FOV cone, range rings, baked airspace polygons, nose + ground-track vectors. Toggles above the minimap.
+- **Live flights + Traffic heat (panel → TRAFFIC / Display options):** optional ADS-B overlay (default off). **Traffic heat** records positions into a time-bucketed density grid (IndexedDB), with view presets (1h/6h/24h/7d/all/custom), 2D radar underlay + 3D ground heat plane, and browser or sidecar writer — alt bins stored for future stacked viz.
 - **Educational panel (top-right):** **Airspace Tour Guide**, legend, Thailand drone rules summary, settings (mouse/gamepad/ground detail), and a clickable list of every airspace with an 8-direction compass-rose to view it from any cardinal vantage.
 - **Tour overlay (bottom-center):** scripted narration, progress bar, skip/end controls.
 

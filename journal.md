@@ -1515,3 +1515,28 @@ Executed the full B5 + B6 playbook to completion (10 atomic commits) and first l
 **Known / deferred:** pre-existing `PlaneGeometry computeBoundingSphere NaN` console errors on teleport-staging (reproduced on pre-B11 — TODO §3 row); playbook-deferred list unchanged (label collision avoidance, floating mini radio-log, per-layer opacity sliders, cloud sprites, Playwright rig); SwiftShader auto-disable path code-reviewed but not exercised (real GPU only this session); focus-mode wave-target chip pulse verified by trace, foreground visual pending a live session.
 
 **End HEAD:** `9880eef` + this docs commit (spec §3.19 + §6 rows + journal (h) + TODO §0f/§3 + README). Merge to main + `betterment11-complete` tag = **user decision** (per B7 precedent).
+
+---
+
+## 2026-07-29 (i) — Path heatmap: Traffic heat module (Tasks 1–9) · STATUS: COMPLETE (code + docs)
+
+**Session:** Shipped the opt-in **Traffic heat** module under `src/pathHeatmap/` per `docs/superpowers/specs/2026-07-29-path-heatmap-design.md` and implementation plan Tasks 1–8; Task 9 docs + regression checklist.
+
+**Landed:**
+- Density grid splat from `LiveFlightsLayer.onPositions` (browser writer) into IndexedDB 5-min buckets × ~2 km cells; altitude bins 0–3 collected, v1 bake sums airborne bins only.
+- View window presets (1h/6h/24h/7d/all) + custom from–to; shared `HeatBake` → 2D radar underlay + 3D additive ground plane; settings `kuson.pathHeatmap.settings.v1`.
+- Hybrid writer policy: browser XOR sidecar; Python sidecar (`scripts/path_heatmap_sidecar.py`) + JSONL shard import; Wake Lock + tab-visibility pause; clear-data + status line.
+- LiveFlights LOD/trail caps untouched (hook-only integration).
+
+**Tests:** `node --test test/pathHeatmap/*.test.js` → **27/27 PASS** (gridMath, altBins, store, collector, bake, importShards).
+
+**Smoke-test (manual):**
+1. Enable **Show me live flights** → confirm aircraft + ~8 min trails + K=20 LOD.
+2. **Record traffic heat** ON → status `recording`; after several polls enable **2D heat** / **3D heat** → warm cells on minimap + ground plane.
+3. Toggle heat OFF → no further splat; presets/custom window change bake only.
+4. Reload → settings + accumulated heat persist; **Clear data** wipes IDB.
+5. Optional: run sidecar, **Import shards** → imported count in status line.
+
+**Commits (in order):** `40cb68e` T1 grid · `1492602` T2 store · `002e1fa` IDB batch · `8a64864` T3 collector · `7936517`/`de50731` collector fixes · `203bc08` T4 bake · `81c3174`/`884f317` T5 2D · `ebc3493` T6 3D · `7e92164` T7 façade · `ec2fcbb` opacity/status · `964e8d6` T8 sidecar · this docs commit (T9).
+
+**End HEAD:** `964e8d6` (pre-docs; T9 docs commit follows on same branch).

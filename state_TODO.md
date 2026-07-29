@@ -129,6 +129,30 @@
 
 ---
 
+## 0g. Path heatmap — Traffic heat (2026-07-29, `node --test` verified)
+
+> Plan: `docs/superpowers/plans/2026-07-29-path-heatmap.md`. Design: `docs/superpowers/specs/2026-07-29-path-heatmap-design.md`. Journal: 2026-07-29 (i).
+
+- [x] **PH.T1 Grid math + altitude bins** — `gridMath.js`, `altBins.js`, `scripts/path_heatmap_config.json`; bbox/cell/bucket/recordKey + FL bins 0–3. (`40cb68e`)
+- [x] **PH.T2 Settings + IndexedDB store** — `kuson.pathHeatmap.settings.v1`, `kuson-path-heatmap` v1, `incrementMany` pre-aggregate, `sumRange`/`pruneOlderThan`/`clear`. (`1492602`, `002e1fa`)
+- [x] **PH.T3 Browser collector** — `onPositions` hook on LiveFlights, Wake Lock + visibility pause, writer=`browser` only, status `off|recording|paused|blocked|error`. (`8a64864`, `7936517`, `de50731`)
+- [x] **PH.T4 Window bake + colormap** — presets 1h/6h/24h/7d/all + custom range, `bakeDensity` → RGBA, empty-window guard. (`203bc08`)
+- [x] **PH.T5 2D radar heat underlay** — `layer2d.js`, minimap blit, north-up row fix. (`81c3174`, `884f317`)
+- [x] **PH.T6 3D ground heat plane** — additive `THREE.DataTexture` plane in scene. (`ebc3493`)
+- [x] **PH.T7 Module façade + UI + main wiring** — `index.js`, Traffic heat controls in live-flights block, throttled rebake, clear/import, `uiPrefs` registry row. (`7e92164`, `ec2fcbb`)
+- [x] **PH.T8 Sidecar + shard import** — `scripts/path_heatmap_sidecar.py`, `importShards.js`, JSONL merge, `.gitignore` shards. (`964e8d6`)
+- [x] **PH.T9 Docs** — spec §3.13 Traffic heat, README bullet, journal (i), this block; regression checklist below.
+- [ ] Altitude-stack 3D viz (bins collected; UI deferred per design).
+- [ ] Dual-writer dedupe (browser + sidecar simultaneously — explicitly out of scope v1).
+
+### Path heatmap regression checklist (manual)
+- [ ] Live flights LOD unchanged (K=20 / cap 150; trails ~8 min).
+- [ ] Heat off → collector idle, rebake throttle idle (no bake cost).
+- [ ] Reload → `kuson.pathHeatmap.settings.v1` + IndexedDB density survive.
+- [ ] Sidecar import round-trip (`.jsonl` → store → 2D/3D bake).
+
+---
+
 ## 1. Current state (as of 2026-05-30, browser smoke)
 
 ### Browser smoke 2026-05-30 (Cursor IDE browser @ 9598ea0)

@@ -251,6 +251,13 @@ A single **boolean contract** that gates all altitude / geofence physical enforc
 - **Follow-cam (`src/followController.js`):** locks the camera onto a live flight and tracks its dead-reckoned position; pauses/hides the player while active; released by Esc / movement keys / canvas pointer-down.
 - **Route line:** great-circle origin→dest line for the selected flight (rebuilt only on selection/route change).
 
+**Path heatmap — Traffic heat (`src/pathHeatmap/`, 2026-07-29):**
+- **Opt-in density grid:** while **Record traffic heat** is on and Live flights is enabled, each poll splats airborne positions into a lon/lat cell grid (~0.02° / ~2 km over `THAILAND_BBOX`) — aggregates only, no callsigns/ICAO24 stored. Live cyan trails stay short-horizon (~8 min); heat is long-horizon.
+- **Time buckets + store:** 5-minute `bucketId` slices in IndexedDB (`kuson-path-heatmap` v1, store `cells`, index `byBucket`); auto-prune buckets older than `retentionDays` (default **14**). Altitude bins (`altBin` 0–3: ground skip / ≤FL100 / FL100–FL290 / >FL290) are collected from day one; v1 bake **sums all airborne bins** into one 2D density (stacked-3D viz deferred).
+- **Hybrid writers (one at a time):** `browser` (default) splats from `LiveFlightsLayer.onPositions` with Wake Lock + tab-visibility pause; `sidecar` (`scripts/path_heatmap_sidecar.py`) polls the same sources and appends daily JSONL shards — import via UI **Import shards**. Status line: `off | recording | paused (tab asleep) | blocked — enable Live Flights | N cells in view | error`.
+- **View window (independent of recording):** presets **1h / 6h / 24h / 7d / all** plus **custom** from–to (`resolveWindow` → `store.sumRange`); recording continues while on; heat off → no splat and throttled rebake idles.
+- **Rendering:** shared `HeatBake` density → **2D radar underlay** (`layer2d.js`, minimap blit) and/or **3D additive ground plane** (`layer3d.js`, `THREE.DataTexture`); toggles + opacity persisted under **`kuson.pathHeatmap.settings.v1`**. **Clear data** wipes IndexedDB; reload restores settings + stored density.
+
 ### 3.14 Airspace group filters (Betterment-5 §13)
 The 144 airspace volumes fall into five plain-language **groups** — **Airports** (CTR + Class D), **Terminal areas** (TMA), **Danger areas**, **Restricted**, **Prohibited** — each with a master on/off toggle in the Airspace Window, plus an **All on/off**. The existing **Military** (RTAF/RTN/RTA) toggle stays a *cross-cutting* filter that composes with the groups (a Danger zone can be military). Hiding a group drops it from the 3D scene, the airspace list, and the radar minimap together. De-clutter is the goal. State persists (`kuson.airspacegroups.v1`); default all-on renders identically to today. See §13.
 
