@@ -1,3 +1,15 @@
+---
+id: 20260702_FaceliftPlaybook
+title: Facelift Playbook — Betterment-11 (UI customization · mode grouping · graphics · declutter)
+class: spec
+version: 1.0.0
+status: active
+updated: 2026-07-02
+owner: kuson
+applies_to: []
+supersedes: []
+superseded_by: []
+---
 # Facelift Playbook — Betterment-11 (UI customization · mode grouping · graphics · declutter)
 
 **Companion to:** `20260702_FaceliftReport.md` (evidence + locked design), `spec.md` (§3.19 to be written in B11.T15), `journal.md`, `claude.md` (operator guide).

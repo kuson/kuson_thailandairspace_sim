@@ -1,3 +1,15 @@
+---
+id: 20260529_betterment2
+title: Betterment-2 Playbook — Thailand Airspace Simulator
+class: spec
+version: 1.0.0
+status: active
+updated: 2026-05-29
+owner: kuson
+applies_to: []
+supersedes: []
+superseded_by: []
+---
 # Betterment-2 Playbook — Thailand Airspace Simulator
 
 **Date opened:** 2026-05-29

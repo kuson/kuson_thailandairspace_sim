@@ -1,3 +1,15 @@
+---
+id: 20260702_FaceliftReport
+title: Facelift Report — UI customization, mode grouping, graphics & clutter (Betterment-11 planning)
+class: spec
+version: 1.0.0
+status: active
+updated: 2026-07-02
+owner: kuson
+applies_to: []
+supersedes: []
+superseded_by: []
+---
 # Facelift Report — UI customization, mode grouping, graphics & clutter (Betterment-11 planning)
 
 **Date:** 2026-07-02 · **Operator:** Fable 5 (review session)

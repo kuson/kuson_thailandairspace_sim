@@ -1,3 +1,15 @@
+---
+id: 2026-07-29-path-heatmap-design
+title: Path Heatmap Module — Design Spec
+class: spec
+version: 1.0.0
+status: active
+updated: 2026-07-29
+owner: kuson
+applies_to: []
+supersedes: []
+superseded_by: []
+---
 # Path Heatmap Module — Design Spec
 
 **Date:** 2026-07-29  
@@ -75,7 +87,7 @@ v1 bake **sums all airborne bins** into one 2D density. Later stacked 3D filters
 
 ### Retention
 
-- Auto-prune buckets older than `retentionDays` (default **14**)
+- Retention is persistent by default (`retentionDays` **0** — no auto-prune; Clear data only). Positive `retentionDays` still enables optional prune if re-enabled later.
 - Independent of view window
 
 ### Sidecar parity
@@ -150,7 +162,7 @@ scripts/path_heatmap_sidecar.py
 - `recordingOn`
 - `viewPreset` | `customFrom` / `customTo`
 - `show2d`, `show3d`, `opacity`
-- `retentionDays` (default 14)
+- `retentionDays` (default **0** = keep forever)
 - `writer`: `browser` | `sidecar`
 
 ### UI
@@ -174,7 +186,7 @@ scripts/path_heatmap_sidecar.py
 
 - Pure functions: cell index, bucket id, altBin, range sum, normalize
 - Mock poll → counts increase; custom bake hits expected hot cell
-- Prune removes buckets older than `retentionDays`
+- Prune only runs when `retentionDays` > 0; default is persistent (no prune)
 - Layer off: no bake, `visible = false`
 - Manual: record ~10 min → Last 1h on radar + 3D plane; empty custom range → no overlay
 
@@ -183,7 +195,7 @@ scripts/path_heatmap_sidecar.py
 1. Recording can run continuously while enabled (browser when runnable; sidecar for unattended).
 2. Presets + custom range change the heat without stopping recording.
 3. Both 2D and 3D heat visible and toggleable in one module.
-4. Store survives reload; prune respects `retentionDays`.
+4. Store survives reload; default keeps forever (`retentionDays` 0); prune only if `retentionDays` > 0.
 5. Altitude bins present in stored data for a later stack viz with no re-collect.
 6. LiveFlights performance contracts unchanged.
 

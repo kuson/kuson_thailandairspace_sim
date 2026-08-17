@@ -1,3 +1,15 @@
+---
+id: 20260528_BettermentReport
+title: Betterment Report — Thailand Airspace Simulator
+class: spec
+version: 1.0.0
+status: active
+updated: 2026-05-28
+owner: kuson
+applies_to: []
+supersedes: []
+superseded_by: []
+---
 # Betterment Report — Thailand Airspace Simulator
 
 **Date:** 2026-05-28

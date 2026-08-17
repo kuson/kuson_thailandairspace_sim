@@ -1,3 +1,15 @@
+---
+id: flyto_state_machine
+title: Fly-To State Machine — Diagnosis & Reference
+class: spec
+version: 1.0.0
+status: active
+updated: 2026-05-29
+owner: kuson
+applies_to: []
+supersedes: []
+superseded_by: []
+---
 # Fly-To State Machine — Diagnosis & Reference
 
 **Task:** Betterment-2 P1.T1 (E4 "airspaces click stays put")

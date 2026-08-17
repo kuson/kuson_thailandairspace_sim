@@ -1,3 +1,15 @@
+---
+id: 20260601_BettermentPlaybook
+title: Betterment-5 & 6 Playbook — Map legibility (de-clutter + ground orientation)
+class: spec
+version: 1.0.0
+status: active
+updated: 2026-06-01
+owner: kuson
+applies_to: []
+supersedes: []
+superseded_by: []
+---
 # Betterment-5 & 6 Playbook — Map legibility (de-clutter + ground orientation)
 
 **Companion to:** `spec.md` §13 (Betterment-5) + §14 (Betterment-6), `journal.md` 2026-06-01 (d).

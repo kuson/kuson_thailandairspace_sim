@@ -1,3 +1,15 @@
+---
+id: spec
+title: Thai Airspace Sim — Specification
+class: spec
+version: 1.0.0
+status: active
+updated: 2026-07-29
+owner: kuson
+applies_to: []
+supersedes: []
+superseded_by: []
+---
 # Thai Airspace Sim — Specification
 
 > **Status:** Phase 1 + Betterment-1 (2026-05-28) + Betterment-2 (2026-05-29, in progress). Thailand-wide catalog, Bangkok-centered projection, dual flight modes, second-order physics, SRTM-backed AGL terrain, atmospheric sky, advisory altitude system with optional Strict-CAAT enforcement.
@@ -253,7 +265,7 @@ A single **boolean contract** that gates all altitude / geofence physical enforc
 
 **Path heatmap — Traffic heat (`src/pathHeatmap/`, 2026-07-29):**
 - **Opt-in density grid:** while **Record traffic heat** is on and Live flights is enabled, each poll splats airborne positions into a lon/lat cell grid (~0.02° / ~2 km over `THAILAND_BBOX`) — aggregates only, no callsigns/ICAO24 stored. Live cyan trails stay short-horizon (~8 min); heat is long-horizon.
-- **Time buckets + store:** 5-minute `bucketId` slices in IndexedDB (`kuson-path-heatmap` v1, store `cells`, index `byBucket`); auto-prune buckets older than `retentionDays` (default **14**). Altitude bins (`altBin` 0–3: ground skip / ≤FL100 / FL100–FL290 / >FL290) are collected from day one; v1 bake **sums all airborne bins** into one 2D density (stacked-3D viz deferred).
+- **Time buckets + store:** 5-minute `bucketId` slices in IndexedDB (`kuson-path-heatmap` v1, store `cells`, index `byBucket`); density is **persistent** (`retentionDays` default **0** — no auto-prune; **Clear heat data** only). Altitude bins (`altBin` 0–3: ground skip / ≤FL100 / FL100–FL290 / >FL290) are collected from day one; v1 bake **sums all airborne bins** into one 2D density (stacked-3D viz deferred).
 - **Hybrid writers (one at a time):** `browser` (default) splats from `LiveFlightsLayer.onPositions` with Wake Lock + tab-visibility pause; `sidecar` (`scripts/path_heatmap_sidecar.py`) polls the same sources and appends daily JSONL shards — import via UI **Import shards**. Status line: `off | recording | paused (tab asleep) | blocked — enable Live Flights | N cells in view | error`.
 - **View window (independent of recording):** presets **1h / 6h / 24h / 7d / all** plus **custom** from–to (`resolveWindow` → `store.sumRange`); recording continues while on; heat off → no splat and throttled rebake idles.
 - **Rendering:** shared `HeatBake` density → **2D radar underlay** (`layer2d.js`, minimap blit) and/or **3D additive ground plane** (`layer3d.js`, `THREE.DataTexture`); toggles + opacity persisted under **`kuson.pathHeatmap.settings.v1`**. **Clear data** wipes IndexedDB; reload restores settings + stored density.

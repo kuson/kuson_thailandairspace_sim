@@ -1,3 +1,15 @@
+---
+id: 20260612_ShebangPlaybook
+title: Shebang Playbook — Betterment-7 (Sky Guardian foundation + first playable)
+class: spec
+version: 1.0.0
+status: active
+updated: 2026-06-12
+owner: kuson
+applies_to: []
+supersedes: []
+superseded_by: []
+---
 # Shebang Playbook — Betterment-7 (Sky Guardian foundation + first playable)
 
 **Companion to:** `20260611_ShebangReport.md` (strategy/design), `spec.md` (§3.16 to be written in B7.T10), `journal.md`.

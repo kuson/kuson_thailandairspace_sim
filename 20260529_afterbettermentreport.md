@@ -1,3 +1,15 @@
+---
+id: 20260529_afterbettermentreport
+title: After-Betterment Report — Thailand Airspace Simulator
+class: spec
+version: 1.0.0
+status: active
+updated: 2026-05-29
+owner: kuson
+applies_to: []
+supersedes: []
+superseded_by: []
+---
 # After-Betterment Report — Thailand Airspace Simulator
 
 **Date:** 2026-05-29  

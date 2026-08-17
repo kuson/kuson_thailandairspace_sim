@@ -1,3 +1,15 @@
+---
+id: claude
+title: CLAUDE.md — Operator guide for the Thai Airspace Sim project
+class: spec
+version: 1.0.0
+status: active
+updated: 2026-05-28
+owner: kuson
+applies_to: []
+supersedes: []
+superseded_by: []
+---
 # CLAUDE.md — Operator guide for the Thai Airspace Sim project
 
 > Read this file first in every Claude session that touches this repo.

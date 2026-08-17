@@ -1,3 +1,15 @@
+---
+id: 2026-07-29-path-heatmap
+title: Path Heatmap Module Implementation Plan
+class: spec
+version: 1.0.0
+status: active
+updated: 2026-07-29
+owner: kuson
+applies_to: []
+supersedes: []
+superseded_by: []
+---
 # Path Heatmap Module Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
@@ -244,7 +256,7 @@ Settings shape:
   show2d: true,
   show3d: true,
   opacity: 0.65,
-  retentionDays: 14,
+  retentionDays: 0, // keep forever; Clear data only
 }
 ```
 

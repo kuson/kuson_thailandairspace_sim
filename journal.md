@@ -1,3 +1,15 @@
+---
+id: journal
+title: Thai Airspace Sim — Journal (append-only)
+class: spec
+version: 1.0.0
+status: active
+updated: 2026-07-29
+owner: kuson
+applies_to: []
+supersedes: []
+superseded_by: []
+---
 # Thai Airspace Sim — Journal (append-only)
 
 > **Protocol:** Append a new block at the end of this file at the close of every session. Never edit prior blocks. Tick `state_TODO.md` checkboxes only after the corresponding pass criterion is verified. The single source of truth for *what is done* is `state_TODO.md`; this file is the single source of truth for *what happened and why*.

@@ -1,3 +1,15 @@
+---
+id: state_TODO
+title: Thai Airspace Sim — State & TODO (single source of truth)
+class: spec
+version: 1.0.0
+status: active
+updated: 2026-07-29
+owner: kuson
+applies_to: []
+supersedes: []
+superseded_by: []
+---
 # Thai Airspace Sim — State & TODO (single source of truth)
 
 > Update this file at the end of every session, after appending to `journal.md`. Tick a box only after the matching pass criterion has been verified (in browser for UI, in code review for logic).

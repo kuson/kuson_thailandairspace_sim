@@ -1,3 +1,15 @@
+---
+id: 20260611_ShebangReport
+title: 20260611 — The Whole Shebang Report
+class: spec
+version: 1.0.0
+status: active
+updated: 2026-06-11
+owner: kuson
+applies_to: []
+supersedes: []
+superseded_by: []
+---
 # 20260611 — The Whole Shebang Report
 ## Thailand Airspace Simulator: 10× Review + "Sky Guardian" Game Layer Design
 
