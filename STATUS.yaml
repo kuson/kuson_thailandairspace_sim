@@ -5,18 +5,18 @@
 
 schema: kstat/1
 project: kuson_thailandairspace_sim
-updated: 2026-08-17T19:24:32+07:00
+updated: 2026-08-19T22:46:30+07:00
 updated_by: claude-code        # claude-code | cursor | human
 
 status: active                 # active | paused | blocked | shipped | archived | incubating
 health: green                  # green | yellow | red
-phase: "init"
-one_liner: "Initialized by kstat init"
-progress_pct: 0                # optional, 0-100; omit if meaningless
+phase: "Mature and usable; iterative betterment waves"
+one_liner: "Thai Airspace Sim — no-build Three.js app for flying a virtual aircraft through Bangkok's 3D airspace volumes; usable now, evolving through betterment waves, last one 2026-07-29"
+# progress_pct omitted — open-ended betterment project, no defined end state
 
 next_action:
-  desc: "Fill in STATUS.yaml"
-  owner: agent                 # human | agent
+  desc: "Manually re-verify the traffic-heat error path in the browser (status line and Record checkbox must agree after forced write/import failure), then pick the next betterment wave"
+  owner: human                 # human | agent
 
 blockers: []                   # empty list when unblocked
 # - id: B-001
@@ -25,13 +25,19 @@ blockers: []                   # empty list when unblocked
 #   since: <YYYY-MM-DD>
 #   resolved: null             # or YYYY-MM-DD; keep resolved rows for history
 
-recent: []                     # newest first, keep last ~5
-# - date: <YYYY-MM-DD>
-#   summary: "<what shipped/changed>"
+recent:                        # newest first, keep last ~5
+  - date: 2026-08-17
+    summary: "KDS-1.0 adoption: docs tree, frontmatter, STATUS.yaml init (wave-4)"
+  - date: 2026-07-29
+    summary: "Fixed traffic-heat UI desync (Record checkbox vs module state after error paths); 31/31 pathHeatmap tests green"
+  - date: 2026-07-29
+    summary: "Path heatmap module landed: grid + IndexedDB store, flight-path collector, 2D north-up blit + 3D bake rendering, sidecar writer and shard import"
+  - date: 2026-07-02
+    summary: "Betterment 11 wave merged to main with follow-up fix wave (C1/C2, I1-I4)"
 
 notes: []                      # portal write-back appends here
 links:
   spec: docs/30-spec/SPEC.md
-  journal: null                # .planning/STATE.md once on GSD
-  todo: null
-tags: []                       # e.g. [flutter, pki, caprover]
+  journal: docs/journal.md     # .planning/STATE.md once on GSD
+  todo: docs/todo.md
+tags: [javascript, threejs]    # e.g. [flutter, pki, caprover]
