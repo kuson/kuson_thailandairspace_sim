@@ -44,18 +44,25 @@ let _game = null;
 let _drone = null;
 /** @type {object|null} */
 let _tourGuide = null;
+/** @type {object|null} B12.T3: pause-menu controller (isOpen/open/close). */
+let _pauseMenu = null;
+/** @type {Function|null} B12.T3: () => follow-cam active? (main.js handle). */
+let _isFollowActive = null;
 
 /**
  * Wire the module's live state handles. Call once from main.js after
  * appMode, game, drone, and tourGuide all exist (mirrors uiProfiles.install's
  * call-once-after-construction pattern).
- * @param {{appMode: object, game: object, drone: object, tourGuide: object}} deps
+ * @param {{appMode: object, game: object, drone: object, tourGuide: object,
+ *   pauseMenu?: object, isFollowActive?: Function}} deps
  */
-export function install({ appMode, game, drone, tourGuide }) {
+export function install({ appMode, game, drone, tourGuide, pauseMenu, isFollowActive }) {
   _appMode = appMode;
   _game = game;
   _drone = drone;
   _tourGuide = tourGuide;
+  _pauseMenu = pauseMenu ?? null;
+  _isFollowActive = isFollowActive ?? null;
 
   window.addEventListener("keydown", _onEscapeCapture, true /* capture */);
 }
@@ -132,6 +139,16 @@ function _onEscapeCapture(e) {
     return;
   }
 
+  // 0b) B12.T3: pause menu open → Escape closes it and resumes (symmetric
+  // with step 5, which opened it). Above the typing check by construction:
+  // the menu can only exist in plain freestyle, so nothing below applies.
+  if (_pauseMenu?.isOpen?.()) {
+    e.preventDefault();
+    e.stopPropagation();
+    _pauseMenu.close();
+    return;
+  }
+
   // 1) Typing modal open → let typing.js's own capture listener (registered
   // separately, see typing.js) handle abort. It's registered independently
   // of this listener; we simply decline to act so DOM listener order
@@ -185,10 +202,21 @@ function _onEscapeCapture(e) {
     return;
   }
 
-  // 5) Else → noop. Do NOT stopPropagation — any other Escape listener
-  // that legitimately remains (main.js:254 follow-cam release,
-  // tutorial.js's own _escListener, typing.js's internal handler) still
-  // sees this event.
+  // 5) B12.T3: plain freestyle with nothing above open → open the pause
+  // menu. Declines while the follow-cam is active — its release listener
+  // (main.js, bubble phase) is a retained consumer of this same Escape, so
+  // the first press releases the cam and only the next one opens the menu.
+  // Also declines outside freestyle (tutorial keeps its own _escListener).
+  if (mode === "freestyle" && _pauseMenu && !_isFollowActive?.()) {
+    e.preventDefault();
+    e.stopPropagation();
+    _pauseMenu.open();
+    return;
+  }
+
+  // 6) Else → noop. Do NOT stopPropagation — any other Escape listener
+  // that legitimately remains (main.js follow-cam release, tutorial.js's
+  // own _escListener, typing.js's internal handler) still sees this event.
 }
 
 // ── Confirm card (abort-mission / end-tour) ─────────────────────────────

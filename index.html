@@ -1176,7 +1176,8 @@
     /* Outer overlay — reuses the same backdrop/flex pattern as #typingModal */
     #gameBriefing,
     #gameDebrief,
-    #inputGuardConfirm {
+    #inputGuardConfirm,
+    #pauseMenu {
       position: fixed;
       inset: 0;
       display: flex;
@@ -1191,7 +1192,10 @@
     #inputGuardConfirm { z-index: 340; }
     #gameBriefing[hidden],
     #gameDebrief[hidden],
-    #inputGuardConfirm[hidden] { display: none; }
+    #inputGuardConfirm[hidden],
+    #pauseMenu[hidden] { display: none; }
+    /* B12.T3: pause-menu buttons stack vertically (gc-btns default is a row). */
+    #pauseMenu .pm-btns { flex-direction: column; align-items: stretch; min-width: 240px; }
 
     /* B9.T2: aim-mode reticle — centered crosshair, z-index 55 (above HUD layers) */
     #reticle {

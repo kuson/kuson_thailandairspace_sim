@@ -1566,3 +1566,20 @@ Executed the full B5 + B6 playbook to completion (10 atomic commits) and first l
 **Manual re-check:** with an error path forced, the status line and the checkbox should now agree (`error` + unchecked recorder, or `recording` + checked recorder).
 
 **End HEAD:** this follow-up commit on `main`.
+
+---
+
+## 2026-08-28 (k) — Betterment-12 "First Five Minutes" fix wave · STATUS: COMPLETE (code + docs)
+
+**Session:** Three-Hats review session (report: `docs/20260828_ThreeHatsReport.md` + published artifact) followed by the report's P0/quick-win fixes, per user request. Verified in headless Chromium (Playwright, SwiftShader, proxy-relayed network, geolocation stubbed outside Thailand to exercise the default-fallback path).
+
+**Landed:**
+- **T1 declutter scope fix** — `declutterLayers` was a `bootstrap()`-local `const` referenced from top-level `loop()` → `ReferenceError` every frame (364 console errors in a ~6-min session, swallowed by `_safe`); B11 declutter laws never ran. Hoisted to module-level `let` + `?.` guard for pre-bootstrap frames.
+- **T2 fresh-profile scenic start + 1×** — fresh profile (no `kuson.*`/`thairspace.*` key at bootstrap entry) without GPS spawns at `SCENIC_START` (13.22 N, 100.50 E — upper Gulf, ~60 km due south of origin, 90 m, heading 000° at the Bangkok stack: open water, red CTR drum ~13 km ahead) at preset 1×; GPS starts and returning profiles byte-identical to pre-B12. History label `Scenic start`. **Two candidates bounced by the harness before this one:** (a) 13.616/100.358 @ 350 m sat inside VTD47 → no-fly freeze at spawn + over the Mavic's 120 m regulated ceiling; (b) 13.45/100.15 @ 90 m was clear at the point but the whole NE sightline is walled off by VTD47's 60,000 ft turquoise prism — first frame was a military-danger curtain. Final point checked three ways: point-in-catalog at spawn, ≥20,000 ft P/R/D curtain scan along the full sightline to the city, and distance to the CTR edge vs the 5 NM advisory band. Lesson: a spawn/vantage constant needs a *sightline* check, not just a point check.
+- **T3 pause menu** — `src/pauseMenu.js` (gc-card: Resume / Restart flight / Main menu), `startScreen.reopen()`, inputGuard Escape-ladder steps 0b + 5 (freestyle-only, declines while follow-cam active), key-swallow while open, `#pauseMenu` overlay CSS. `window.__sim.pauseMenu` harness API.
+
+**Verification (harness):** 12/12 checks PASS — fresh spawn position/heading/preset exact; zero declutter errors; Esc open→pause→key-swallow→close→resume round-trip; Main menu → start screen → Explore resumes; returning profile keeps 100× + Bangkok center; WAVE Esc still yields the abort-confirm card, second Esc dismisses (ladder intact). `node --check` clean on all touched files.
+
+**Observed, not fixed (TODO row):** `getStartLocation()` stalls `ready()` if the geolocation permission prompt is never answered (API timeout doesn't cover pending-permission) — race with an app-side timer as hardening.
+
+**Docs:** spec §3.20 + §3.3 default-preset note + acceptance rows 73–75; this journal block; TODO §0g; STATUS.yaml refresh.

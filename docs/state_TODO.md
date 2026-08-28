@@ -165,6 +165,19 @@ superseded_by: []
 
 ---
 
+## 0h. Betterment-12 — First Five Minutes fix wave (2026-08-28, harness-verified)
+
+> Report: `docs/20260828_ThreeHatsReport.md` (+ published artifact with screenshots). Spec: §3.20. Journal: 2026-08-28 (k).
+
+- [x] **B12.T1 Declutter scope fix** — `declutterLayers` hoisted to module scope (`main.js`); was a bootstrap-local `const` dead-referenced from `loop()` → ReferenceError every frame, declutter laws never ran. 0 declutter errors post-fix (was 364/session).
+- [x] **B12.T2 Fresh-profile scenic start + 1×** — no-`kuson.*`-key profiles without GPS spawn at `SCENIC_START` (upper Gulf, ~60 km due S of origin, 90 m, hdg 000° at the Bangkok stack — catalog-checked at the point AND along the sightline: clear of CTR + P/R/D, under the TMA floor and the Mavic ceiling, no 60,000 ft danger curtain in view) at 1×; GPS + returning profiles byte-identical to pre-B12. Harness-verified both paths (two candidates rejected: inside VTD47; VTD47 curtain across the view).
+- [x] **B12.T3 Pause menu** — `src/pauseMenu.js` (Resume / Restart flight / Main menu), `startScreen.reopen()`, Escape-ladder steps 0b+5 (freestyle-only, follow-cam-aware), key-swallow while open. Harness-verified round-trip incl. WAVE Esc → abort card unchanged.
+- [ ] Geolocation pending-permission stall — `getStartLocation()` never resolves if the prompt is left unanswered (API `timeout` doesn't cover pending state); race with an app-side timer. Observed in harness, pre-existing.
+- [ ] `[?]` Scenic-start framing on real hardware — verify the SW-coast vantage reads as the "exterior cages" hero shot on a real GPU/display (harness used SwiftShader).
+- [ ] Map-primary tile source: "API KEY REQUIRED" watermarks observed at some zooms in the harness (CARTO raster endpoint) — verify in production; line up an OSM-raster fallback before chart-first work (Three-Hats §0.3-5).
+
+---
+
 ## 1. Current state (as of 2026-05-30, browser smoke)
 
 ### Browser smoke 2026-05-30 (Cursor IDE browser @ 9598ea0)

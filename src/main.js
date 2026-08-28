@@ -48,6 +48,7 @@ import { installGfx, getGfxSettings } from "./gfx.js";
 import * as appMode from "./appMode.js";
 import * as uiProfiles from "./uiProfiles.js";
 import * as inputGuard from "./inputGuard.js";
+import { installPauseMenu } from "./pauseMenu.js";
 
 // B7.T9: build the start-screen overlay immediately (before bootstrap runs).
 // Failure-safe: if construction throws, stub methods are returned and dismissed
@@ -294,6 +295,12 @@ let ui;
 let tourGuide;
 let catalogHighlightId = null;
 let _applyingHistory = false;
+// B12.T1 (Three-Hats §0.3): module-level like every other layer loop()
+// touches — as a bootstrap()-local const the loop's _safe("declutter")
+// threw ReferenceError every frame and the declutter laws never ran.
+let declutterLayers = null;
+// B12.T3: pause menu controller (installed in bootstrap).
+let pauseMenu = null;
 
 // B8.T1: audio core — created before bootstrap so startScreen buttons can unlock it.
 const audio = installAudio({ alerts });
@@ -438,7 +445,38 @@ drone.onIdentifyToggle = (on) => {
 
 flightHistory.onChange = (state) => ui?.updateHistoryButtons?.(state);
 
+// B12.T2: scenic first-run vantage — over the upper Gulf, ~60 km due south
+// of the Bangkok origin, facing 000° at the city. Catalog-checked
+// (2026-08-28): laterally only under the VTBD-TMA 3,000 ft floor (clear of
+// every volume at 90 m), 13.3 km outside the VTBD-CTR edge (beyond the
+// 5 NM advisory band), and the whole sightline to the city crosses no tall
+// P/R/D curtain (the SW approach is walled off by VTD16/19/47's 60,000 ft
+// prisms). First frame: open water, the red CTR drum ~13 km ahead, the
+// city stack behind it — no interior film, no geofence freeze, and no
+// over-ceiling banner (90 m = 75% of the Mavic's 120 m regulated AGL
+// ceiling). yawRad 0 = heading 000° (headingDeg() = -yaw·180/π, drone.js).
+const SCENIC_START = { lat: 13.22, lon: 100.50, altM: 90, yawRad: 0 };
+
+/**
+ * B12.T2: a profile is "fresh" when no kuson.* persistence key exists yet —
+ * the same signal ui.js's progressive-HUD default uses (B8.T8). Read once
+ * at bootstrap entry, before any module can write its first key.
+ * @returns {boolean}
+ */
+function _isFreshProfile() {
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && (k.startsWith("kuson.") || k.startsWith("thairspace."))) return false;
+    }
+    return true;
+  } catch {
+    return false; // storage unavailable (private mode) — keep legacy greeting
+  }
+}
+
 async function bootstrap() {
+  const freshProfile = _isFreshProfile();
   await layer.load("./data/airspaces.json");
   startScreen.tick("Loading airspaces…");
   scene.add(layer.group);
@@ -684,7 +722,7 @@ async function bootstrap() {
   // provinces/airports resolve asynchronously (see installProvinceLines/
   // installAirportBeacons .then() above) — pass live-ref getters, same
   // shape as window.__sim.groundLayers' get airports()/get provinces().
-  const declutterLayers = declutter.install({
+  declutterLayers = declutter.install({
     layer,
     provinces: { ref: () => provinceLines },
     airports: { ref: () => airportBeacons },
@@ -704,9 +742,23 @@ async function bootstrap() {
 
   const start = await getStartLocation();
   startScreen.tick("Locating start position…");
-  const w = geoToWorld(start.lat, start.lon);
-  drone.teleport(w.x, start.altM ?? 200, w.z, 0, -0.05);
-  drone.setSpeedPreset("100x");
+  // B12.T2 (Three-Hats §0.3-2/3): a fresh profile without a GPS fix greets
+  // the player from a scenic vantage SW of the city — outside the VTR1
+  // interior wash, aimed at the Bangkok volume stack (the exterior "cage"
+  // hero view) — at 1× (Mavic) instead of 100×. A GPS start keeps the
+  // player's own location; returning profiles keep the pre-B12 greeting
+  // (Bangkok center, 100×) untouched.
+  const scenicStart = freshProfile && start.source !== "gps";
+  let w = geoToWorld(start.lat, start.lon);
+  let spawnAltM = start.altM ?? 200;
+  let spawnYaw = 0;
+  if (scenicStart) {
+    w = geoToWorld(SCENIC_START.lat, SCENIC_START.lon);
+    spawnAltM = SCENIC_START.altM;
+    spawnYaw = SCENIC_START.yawRad;
+  }
+  drone.teleport(w.x, spawnAltM, w.z, spawnYaw, scenicStart ? -0.01 : -0.05);
+  drone.setSpeedPreset(freshProfile ? "1x" : "100x");
   ui.syncSpeedButtons();
   ui.setRadarMapDefault(true);
   ui.setRadarCenterDefault(true);
@@ -720,7 +772,8 @@ async function bootstrap() {
 
   ground.updateAround(w.x, w.z);
   flightHistory.record(HISTORY_EVENT_TYPES.START, drone.snapshot(), {
-    label: start.source === "gps" ? "GPS start" : "Bangkok start",
+    label: start.source === "gps" ? "GPS start"
+         : scenicStart ? "Scenic start" : "Bangkok start",
   });
   startScreen.tick("Ready!");
 
@@ -745,10 +798,20 @@ async function bootstrap() {
     },
   });
 
+  // B12.T3: pause menu — built here so the Escape ladder below can own its
+  // open/close decisions. Restart reuses the panel Reset path (resetDrone);
+  // Main menu re-shows the start screen (handlers persist from ready()).
+  pauseMenu = installPauseMenu({ drone, onRestart: resetDrone, startScreen });
+  window.__sim.pauseMenu = pauseMenu;   // harness API
+
   // B11.T7: per-mode action guards + unified Escape ladder. Wired last, once
   // appMode/game/drone/tourGuide all exist — mirrors uiProfiles.install's
   // call-once-after-construction pattern just above.
-  inputGuard.install({ appMode, game, drone, tourGuide });
+  inputGuard.install({
+    appMode, game, drone, tourGuide,
+    pauseMenu,
+    isFollowActive: () => follow.active,
+  });
 
   // B11.T10: focus mode — two-way wiring with the View-panel checkbox + F
   // key (both live in ui.js, which cannot import from this entry-point
@@ -1168,7 +1231,7 @@ function loop(t) {
   // and this pass multiplies a law factor on top of whatever they just
   // wrote (see declutter.js file header for why that composition is safe
   // and requires no separate restore for those layers).
-  _safe("declutter", () => declutterLayers.update(camera, drone, dt));
+  _safe("declutter", () => declutterLayers?.update(camera, drone, dt));
   _safe("ufos", () => ufos.update(dt));
   _safe("crawlers", () => crawlers.update(dt));
   _safe("shadow", () => _updatePlayerShadow(dt));

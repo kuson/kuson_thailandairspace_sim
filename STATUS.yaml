@@ -5,27 +5,27 @@
 
 schema: kstat/1
 project: kuson_thailandairspace_sim
-updated: 2026-08-19T22:46:30+07:00
+updated: 2026-08-28T15:39:39+07:00
 updated_by: claude-code        # claude-code | cursor | human
 
 status: active                 # active | paused | blocked | shipped | archived | incubating
 health: green                  # green | yellow | red
 phase: "Mature and usable; iterative betterment waves"
-one_liner: "Thai Airspace Sim — no-build Three.js app for flying a virtual aircraft through Bangkok's 3D airspace volumes; usable now, evolving through betterment waves, last one 2026-07-29"
+one_liner: "Thai Airspace Sim — no-build Three.js app for flying a virtual aircraft through Bangkok's 3D airspace volumes; Three-Hats product review shipped 2026-08-28 plus B12 First-Five-Minutes fix wave (declutter P0, scenic fresh spawn, pause menu)"
 # progress_pct omitted — open-ended betterment project, no defined end state
 
 next_action:
-  desc: "Manually re-verify the traffic-heat error path in the browser (status line and Record checkbox must agree after forced write/import failure), then pick the next betterment wave"
-  owner: human                 # human | agent
+  desc: "Verify the B12 scenic-start framing and pause menu on real hardware (harness used SwiftShader), then pick the first Three-Hats roadmap wave (report §4: Structure B Daily/Missions, or ACADEMY seed)"
+  owner: human                 # human | agent | external
+  since: 2026-08-28
 
 blockers: []                   # empty list when unblocked
-# - id: B-001
-#   desc: "Needs Google Cloud OAuth client + SHA-1 fingerprints"
-#   owner: human               # human | agent | external
-#   since: <YYYY-MM-DD>
-#   resolved: null             # or YYYY-MM-DD; keep resolved rows for history
 
-recent:                        # newest first, keep last ~5
+recent:                        # newest first, keep last ~10
+  - date: 2026-08-28
+    summary: "B12 First Five Minutes fix wave: declutter scope P0 fixed (364 errors/session → 0), fresh-profile scenic Gulf-south spawn at 1× (sightline-checked against the catalog), Esc pause menu (Resume/Restart/Main menu) wired into the Escape ladder; 16/16 harness checks green"
+  - date: 2026-08-28
+    summary: "Three-Hats report shipped (docs/20260828_ThreeHatsReport.md + artifact): market directions (CAAT-2026 test-prep, pre-flight check), four game/UI structures, three persona improvement lists; live walkthrough surfaced the declutter P0"
   - date: 2026-08-17
     summary: "KDS-1.0 adoption: docs tree, frontmatter, STATUS.yaml init (wave-4)"
   - date: 2026-07-29
@@ -35,9 +35,76 @@ recent:                        # newest first, keep last ~5
   - date: 2026-07-02
     summary: "Betterment 11 wave merged to main with follow-up fix wave (C1/C2, I1-I4)"
 
+todo:                          # session handoff (R-29); newest additions last
+  - id: T-001
+    desc: "Three-Hats review report (market / game structure / personas) with live walkthrough"
+    done: true
+    date: 2026-08-28
+  - id: T-002
+    desc: "B12.T1 declutter scope fix (P0 from the report)"
+    done: true
+    date: 2026-08-28
+  - id: T-003
+    desc: "B12.T2 fresh-profile scenic spawn + 1x default"
+    done: true
+    date: 2026-08-28
+  - id: T-004
+    desc: "B12.T3 Esc pause menu (Resume / Restart flight / Main menu)"
+    done: true
+    date: 2026-08-28
+  - id: T-005
+    desc: "Real-hardware visual pass on B12 (scenic framing, pause menu, declutter ladder)"
+    done: false
+  - id: T-006
+    desc: "Geolocation pending-permission stall: race getStartLocation() with an app-side timer"
+    done: false
+  - id: T-007
+    desc: "Map-primary tile fallback (CARTO 'API KEY REQUIRED' watermarks seen at some zooms in harness)"
+    done: false
+  - id: T-008
+    desc: "First Five Minutes part 2: 60s interactive onboarding replacing the passive tip; start-screen hero backdrop"
+    done: false
+  - id: T-009
+    desc: "Structure B seed: Daily Flight (date-seeded 3-min challenge) + share card (Three-Hats §2-B)"
+    done: false
+  - id: T-010
+    desc: "ACADEMY seed: chart-first entry (promote map-primary), per-stop tour micro-quiz, mock-exam skeleton (Three-Hats §1.1 + §2-D)"
+    done: false
+  - id: T-011
+    desc: "Thai locale file (UI strings + short-tour narration)"
+    done: false
+  - id: T-012
+    desc: "In-wave target beacon + screen-edge arrow (Three-Hats §2 directive 4)"
+    done: false
+
+issues:                        # problems found, not blocking (R-31)
+  - id: I-001
+    severity: medium
+    desc: "getStartLocation() stalls ready() forever if the geolocation permission prompt is never answered (API timeout does not cover pending-permission)"
+    opened: 2026-08-28
+  - id: I-002
+    severity: low
+    desc: "Advisory banner effectively permanent over Bangkok (baseline 'controlled airspace within 5 NM' owns center-top; banner-fatigue, Three-Hats §0.3-4)"
+    opened: 2026-08-28
+  - id: I-003
+    severity: low
+    desc: "Map-primary keeps altitude tape + attitude indicator drawn over the 2D chart (layering gap, Three-Hats §0.3-5)"
+    opened: 2026-08-28
+
+next_prompts:                  # copy-paste-ready for the next session (R-29)
+  - title: "Verify B12 on real hardware"
+    kind: review
+    prompt: "Run the sim on real hardware with a cleared profile: confirm the Gulf-south scenic start reads as the exterior-cages hero shot (no danger curtain, no banner), the Esc pause menu round-trips (Resume/Restart/Main menu) in freestyle and never appears mid-wave/tour, and the declutter ladder thresholds from SPEC row 69 behave. Tick the [?] rows in docs/state_TODO.md §0h."
+  - title: "Build Daily Flight (Structure B seed)"
+    kind: build
+    prompt: "Implement the Daily Flight mode from docs/20260828_ThreeHatsReport.md §2 Structure B: one date-seeded ~3-minute challenge per day reusing the SCRAMBLE/fly-to machinery (seed = YYYYMMDD picks target volumes deterministically), a fourth start-screen slot, a debrief with score + one learned fact + countdown to tomorrow's flight, and a shareable end-card (canvas screenshot with score/date). Persist streaks under kuson.daily.v1."
+  - title: "Seed ACADEMY: chart-first + micro-quiz"
+    kind: build
+    prompt: "Per docs/20260828_ThreeHatsReport.md §1.1/§2-D: promote map-primary to a start-screen entry (fix instrument overlay when 2D is primary, add a tile-source fallback), add a 3-question micro-quiz after each Express-tour stop (reuse the typing-challenge modal in multiple-choice form), and store per-volume mastery under kuson.mastery.v1."
 notes: []                      # portal write-back appends here
 links:
   spec: docs/30-spec/SPEC.md
   journal: docs/journal.md     # .planning/STATE.md once on GSD
   todo: docs/todo.md
+  report: docs/20260828_ThreeHatsReport.md
 tags: [javascript, threejs]    # e.g. [flutter, pki, caprover]

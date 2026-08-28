@@ -95,7 +95,7 @@ Nationwide airport CTR/TMA overlays (including RTAF bases Takhli, Khorat, Kampha
   | `learjet` | Learjet | 850 km/h |
   | `b777` | Boeing 777 | 920 km/h |
   | `100x` | 100× | 10 000 km/h |
-- Default preset on load: **100×** (10 000 km/h).
+- Default preset on load: **100×** (10 000 km/h) for returning profiles; a **fresh profile** (no `kuson.*` key yet) starts at **1×** (Mavic, 50 km/h) — B12, see §3.20.
 - With `Shift`: an additional **3× boost** while held.
 - Sim-speed buttons live in the HUD under **SIM SPEED**; the active preset name and target km/h are echoed in the SPD line.
 - **Camera view modes** (press the same arrow again to return to front view):
@@ -413,6 +413,18 @@ Master toggle **"Declutter"** (`kuson.grounddetail.v1.declutter`, default ON).
 
 **Persistence keys added:** `kuson.uiprefs.v1`, `kuson.theme.v1`, `kuson.panel.v1`, `kuson.gfx.v1`; `kuson.grounddetail.v1` gains `{interiorFade, declutter, terrainShade}`.
 
+### 3.20 First Five Minutes (Betterment-12, 2026-08-28)
+
+Design record in `docs/20260828_ThreeHatsReport.md` (§0.3 build-health findings + §2 screen-level directives); this section records what shipped.
+
+**Declutter scope fix (B12.T1).** `declutterLayers` was a `bootstrap()`-local `const` referenced from the top-level `loop()` — `ReferenceError` on every frame, swallowed by `_safe`, so the §3.19 declutter laws never ran and the console flooded (~364 errors per short session). Now a module-level `let` (the pattern every other loop-touched layer uses), with a `?.` guard for pre-bootstrap frames.
+
+**Fresh-profile scenic start (B12.T2).** A profile is *fresh* when no `kuson.*` / `thairspace.*` localStorage key exists at bootstrap entry (same signal as B8's progressive-HUD default). A fresh profile **without a GPS fix** spawns at the scenic vantage `SCENIC_START` (13.22 N, 100.50 E — over the upper Gulf, ~60 km due south of origin), 90 m AMSL, heading 000° at the Bangkok volume stack — open water, the red CTR drum ~13 km ahead, the city stack behind it: the exterior-wall hero view instead of the inner-city interior wash — at preset **1×** (Mavic). The point is catalog-checked: laterally only under the VTBD-TMA 3,000 ft floor (clear of every volume at 90 m), 13.3 km outside the VTBD-CTR edge (beyond the 5 NM advisory band), and the whole sightline to the city crosses no ≥20,000 ft P/R/D curtain (the SW approach is walled off by VTD16/19/47's 60,000 ft prisms, which additionally no-fly-freeze a spawn inside them); 90 m keeps the Mavic at 75 % of its 120 m regulated AGL ceiling. The amber `ADVISORY — controlled airspace within 5 NM` banner still shows at this spawn: the advisory tier evaluates the **TMA's lateral footprint regardless of its floor**, and the point sits under it — recorded as issue I-002 (banner fatigue), not fixed in B12. A GPS start keeps the user's own location; returning profiles keep the pre-B12 greeting (Bangkok center, 100×) byte-for-byte. Flight-history start label: `Scenic start`.
+
+**Pause menu (B12.T3).** `src/pauseMenu.js` — a `gc-card` modal (`#pauseMenu`, same overlay CSS block as briefing/confirm): **Resume (Esc)** · **Restart flight** (reuses `resetDrone`) · **Main menu** (reopens the start screen via the new `startScreen.reopen()`; `ready()` handlers persist, so a pick routes exactly like first launch). Opening pauses the sim through the same `drone.paused` + `onPauseChange` path as `P`; closing resumes. **Ownership:** the inputGuard Escape ladder decides when it opens/closes — new step 0b (menu open → close+resume) and step 5 (plain freestyle, nothing else open, follow-cam inactive → open). The ladder declines while the follow-cam is active (its release listener is a retained bubble-phase Escape consumer) and outside freestyle (tour/game/tutorial contexts keep their existing Escape behavior). While open, a capture-phase listener swallows every key except Tab/Enter/Escape (startScreen pattern) so flight keys and `P` cannot reach the sim.
+
+**Known limitation (observed, unchanged):** `getStartLocation()` resolves only via the geolocation API's own callbacks; a permission prompt left unanswered indefinitely stalls `ready()` (the API `timeout` does not cover the pending-permission state). Hardening candidate: race with an app-side timer (TODO §3 row).
+
 ## 4. Non-functional requirements
 
 | Concern | Decision |
@@ -546,6 +558,10 @@ A reviewer should be able to verify Phase 1 by:
 70. **Focus 143-volume dim/restore:** pressing `F` with 143 loaded volumes dims all non-kept volumes to fill 0.05 / outline 0.3 and suppresses their labels in the same frame; the kept set (containing + fly-to/tour/game target) stays at full opacity with labels intact; changing app mode auto-exits focus and restores every volume's prior fill/outline/label state exactly; `F` is never written to any persistence key.
 71. **Night showcase frame budget:** with Night mode active, city-light carpet + ~1200-star dome + moon + gated bloom all rendering together, per-frame cost is ≤ 4 ms over the equivalent Day-mode frame (orchestrator-measured); toggling Night → Day removes all four effects with no residual geometry or program leak.
 72. **§0.4 repros pass:** all repro cases catalogued for T14 (district-label staleness on position jump, daynight select/setMode desync, alert-stack/TARGET-strip overlap, placeLabel/controls-pill overlap) are re-run against B11 HEAD and each shows the fixed behavior with no regression to its surrounding feature.
+
+73. **Declutter runs clean:** a full session (explore + wave + tour) logs zero `[loop:declutter]` errors; `window.__sim.declutter` is defined after bootstrap; the §3.19 declutter ladder thresholds behave as rows 69 describes (harness-verified 2026-08-28: 0 declutter errors vs 364 pre-fix).
+74. **Fresh vs returning greeting:** with an empty localStorage and geolocation outside Thailand, the sim spawns at `SCENIC_START` (world ≈ 0 km E, +60 km S, 90 m), heading ≈ 000°, preset **1×**, HUD reading `Clear — not inside any cataloged airspace`, with no NO-FLY freeze and no over-ceiling banner; with any `kuson.*` key present, the pre-B12 greeting (Bangkok center 200 m, preset 100×) is unchanged (harness-verified both paths, 2026-08-28).
+75. **Pause menu round-trip:** in plain freestyle, `Esc` opens `#pauseMenu` and sets `drone.paused` true; flight keys held while open register nothing; `Esc` again closes and resumes; **Main menu** re-shows the start screen and a subsequent Explore pick resumes cleanly; during a WAVE, `Esc` still produces the abort-confirm card (never the pause menu) and a second `Esc` dismisses it (harness-verified 2026-08-28).
 
 ---
 

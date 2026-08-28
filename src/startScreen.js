@@ -52,7 +52,7 @@ export function installStartScreen() {
     return _build();
   } catch (e) {
     console.warn("[startScreen] construction failed:", e);
-    return { tick() {}, ready() {}, fail() {}, dismissed: true };
+    return { tick() {}, ready() {}, fail() {}, reopen() {}, dismissed: true };
   }
 }
 
@@ -207,10 +207,24 @@ function _build() {
     } catch {}
   }
 
+  // B12.T3: pause menu's "Main menu" — re-show the overlay after a
+  // dismissal. Handlers set by ready() persist, so a pick routes exactly
+  // like the first time (Explore = just close, Tour/Play = start them).
+  function reopen() {
+    try {
+      if (!_handlers) return; // never before ready()
+      _dismissed = false;
+      overlay.style.display = "";
+      _setHighlight(_highlighted);
+      btns[_highlighted]?.focus();
+    } catch {}
+  }
+
   return {
     tick,
     ready,
     fail,
+    reopen,
     get dismissed() { return _dismissed; },
   };
 }
