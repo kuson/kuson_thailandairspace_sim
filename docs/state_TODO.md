@@ -4,7 +4,7 @@ title: Thai Airspace Sim — State & TODO (single source of truth)
 class: spec
 version: 1.0.0
 status: active
-updated: 2026-07-29
+updated: 2026-08-28
 owner: kuson
 applies_to: []
 supersedes: []
@@ -160,8 +160,27 @@ superseded_by: []
 ### Path heatmap regression checklist (manual)
 - [ ] Live flights LOD unchanged (K=20 / cap 150; trails ~8 min).
 - [ ] Heat off → collector idle, rebake throttle idle (no bake cost).
-- [ ] Reload → `kuson.pathHeatmap.settings.v1` + IndexedDB density survive.
+- [ ] Reload → `kuson.pathHeatmap.settings.v1` + IndexedDB density survive. *(settings half automated 2026-08-28 e2e — `features.test.mjs`; IDB density survival still manual)*
 - [ ] Sidecar import round-trip (`.jsonl` → store → 2D/3D bake).
+
+---
+
+## 0h. Betterment-12 — Headless verification rig + boot-window fixes (2026-08-28, `node --test` verified)
+
+> Journal: 2026-08-28 (k). Branch `claude/workflow-execution-vz9bof`; SHAs committed after the journal block.
+
+- [x] **B12.T1 e2e harness** — `test/e2e/harness.mjs` + `test/e2e/README.md`: Playwright *library* (no `@playwright/test`, no package.json), headless SwiftShader Chromium, ephemeral-port `node:http` static server, catch-all network abort + carto-tile stub, three@0.170.0 vendored from the registry tarball into gitignored `test/e2e/.cache/`. Run: `node --test test/e2e/*.test.mjs`.
+- [x] **B12.T2 Boot smokes** — `test/e2e/boot.test.mjs` (5 subtests): app boots to `window.__sim` with a clean console.
+- [x] **B12.T3 Core interactions spec** — `test/e2e/core.test.mjs` (9 subtests): presets 1–5 + model swap, held-`W` movement, `P` pause/resume, `U` units, `M` map-primary, `I` identify cap-3 + expand pill, `V` 1st/3rd (via `__sim` state — no DOM badge exists), HUD lat/lon-DMS/SPD/HDG sanity + updates. All 8 checklist items automated, no skips.
+- [x] **B12.T4 Features spec** — `test/e2e/features.test.mjs` (9 subtests): catalog warp >100 km, 3-warp undo/redo round-trip, express tour (narration + identify blocked + End restores), Strict-CAAT reload persistence, **Traffic-heat nominal / ERROR / settings-reload** — the ERROR path (IDB-poison at the `idbRunTx` seam → `#heatStatus` error + checkbox unchecked + `recordingOn:false`) automates what STATUS.yaml carried as a pending manual next_action since journal (j).
+- [x] **B12.F1 Declutter boot fix** — `src/main.js`: `declutterLayers` was a bootstrap-scoped const referenced by module-scope `loop()` → `ReferenceError` every frame during (and after) boot, declutter pass never ran. Hoisted `let … = null` + `?.update()` guard; regression spec `test/e2e/boot-clean.test.mjs` (asserts an empty filtered console-error list).
+- [x] **B12.F2 Teleport-NaN fix** — `src/ground.js` `updateAround` finite-guards position + all tile indices; `src/terrain.js` `elevationAt` NaN-proof negated range guard. Kills the `computeBoundingSphere(): Computed radius is NaN` spam from out-of-Mercator-domain teleports (§3 row below). Regression spec `test/e2e/teleport-nan.test.mjs` (terrain-delayed repro, both sides of the load gap).
+- [x] **B12.F3 `?debug=1` frame-budget logger** — `src/debugOverlay.js`: `[frame-budget] avg | p95 | worst` console line every ~5 s, zero cost without the flag (§3-Low row). Spec `test/e2e/debug-flag.test.mjs`.
+- [x] **B12.F4 Airspaces JSON Schema** — `data/airspaces.schema.json` (draft-07) + `test/data/airspacesSchema.test.js` (9 tests reading required/enums/bounds from the schema itself; §3-Low row).
+- [x] **B12.V Verification** — `test/e2e` 27/27 twice (66.0 s / 60.8 s), `test/pathHeatmap` 31/31, `test/data` 9/9 → **67/67 green, zero skips**; `node --check` clean on all 4 changed src files; adversarial verifier audited both fixes' seams (see journal (k)).
+- [x] `core.test.mjs` paused-freeze assertion is wall-clock — FIXED post-verification (orchestrator): `waitForRenderedFrames(page, 2)` between hold and frozen-position read (rendering continues while paused, only physics halts); re-run 9/9 green.
+- [ ] `src/ui.js` `_drawMapUnderlay` computes NaN tile centers at |lat| > 90° — verified benign (loops no-op → empty minimap basemap in that state); tidy only if that code is touched anyway.
+- [ ] §2 rows not covered by the rig stay manual (pointer-lock, hover, arrow views, Reset-clears-history, tour completion, flicker, 3D labels…).
 
 ---
 
@@ -268,20 +287,20 @@ Operator should walk through `spec.md §6` in a real browser. Until then these a
 
 - [x] Loading splash disappears within ~2 s; GPS prompt handled. *(2026-05-30 browser smoke)*
 - [?] OSM tiles render at GPS/Bangkok start; base + detail follow drone to Phuket/Chiang Mai warp.
-- [?] Click → pointer-lock; WASD/QE move; mouse looks.
+- [?] Click → pointer-lock; WASD/QE move; mouse looks. *(partial 2026-08-28 e2e: held-`W` movement automated; pointer-lock/mouse-look still manual)*
 - [?] `Space` hover; `Esc` releases pointer.
-- [?] Catalog warp + Undo/Redo; Reset clears history.
+- [?] Catalog warp + Undo/Redo; Reset clears history. *(partial 2026-08-28 e2e: warp + undo/redo round-trip automated in `features.test.mjs`; Reset-clears-history still manual)*
 - [?] Alt+Tab no stuck-W.
-- [?] Speed presets: 1× slow, 100× fast; preset name in SPD line.
+- [x] Speed presets: 1× slow, 100× fast; preset name in SPD line. *(2026-08-28 e2e)*
 - [?] `↓`/`←`/`→` view toggles + badge “press again for front view”; `D` strafes right.
-- [?] HDG tape inertia visible when turning quickly; digital degrees immediate.
-- [x] Identify mode (`I`): bottom stacked cards with category colors, radius, distance to nearest point, base/ceiling — sorted nearest-first; cap 3 + expand pill. *(2026-05-30 browser smoke)*
-- [?] `U` flips speed/alt/distance/floor-ceiling between metric and aero (kt/ft/NM).
-- [?] `M` swaps map ↔ 3D as primary view; inset shows the non-primary one.
+- [?] HDG tape inertia visible when turning quickly; digital degrees immediate. *(partial 2026-08-28 e2e: HDG readout format + repaint automated; inertia feel still manual)*
+- [x] Identify mode (`I`): bottom stacked cards with category colors, radius, distance to nearest point, base/ceiling — sorted nearest-first; cap 3 + expand pill. *(2026-05-30 browser smoke; cap-3 + expand pill re-verified 2026-08-28 e2e)*
+- [?] `U` flips speed/alt/distance/floor-ceiling between metric and aero (kt/ft/NM). *(partial 2026-08-28 e2e: HUD speed/alt strings automated; identify-card distance + base/ceiling still manual)*
+- [x] `M` swaps map ↔ 3D as primary view; inset shows the non-primary one. *(2026-08-28 e2e)*
 - [?] `+`/`-` zoom map; `Esc` releases pointer.
 - [?] Tour dwell phase orbits the airspace slowly, alternating direction per stop.
-- [?] Tour with `I` already on: identify panel + crosshairs hide on tour start; `I` is a no-op while tour runs.
-- [?] `V` toggles 1st/3rd person; cycling sim-speed presets swaps the aircraft model (Mavic 3 → Cessna → Learjet → 777 → F-16).
+- [?] Tour with `I` already on: identify panel + crosshairs hide on tour start; `I` is a no-op while tour runs. *(partial 2026-08-28 e2e: `I` no-op during tour + End-tour restore automated; pre-enabled-`I` hide on tour start still manual)*
+- [x] `V` toggles 1st/3rd person; cycling sim-speed presets swaps the aircraft model (Mavic 3 → Cessna → Learjet → 777 → F-16). *(2026-08-28 e2e — via `__sim` state + chase-model visibility/uuid; no DOM badge exists for view-person)*
 - [?] Altitude tape: red 90 m line visible near ground; auto-rescales (200 m → 45 km) as you climb; reference bands stay aligned with tick marks.
 - [?] Horizon N/S/E/W follow aircraft position nationwide.
 - [?] Radar center aircraft on by default; uncheck enables drag-pan.
@@ -290,7 +309,7 @@ Operator should walk through `spec.md §6` in a real browser. Until then these a
 - [?] 3D labels toggle; height sub-toggle.
 - [x] Panel title shows current airspace(s); filter box works. *(2026-05-30: VTBD filter → 2 entries)*
 - [?] Movement works after catalog warp (hover not stuck).
-- [?] Express tour completes in ~5 min; full tour visits north/south/east/west stops; finale returns to Bangkok; Skip/End work.
+- [?] Express tour completes in ~5 min; full tour visits north/south/east/west stops; finale returns to Bangkok; Skip/End work. *(partial 2026-08-28 e2e: express start + narration overlay + End-tour automated; full completion/Skip still manual)*
 
 ---
 
@@ -306,9 +325,9 @@ Operator should walk through `spec.md §6` in a real browser. Until then these a
 - [ ] Re-verify VTR8 polygon against AIP ENR 5.1 DDMMSS source.
 - [ ] Trace true Thai-Cambodian border for VTR62 polygon (currently straight-line closes through Cambodia — overstates area on that side).
 - [ ] Sample arc segments for VTD34 / VTD58 / VTD17 instead of straight-line chord between endpoints.
-- [ ] Add a smoke-test rig (Playwright or Puppeteer) covering the verification checklist in §2.
+- [x] **2026-08-28:** Add a smoke-test rig (Playwright or Puppeteer) covering the verification checklist in §2 — DONE: headless Playwright-library rig under `test/e2e/` (harness + 6 spec files, 27 tests, zero network, no package.json). Run `node --test test/e2e/*.test.mjs`. See §0h + `journal.md` 2026-08-28 (k); remaining un-automated §2 rows are annotated inline in §2.
 - [x] **2026-07-02:** Execute **Betterment-11 Facelift** — DONE 2026-07-03, gates C1–C4 passed; see §0f + `journal.md` (h). Branch `betterment11-20260702` pushed; merge = user decision.
-- [ ] Root-cause the pre-existing `THREE PlaneGeometry computeBoundingSphere NaN` console errors fired by large teleports before terrain streams in (reproduced on pre-B11 main — suspect a plane/blob geometry built from NaN elevation during the gap; see journal (h) known-deferred).
+- [x] **2026-08-28:** Root-cause the pre-existing `THREE PlaneGeometry computeBoundingSphere NaN` console errors fired by large teleports before terrain streams in — FIXED: NaN tile indices from teleports outside the Web-Mercator latitude domain (`latToTileY` → `Math.log` of a negative), plus `elevationAt`'s NaN-passing range guard once the grid loaded. Finite guards in `src/ground.js` `updateAround` + negated in-range check in `src/terrain.js`; regression spec `test/e2e/teleport-nan.test.mjs` covers both sides of the terrain-load gap. See §0h + `journal.md` 2026-08-28 (k).
 
 ### Betterment-5 — Airspace de-clutter (✅ done + browser-verified 2026-06-01 (e); see `20260601_BettermentPlaybook.md` + `spec.md §13`)
 - [x] **B5.T1** — `groupKeyFor(a)` + `AIRSPACE_GROUPS` in `airspace.js` (counts: 34/13/71/21/5 = 144).
@@ -331,8 +350,8 @@ Operator should walk through `spec.md §6` in a real browser. Until then these a
 - [ ] Bundle offline Amphoe/Province lookup table to avoid Nominatim dependency.
 
 ### Low
-- [ ] Frame-budget logger behind `?debug=1`.
-- [ ] `data/airspaces.schema.json` for IDE validation.
+- [x] **2026-08-28:** Frame-budget logger behind `?debug=1` — DONE in `src/debugOverlay.js` (`[frame-budget] avg | p95 | worst` every ~5 s, zero cost without the flag); spec `test/e2e/debug-flag.test.mjs`. See §0h + `journal.md` (k).
+- [x] **2026-08-28:** `data/airspaces.schema.json` for IDE validation — DONE (draft-07) + `test/data/airspacesSchema.test.js` validating the live catalog against it. See §0h + `journal.md` (k).
 - [ ] Document local-tangent-plane math in `coords.js`.
 
 ### Out of scope for Phase 1 (parked)

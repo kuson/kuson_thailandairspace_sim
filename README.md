@@ -24,6 +24,18 @@ npx serve .
 
 That's it. No npm, no bundler, no Three.js install — it's all pulled from a CDN via an `<script type="importmap">` block.
 
+## Testing
+
+Plain `node --test` (Node ≥ 22), no test framework installed into the repo:
+
+```sh
+node --test test/pathHeatmap/*.test.js   # Traffic-heat unit tests (grid math, store, bake, import)
+node --test test/data/*.test.js          # data/airspaces.json vs data/airspaces.schema.json
+node --test test/e2e/*.test.mjs          # headless-browser smoke — boots the real app in Chromium
+```
+
+The e2e specs drive the actual app in headless Chromium (SwiftShader WebGL) via the Playwright **library** — if `playwright` isn't on your module path, point `PLAYWRIGHT_LIB` at its `index.mjs`. They need **no network** beyond one initial download of the pinned `three@0.170.0` tarball from registry.npmjs.org into the gitignored `test/e2e/.cache/` vendor cache; after that every page request is served locally, stubbed, or aborted. Details in `test/e2e/README.md`.
+
 ## Flight modes
 
 Press **`K`** to toggle between the two control philosophies. The HUD mode chip shows which is active.
