@@ -15,13 +15,15 @@ one_liner: "Thai Airspace Sim — no-build Three.js app for flying a virtual air
 # progress_pct omitted — open-ended betterment project, no defined end state
 
 next_action:
-  desc: "Verify the B12 scenic-start framing and pause menu on real hardware (harness used SwiftShader), then pick the first Three-Hats roadmap wave (report §4: Structure B Daily/Missions, or ACADEMY seed)"
-  owner: human                 # human | agent | external
+  desc: "Execute Autopilot Playbook W0 (docs/20260828_AutopilotPlaybook.md): commit the e2e gate rig + ledger seed, then dispatch B13 lanes; B12 real-hardware check is folded into checkpoint C1 G-human"
+  owner: agent                 # human | agent | external
   since: 2026-08-28
 
 blockers: []                   # empty list when unblocked
 
 recent:                        # newest first, keep last ~10
+  - date: 2026-08-28
+    summary: "Autopilot Playbook shipped (docs/20260828_AutopilotPlaybook.md): orchestrated B13-B15 plan - Fable orchestrator, Opus/Sonnet/Haiku lane routing, e2e+review gates, worktree lanes, cold-resume protocol, friction review v1.1"
   - date: 2026-08-28
     summary: "B12 First Five Minutes fix wave: declutter scope P0 fixed (364 errors/session → 0), fresh-profile scenic Gulf-south spawn at 1× (sightline-checked against the catalog), Esc pause menu (Resume/Restart/Main menu) wired into the Escape ladder; 16/16 harness checks green"
   - date: 2026-08-28
@@ -92,15 +94,15 @@ issues:                        # problems found, not blocking (R-31)
     opened: 2026-08-28
 
 next_prompts:                  # copy-paste-ready for the next session (R-29)
-  - title: "Verify B12 on real hardware"
-    kind: review
-    prompt: "Run the sim on real hardware with a cleared profile: confirm the Gulf-south scenic start reads as the exterior-cages hero shot (no danger curtain, no banner), the Esc pause menu round-trips (Resume/Restart/Main menu) in freestyle and never appears mid-wave/tour, and the declutter ladder thresholds from SPEC row 69 behave. Tick the [?] rows in docs/state_TODO.md §0h."
-  - title: "Build Daily Flight (Structure B seed)"
+  - title: "Autopilot W0: commit the gate rig"
     kind: build
-    prompt: "Implement the Daily Flight mode from docs/20260828_ThreeHatsReport.md §2 Structure B: one date-seeded ~3-minute challenge per day reusing the SCRAMBLE/fly-to machinery (seed = YYYYMMDD picks target volumes deterministically), a fourth start-screen slot, a debrief with score + one learned fact + countdown to tomorrow's flight, and a shareable end-card (canvas screenshot with score/date). Persist streaks under kuson.daily.v1."
-  - title: "Seed ACADEMY: chart-first + micro-quiz"
+    prompt: "Read docs/20260828_AutopilotPlaybook.md sections 0-1. Execute W0.T1+T2 exactly per contract on branch betterment13-20260829 (cut from main after the B12 merge decision, else stacked per section 6). Report the two consecutive ALL PASS outputs."
+  - title: "Autopilot B13: dispatch the lanes"
     kind: build
-    prompt: "Per docs/20260828_ThreeHatsReport.md §1.1/§2-D: promote map-primary to a start-screen entry (fix instrument overlay when 2D is primary, add a tile-source fallback), add a 3-question micro-quiz after each Express-tour stop (reuse the typing-challenge modal in multiple-choice form), and store per-volume mastery under kuson.mastery.v1."
+    prompt: "Read docs/20260828_AutopilotPlaybook.md sections 0+2. W0 is green. As Fable orchestrator, dispatch lanes A/B/C per the lane map in git worktrees (opus for T1, sonnet elsewhere), gate each per section 0.2, merge A-B-C, and stop at checkpoint C1 with the evidence summary."
+  - title: "Autopilot resume (generic)"
+    kind: chore
+    prompt: "Read docs/20260828_AutopilotPlaybook.md section 5.2 (cold resume): find the frontier in docs/state_TODO.md, run node test/e2e/run.mjs --suite regression to confirm HEAD sanity, then continue dispatching from the frontier."
 notes: []                      # portal write-back appends here
 links:
   spec: docs/30-spec/SPEC.md
