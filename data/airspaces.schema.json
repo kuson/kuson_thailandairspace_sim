@@ -1,0 +1,121 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://kuson.example/data/airspaces.schema.json",
+  "title": "Thai Airspace Sim — airspace catalog",
+  "description": "Shape of data/airspaces.json as produced by scripts/build_airspaces.py (AIP ENR 2.1 + ENR 5.1 parse, AIRPORT_ZONES table, and scripts/data/curated_prd.json overrides). Educational visualization only — not for flight planning.",
+  "type": "object",
+  "required": ["meta", "airspaces"],
+  "additionalProperties": false,
+  "properties": {
+    "meta": {
+      "type": "object",
+      "required": [
+        "centerLat",
+        "centerLon",
+        "radiusKm",
+        "sourceAIRAC",
+        "sourceUrls",
+        "disclaimer",
+        "volumeCount"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "centerLat": { "type": "number" },
+        "centerLon": { "type": "number" },
+        "radiusKm": { "type": "number", "exclusiveMinimum": 0 },
+        "sourceAIRAC": { "type": "string" },
+        "sourceUrls": {
+          "type": "array",
+          "items": { "type": "string", "format": "uri" }
+        },
+        "disclaimer": { "type": "string" },
+        "volumeCount": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "airspaces": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/volume" }
+    }
+  },
+  "definitions": {
+    "latLonPair": {
+      "description": "[latitude, longitude] in decimal degrees. Bounds mirror thailand_ok() in scripts/build_airspaces.py.",
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "items": [
+        { "type": "number", "minimum": 5.0, "maximum": 21.0 },
+        { "type": "number", "minimum": 97.0, "maximum": 106.0 }
+      ]
+    },
+    "volume": {
+      "type": "object",
+      "required": [
+        "id",
+        "name",
+        "shortName",
+        "category",
+        "class",
+        "lowerFt",
+        "upperFt",
+        "shape",
+        "approximate",
+        "source",
+        "description"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[A-Z0-9-]+$"
+        },
+        "name": { "type": "string", "minLength": 1 },
+        "shortName": { "type": "string", "minLength": 1 },
+        "category": {
+          "description": "CAT_MAP values (Prohibited/Restricted/Danger) plus the AIRPORT_ZONES categories.",
+          "type": "string",
+          "enum": ["Prohibited", "Restricted", "Danger", "CTR", "TMA", "Class D"]
+        },
+        "class": {
+          "description": "First letter of the category for ENR 5.1 areas (P/R/D); explicit ICAO class C/D for airport zones.",
+          "type": "string",
+          "enum": ["C", "D", "P", "R"]
+        },
+        "lowerFt": { "type": "integer", "minimum": 0 },
+        "upperFt": { "type": "integer", "minimum": 0 },
+        "lowerRef": {
+          "description": "Optional — curated entries may omit it. Builder always writes GND.",
+          "type": "string",
+          "enum": ["GND"]
+        },
+        "upperRef": {
+          "description": "Optional — curated entries may omit it. Builder writes AMSL; curated data also uses FL.",
+          "type": "string",
+          "enum": ["AMSL", "FL"]
+        },
+        "shape": { "type": "string", "enum": ["circle", "polygon"] },
+        "approximate": { "type": "boolean" },
+        "source": { "type": "string", "minLength": 1 },
+        "description": { "type": "string", "minLength": 1 },
+        "center": { "$ref": "#/definitions/latLonPair" },
+        "radiusNM": { "type": "number", "exclusiveMinimum": 0 },
+        "points": {
+          "type": "array",
+          "minItems": 3,
+          "items": { "$ref": "#/definitions/latLonPair" }
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "shape": { "const": "circle" } } },
+          "then": { "required": ["center", "radiusNM"] }
+        },
+        {
+          "if": { "properties": { "shape": { "const": "polygon" } } },
+          "then": { "required": ["points"] }
+        }
+      ]
+    }
+  }
+}
