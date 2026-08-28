@@ -400,16 +400,35 @@ export class DynamicGround {
 
   /** Call each frame (or when drone moves > half a tile). */
   updateAround(worldX, worldZ) {
+    // Teleport-NaN root cause (state_TODO §3): a runaway/staged teleport can
+    // hand this a non-finite position, or one so far north/south that
+    // |lat| > 90° — outside the Web-Mercator domain, where latToTileY()'s
+    // Math.log(tan+sec) goes NaN. Those NaN tile indices used to flow into
+    // _buildMesh → tileYToLat(NaN) → NaN plane width/height →
+    // new THREE.PlaneGeometry(NaN, …) → THREE spamming
+    // "computeBoundingSphere(): Computed radius is NaN" on every rendered
+    // frame (and, once the elevation grid was loaded, elevationAt(NaN, NaN)
+    // baking NaN vertex heights too). Guard BEFORE any state is touched:
+    // keep the current tile set and leave _lastWorld/_lastBase/_lastDetail
+    // alone, so the first sane position afterwards refreshes normally. For
+    // every position the tile pyramid can actually represent, the flow below
+    // is unchanged.
+    if (!Number.isFinite(worldX) || !Number.isFinite(worldZ)) return;
+    const geo = worldToGeo(worldX, worldZ);
+    const btx = lonToTileX(geo.lon, this.baseZoom);
+    const bty = latToTileY(geo.lat, this.baseZoom);
+    const dtx = lonToTileX(geo.lon, this.detailZoom);
+    const dty = latToTileY(geo.lat, this.detailZoom);
+    if (!Number.isFinite(btx) || !Number.isFinite(bty) ||
+        !Number.isFinite(dtx) || !Number.isFinite(dty)) return;
+
     if (this._lastWorld) { this._lastWorld.x = worldX; this._lastWorld.z = worldZ; }
     else this._lastWorld = { x: worldX, z: worldZ };
-    const geo = worldToGeo(worldX, worldZ);
 
     if (this._fallbackPlane) {
       this._fallbackPlane.position.set(worldX, -8, worldZ);
     }
 
-    const btx = lonToTileX(geo.lon, this.baseZoom);
-    const bty = latToTileY(geo.lat, this.baseZoom);
     if (btx !== this._lastBase.tx || bty !== this._lastBase.ty) {
       this._lastBase = { tx: btx, ty: bty };
       for (let dy = -this.baseRange; dy <= this.baseRange; dy++) {
@@ -420,17 +439,15 @@ export class DynamicGround {
       this._pruneZoom(this.baseZoom, btx, bty, this.baseRange);
     }
 
-    const tx = lonToTileX(geo.lon, this.detailZoom);
-    const ty = latToTileY(geo.lat, this.detailZoom);
-    if (tx === this._lastDetail.tx && ty === this._lastDetail.ty) return;
-    this._lastDetail = { tx, ty };
+    if (dtx === this._lastDetail.tx && dty === this._lastDetail.ty) return;
+    this._lastDetail = { tx: dtx, ty: dty };
 
     for (let dy = -this.detailRange; dy <= this.detailRange; dy++) {
       for (let dx = -this.detailRange; dx <= this.detailRange; dx++) {
-        this._ensureTile(this.detailZoom, tx + dx, ty + dy);
+        this._ensureTile(this.detailZoom, dtx + dx, dty + dy);
       }
     }
-    this._pruneZoom(this.detailZoom, tx, ty, this.detailRange);
+    this._pruneZoom(this.detailZoom, dtx, dty, this.detailRange);
   }
 }
 

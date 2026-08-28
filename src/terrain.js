@@ -61,7 +61,13 @@ export function elevationAt(lat, lon) {
   const { rows, cols, lat0, lon0, dLat, dLon } = _meta;
   const fy = (lat - lat0) / dLat;
   const fx = (lon - lon0) / dLon;
-  if (fy < 0 || fx < 0 || fy > rows - 1 || fx > cols - 1) return 0;
+  // Negated in-range form so a NaN input (e.g. worldToGeo of a runaway
+  // teleport position) fails the check and returns 0 like any other
+  // out-of-coverage point, instead of slipping past `fy < 0` (false for
+  // NaN) and indexing the grid with NaN → NaN elevation → NaN geometry
+  // (state_TODO §3). For finite inputs this is exactly the old
+  // `fy < 0 || fx < 0 || fy > rows-1 || fx > cols-1` reject set.
+  if (!(fy >= 0 && fx >= 0 && fy <= rows - 1 && fx <= cols - 1)) return 0;
   const y0 = Math.floor(fy);
   const x0 = Math.floor(fx);
   const y1 = Math.min(y0 + 1, rows - 1);
