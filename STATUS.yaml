@@ -5,18 +5,19 @@
 
 schema: kstat/1
 project: kuson_thailandairspace_sim
-updated: 2026-08-19T22:46:30+07:00
+updated: 2026-08-28T19:23:57+07:00
 updated_by: claude-code        # claude-code | cursor | human
 
 status: active                 # active | paused | blocked | shipped | archived | incubating
 health: green                  # green | yellow | red
 phase: "Mature and usable; iterative betterment waves"
-one_liner: "Thai Airspace Sim — no-build Three.js app for flying a virtual aircraft through Bangkok's 3D airspace volumes; usable now, evolving through betterment waves, last one 2026-07-29"
+one_liner: "Thai Airspace Sim — no-build Three.js app for flying a virtual aircraft through Bangkok's 3D airspace volumes; now with a headless e2e smoke rig (67 tests green), evolving through betterment waves, last one 2026-08-28"
 # progress_pct omitted — open-ended betterment project, no defined end state
 
 next_action:
-  desc: "Manually re-verify the traffic-heat error path in the browser (status line and Record checkbox must agree after forced write/import failure), then pick the next betterment wave"
+  desc: "Review Betterment-12 on branch claude/workflow-execution-vz9bof (6 commits: e2e rig + declutter/NaN fixes + debug logger + schema), merge to main, then pick the next betterment wave"
   owner: human                 # human | agent
+  since: 2026-08-28
 
 blockers: []                   # empty list when unblocked
 # - id: B-001
@@ -26,6 +27,8 @@ blockers: []                   # empty list when unblocked
 #   resolved: null             # or YYYY-MM-DD; keep resolved rows for history
 
 recent:                        # newest first, keep last ~5
+  - date: 2026-08-28
+    summary: "Betterment-12: headless Playwright e2e rig (zero-network, 27 e2e tests) automating the spec §6 smoke checklist incl. the traffic-heat error path; fixed boot-window declutter ReferenceError (pass never ran) + teleport-NaN tile geometry; ?debug=1 frame-budget logger; airspaces JSON Schema; 67/67 tests green"
   - date: 2026-08-17
     summary: "KDS-1.0 adoption: docs tree, frontmatter, STATUS.yaml init (wave-4)"
   - date: 2026-07-29
@@ -34,6 +37,59 @@ recent:                        # newest first, keep last ~5
     summary: "Path heatmap module landed: grid + IndexedDB store, flight-path collector, 2D north-up blit + 3D bake rendering, sidecar writer and shard import"
   - date: 2026-07-02
     summary: "Betterment 11 wave merged to main with follow-up fix wave (C1/C2, I1-I4)"
+
+todo:                          # session handoff (R-29); done items keep date
+  - desc: "Add smoke-test rig (Playwright/Puppeteer) covering the state_TODO §2 verification checklist"
+    done: true
+    date: 2026-08-28
+  - desc: "Re-verify traffic-heat error path: status line and Record checkbox must agree after forced write/import failure (now automated in test/e2e/features.test.mjs)"
+    done: true
+    date: 2026-08-28
+  - desc: "Root-cause pre-existing THREE PlaneGeometry computeBoundingSphere NaN errors on large teleports before terrain streams in"
+    done: true
+    date: 2026-08-28
+  - desc: "Frame-budget logger behind ?debug=1"
+    done: true
+    date: 2026-08-28
+  - desc: "data/airspaces.schema.json for IDE validation"
+    done: true
+    date: 2026-08-28
+  - desc: "Fix boot-window declutter ReferenceError in src/main.js (bootstrap-scoped const invisible to loop(); pass never ran) — discovered by the e2e rig"
+    done: true
+    date: 2026-08-28
+  - desc: "Merge claude/workflow-execution-vz9bof (Betterment-12) to main"
+    done: false
+  - desc: "Merge betterment11-20260702 to main + tag betterment11-complete (user decision, per B7 precedent)"
+    done: false
+  - desc: "Automate remaining manual §2 rows where headless-feasible: pointer-lock/mouse-look, Space hover, arrow-view badges, Reset-clears-history, tour completion"
+    done: false
+  - desc: "Re-verify VTR8 polygon against AIP ENR 5.1 DDMMSS source"
+    done: false
+  - desc: "Trace true Thai-Cambodian border for VTR62 polygon"
+    done: false
+  - desc: "Sample arc segments for VTD34 / VTD58 / VTD17 instead of straight-line chords"
+    done: false
+  - desc: "Player shadow blob foreground visual check (needs a live rAF session)"
+    done: false
+  - desc: "Bundle offline Amphoe/Province lookup table to avoid Nominatim dependency"
+    done: false
+
+issues:                        # problems found that don't block work (R-31)
+  - id: I-001
+    desc: "ui.js _drawMapUnderlay computes NaN tile centers while parked at |lat|>90°; its loops no-op against NaN bounds so the minimap basemap just renders empty in that out-of-domain state — verified benign, no throw"
+    severity: low              # low | medium | high
+    opened: 2026-08-28
+
+next_prompts:                  # copy-paste-ready prompts for the next session
+  - title: "Review + merge Betterment-12"
+    kind: review               # build | fix | decide | review | chore
+    prompt: "Review branch claude/workflow-execution-vz9bof (6 commits, Betterment-12: headless e2e rig + boot-window fixes — journal 2026-08-28 (k)). Run node --test test/e2e/*.test.mjs, test/pathHeatmap/*.test.js and test/data/*.test.js; if green and the diff reads clean, merge to main."
+  - title: "Extend e2e coverage to the remaining manual §2 rows"
+    kind: build
+    prompt: "Extend test/e2e/ (see test/e2e/README.md and harness.mjs) to cover more of docs/state_TODO.md §2 rows still marked [?]: Space hover, arrow-view camera badges, Reset-clears-history, quality presets, express-tour completion. Skip pointer-lock/mouse-look if headless Chromium can't do them faithfully — document skips in state_TODO."
+  - title: "Airspace data accuracy pass"
+    kind: fix
+    prompt: "In scripts/build_airspaces.py + source extracts: re-verify VTR8 against the AIP ENR 5.1 DDMMSS source, trace the true Thai-Cambodian border for VTR62's closure, and sample arc segments for VTD34/VTD58/VTD17 instead of straight-line chords. Regenerate data/airspaces.json, keep test/data/airspacesSchema.test.js green, and update the approximate-volume counts in docs/state_TODO.md §4."
 
 notes: []                      # portal write-back appends here
 links:
