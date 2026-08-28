@@ -5,7 +5,7 @@
 
 schema: kstat/1
 project: kuson_thailandairspace_sim
-updated: 2026-08-28T19:23:57+07:00
+updated: 2026-08-28T21:07:08+07:00
 updated_by: claude-code        # claude-code | cursor | human
 
 status: active                 # active | paused | blocked | shipped | archived | incubating
@@ -15,7 +15,7 @@ one_liner: "Thai Airspace Sim — no-build Three.js app for flying a virtual air
 # progress_pct omitted — open-ended betterment project, no defined end state
 
 next_action:
-  desc: "Review Betterment-12 on branch claude/workflow-execution-vz9bof (6 commits: e2e rig + declutter/NaN fixes + debug logger + schema), merge to main, then pick the next betterment wave"
+  desc: "Pick the next betterment wave — extend e2e coverage to the remaining manual §2 rows, or the airspace data-accuracy pass (VTR8/VTR62/arc sampling); also still open: merge betterment11-20260702 + tag betterment11-complete"
   owner: human                 # human | agent
   since: 2026-08-28
 
@@ -28,7 +28,7 @@ blockers: []                   # empty list when unblocked
 
 recent:                        # newest first, keep last ~5
   - date: 2026-08-28
-    summary: "Betterment-12: headless Playwright e2e rig (zero-network, 27 e2e tests) automating the spec §6 smoke checklist incl. the traffic-heat error path; fixed boot-window declutter ReferenceError (pass never ran) + teleport-NaN tile geometry; ?debug=1 frame-budget logger; airspaces JSON Schema; 67/67 tests green"
+    summary: "Betterment-12 MERGED to main (ff 6126d38..02abf2a): headless Playwright e2e rig (zero-network, 27 e2e tests) automating the spec §6 smoke checklist incl. the traffic-heat error path; fixed boot-window declutter ReferenceError (pass never ran) + teleport-NaN tile geometry; ?debug=1 frame-budget logger; airspaces JSON Schema; 67/67 tests green; both regression guards confirmed failing on pre-fix main"
   - date: 2026-08-17
     summary: "KDS-1.0 adoption: docs tree, frontmatter, STATUS.yaml init (wave-4)"
   - date: 2026-07-29
@@ -58,7 +58,8 @@ todo:                          # session handoff (R-29); done items keep date
     done: true
     date: 2026-08-28
   - desc: "Merge claude/workflow-execution-vz9bof (Betterment-12) to main"
-    done: false
+    done: true
+    date: 2026-08-28
   - desc: "Merge betterment11-20260702 to main + tag betterment11-complete (user decision, per B7 precedent)"
     done: false
   - desc: "Automate remaining manual §2 rows where headless-feasible: pointer-lock/mouse-look, Space hover, arrow-view badges, Reset-clears-history, tour completion"
@@ -81,15 +82,15 @@ issues:                        # problems found that don't block work (R-31)
     opened: 2026-08-28
 
 next_prompts:                  # copy-paste-ready prompts for the next session
-  - title: "Review + merge Betterment-12"
-    kind: review               # build | fix | decide | review | chore
-    prompt: "Review branch claude/workflow-execution-vz9bof (7 commits, Betterment-12: headless e2e rig + boot-window fixes — journal 2026-08-28 (k)). Run node --test test/e2e/*.test.mjs, test/pathHeatmap/*.test.js and test/data/*.test.js; if green and the diff reads clean, merge to main."
   - title: "Extend e2e coverage to the remaining manual §2 rows"
-    kind: build
-    prompt: "Extend test/e2e/ (see test/e2e/README.md and harness.mjs) to cover more of docs/state_TODO.md §2 rows still marked [?]: Space hover, arrow-view camera badges, Reset-clears-history, quality presets, express-tour completion. Skip pointer-lock/mouse-look if headless Chromium can't do them faithfully — document skips in state_TODO."
+    kind: build                # build | fix | decide | review | chore
+    prompt: "Extend test/e2e/ (see test/e2e/README.md and harness.mjs) to cover more of docs/state_TODO.md §2 rows still marked [?]: Space hover, arrow-view camera badges, Reset-clears-history, ground-quality presets, express-tour completion. Skip pointer-lock/mouse-look if headless Chromium can't do them faithfully — document skips in state_TODO §2."
   - title: "Airspace data accuracy pass"
     kind: fix
     prompt: "In scripts/build_airspaces.py + source extracts: re-verify VTR8 against the AIP ENR 5.1 DDMMSS source, trace the true Thai-Cambodian border for VTR62's closure, and sample arc segments for VTD34/VTD58/VTD17 instead of straight-line chords. Regenerate data/airspaces.json, keep test/data/airspacesSchema.test.js green, and update the approximate-volume counts in docs/state_TODO.md §4."
+  - title: "Decide the fate of betterment11-20260702"
+    kind: decide
+    prompt: "Branch betterment11-20260702 (Facelift, gates C1-C4 passed 2026-07-03) has never been merged; main has moved on since. Check whether its commits are already contained in main, and if not, either merge + tag betterment11-complete or close it out in docs/state_TODO.md §0f with the reason."
 
 notes: []                      # portal write-back appends here
 links:
