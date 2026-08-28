@@ -83,7 +83,7 @@ issues:                        # problems found that don't block work (R-31)
 next_prompts:                  # copy-paste-ready prompts for the next session
   - title: "Review + merge Betterment-12"
     kind: review               # build | fix | decide | review | chore
-    prompt: "Review branch claude/workflow-execution-vz9bof (6 commits, Betterment-12: headless e2e rig + boot-window fixes — journal 2026-08-28 (k)). Run node --test test/e2e/*.test.mjs, test/pathHeatmap/*.test.js and test/data/*.test.js; if green and the diff reads clean, merge to main."
+    prompt: "Review branch claude/workflow-execution-vz9bof (7 commits, Betterment-12: headless e2e rig + boot-window fixes — journal 2026-08-28 (k)). Run node --test test/e2e/*.test.mjs, test/pathHeatmap/*.test.js and test/data/*.test.js; if green and the diff reads clean, merge to main."
   - title: "Extend e2e coverage to the remaining manual §2 rows"
     kind: build
     prompt: "Extend test/e2e/ (see test/e2e/README.md and harness.mjs) to cover more of docs/state_TODO.md §2 rows still marked [?]: Space hover, arrow-view camera badges, Reset-clears-history, quality presets, express-tour completion. Skip pointer-lock/mouse-look if headless Chromium can't do them faithfully — document skips in state_TODO."
