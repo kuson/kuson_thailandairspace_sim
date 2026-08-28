@@ -292,6 +292,13 @@ const layer = new AirspaceLayer();
 
 let ui;
 let tourGuide;
+// B11.T9 fix: hoisted like ui/tourGuide above — declutter.install() runs
+// deep inside async bootstrap(), but loop() starts on the first rAF after
+// startSim() and referenced this name from frame one. As a bootstrap-scoped
+// const it was invisible to loop() (ReferenceError every frame, declutter
+// pass never ran); as a module `let` the loop's ?. guard no-ops until
+// install lands, matching the airportBeacons/provinceLines idiom.
+let declutterLayers = null;
 let catalogHighlightId = null;
 let _applyingHistory = false;
 
@@ -684,7 +691,7 @@ async function bootstrap() {
   // provinces/airports resolve asynchronously (see installProvinceLines/
   // installAirportBeacons .then() above) — pass live-ref getters, same
   // shape as window.__sim.groundLayers' get airports()/get provinces().
-  const declutterLayers = declutter.install({
+  declutterLayers = declutter.install({
     layer,
     provinces: { ref: () => provinceLines },
     airports: { ref: () => airportBeacons },
@@ -1168,7 +1175,7 @@ function loop(t) {
   // and this pass multiplies a law factor on top of whatever they just
   // wrote (see declutter.js file header for why that composition is safe
   // and requires no separate restore for those layers).
-  _safe("declutter", () => declutterLayers.update(camera, drone, dt));
+  _safe("declutter", () => declutterLayers?.update(camera, drone, dt));
   _safe("ufos", () => ufos.update(dt));
   _safe("crawlers", () => crawlers.update(dt));
   _safe("shadow", () => _updatePlayerShadow(dt));
